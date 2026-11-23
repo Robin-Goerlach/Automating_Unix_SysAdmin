@@ -11,7 +11,8 @@ while (@ARGV) {
 }
 defined $input && -f $input && !-l $input or die "invalid host inventory\n";
 open(IN,"<$input") or die "cannot read host inventory: $!\n";
-my (%known,$good,$bad)=((),0,0);
+my %known;
+my ($good,$bad)=(0,0);
 while (<IN>) {
     chomp;
     s/\r\z//;
