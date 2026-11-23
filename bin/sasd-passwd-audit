@@ -10,7 +10,8 @@ while (@ARGV) {
 }
 defined $file && -f $file && !-l $file or die "invalid passwd snapshot\n";
 open(IN,"<$file") or die "cannot open passwd snapshot: $!\n";
-my (%uids,%names,$warn,$invalid,$rows)=((),(),0,0,0);
+my (%uids,%names);
+my ($warn,$invalid,$rows)=(0,0,0);
 while (<IN>) {
     chomp;
     s/\r\z//;
