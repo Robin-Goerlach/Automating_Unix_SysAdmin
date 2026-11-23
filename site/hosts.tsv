@@ -1,0 +1,5 @@
+# hostname	address	os-family	role	groups	profile
+cfg.lab.invalid	192.0.2.10	unix	config	admin,lab	config
+mail.lab.invalid	192.0.2.12	unix	mail	lab	mail
+mon.lab.invalid	192.0.2.13	unix	monitoring	lab	monitoring
+web.lab.invalid	192.0.2.11	unix	web	lab	web

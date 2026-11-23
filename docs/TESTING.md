@@ -6,7 +6,7 @@
 
 make syntax runs perl -c on the Perl scripts and sh -n on the POSIX shell scripts. tests/smoke.sh exercises synthetic df data, creates a private status spool, checks HTML output, verifies the drift outcome and confirms the MRTG four-line contract. tests/classic.sh additionally exercises passwd UID-0 anomalies, BSD syslog aggregation, NTP source extraction and cron schedule validation.
 
-No network activity or root permissions are needed.
+No network activity or root permissions are needed. `tests/r2-site.sh` validates the four-host role laboratory, including malformed inventory rejection, clean and changed role manifests, and the green/yellow status transition.
 
 CI workflow: .github/workflows/test.yml. The workflow runs on a current Ubuntu GitHub Actions image. This only establishes the current source's contemporary smoke-test behavior.
 
@@ -33,6 +33,8 @@ No archived CFEngine 1, RRDtool 1999 release, MRTG 1999 release, old Perl, legac
 - counter wraparound and unknown input behavior;
 - trusted host-key handling in a later SSH lab;
 - exact historical Perl and cfagent parser acceptance.
+
+R2 categories are separate: offline `make test` is required; an optional integration run may use an explicitly selected `cfagent` in a disposable directory; historical acceptance remains open until CFEngine 1 is exercised on a documented period OS with provenance, checksum, command, output and cleanup evidence.
 
 ## Git checkout line endings
 

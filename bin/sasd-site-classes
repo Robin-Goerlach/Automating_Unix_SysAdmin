@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+# Resolve SASD roles to independent administrative classes.
+# This is not an implementation of CFEngine's native class engine.
+use strict;
+my ($input,$roles,$want_host,$list) = ('','','','');
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--input') { $input=shift @ARGV; }
+    elsif ($a eq '--roles') { $roles=shift @ARGV; }
+    elsif ($a eq '--host') { $want_host=shift @ARGV; }
+    elsif ($a eq '--list') { $list=1; }
+    elsif ($a eq '--help') { print "usage: sasd-site-classes --input hosts.tsv --roles roles.tsv [--host HOST|--list]\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+$input && -f $input && !-l $input && $roles && -f $roles && !-l $roles or die "invalid inventory or roles file\n";
+($want_host || $list) or die "select --host or --list\n";
+sub safe { my($s)=@_; return defined($s) && $s !~ /[\x00-\x1f\x7f]/; }
+sub ident { my($s)=@_; return defined($s) && $s =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/; }
+sub profile { my($s)=@_; return defined($s) && $s =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,31}\z/; }
+sub fields { my($l,$n,$what)=@_; my @v=split /\t/,$l,-1; @v==$n or die "invalid $what record\n"; for(@v){safe($_) or die "control character in $what record\n";} return @v; }
+my %roles;
+open(R,"<$roles") or die "cannot read roles: $!\n";
+while(<R>){chomp;s/\r\z//;next if /^\s*$/||/^\s*#/;my($r,$c,$p,$m)=fields($_,4,'role');ident($r)&&ident($c)&&profile($p) or die "invalid role record\n";$m =~ m!\A[A-Za-z0-9_./-]+\z! && $m !~ m!^/! && $m !~ m!(?:^|/)\.\.(?:/|$)! or die "unsafe role manifest\n";exists $roles{$r} and die "duplicate role: $r\n";$roles{$r}=[$c,$p,$m];} close R;
+my %hosts;
+open(I,"<$input") or die "cannot read inventory: $!\n";
+while(<I>){chomp;s/\r\z//;next if /^\s*$/||/^\s*#/;my($h,$ip,$os,$r,$groups,$profile)=fields($_,6,'host');$h =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/ && $ip =~ /\A\d+(?:\.\d+){3}\z/ && ident($r) && ident($profile) or die "invalid host record\n";exists $roles{$r} or die "unknown role '$r'\n";if($groups ne ''){for my $g(split /,/,$groups){ident($g) or die "invalid group\n";}}exists $hosts{$h} and die "duplicate hostname: $h\n";$hosts{$h}=[$h,$r,$groups,$profile];}close I;
+sub emit { my($r)=@_; my $x=$hosts{$r}; my($h,$role,$groups,$profile)=@$x; my @c=('baseline','role_'.$role); for my $g (split(/,/, $groups||'')){push @c,'group_'.$g if $g ne '';} print join("\t",$h,join(',',@c),$role,$profile,$roles{$role}->[0],$roles{$role}->[2]),"\n"; }
+if($want_host){exists $hosts{$want_host} or die "unknown host: $want_host\n";emit($want_host);}else{emit($_) for sort keys %hosts;}
+exit 0;

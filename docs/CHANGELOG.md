@@ -12,3 +12,10 @@
 - Recorded missing verification for real period environments, third-party binaries and operational security.
 
 This document records real development activity, not a fictitious historical chronology. For period interpretation, see TIMELINE.md.
+
+## 2026-11-23 — R2 site inventory and CFEngine 1 candidate foundation
+
+- Added a validated fictional four-host TSV inventory and role manifest contract.
+- Added deterministic SASD class selection and a read-only role-aware configuration audit/status adapter.
+- Added offline fixtures and negative tests for duplicate, malformed and unsafe inventory data and configuration drift.
+- Documented archived CFEngine 1.4.0 evidence and kept native historical compatibility explicitly open.

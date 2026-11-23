@@ -6,10 +6,10 @@ The 2009 text was written well after the 1999 baseline. As a result, modules hav
 
 | Book topic / chapter | Independent SASD need | Deliverable / module | Profile | Status |
 | --- | --- | --- | --- | --- |
-| 1: Automation fundamentals | Reusable site inventory and system roles | host-facts, later role inventory | P0–P3 | Host facts implemented; roles planned |
+| 1: Automation fundamentals | Reusable site inventory and system roles | host-facts, site-inventory, site-classes | P0–P3 | Offline inventory and role selection implemented |
 | 2: Practical automation | Predictable failure handling, idempotence | rollback protocol and negative tests | all | Early tests implemented; rollback planned |
 | 3: SSH administration | Audited, restricted remote access | SSH key and trust-policy review | P4/P5 | Planned |
-| 4: cfengine | Detect/configure desired local state | independent config-drift + optional CFEngine policies | P1/P4 | Drift implemented; CFEngine lab example unverified |
+| 4: cfengine | Detect/configure desired local state | independent config-drift + role audit + optional CFEngine 1 policy | P1/P4 | Drift and role audit implemented; CFEngine lab example unverified |
 | 5: Infrastructure bootstrap | Host onboarding and control of baseline files | host enrollment, role manifests and staging | P4/P5 | Planned |
 | 6: Automated installation | Repeatable isolated Unix guest builds | separate FAI, Kickstart and JumpStart adapters | P4/P5 | Planned |
 | 7: Shared infrastructure | NTP, DNS, accounts, mail | independent audit and distribution helpers | P1–P5 | NTP file comparison fixture; services planned |

@@ -17,6 +17,16 @@
 
     counter stream ----> optional rrd-cycle ----> RRDtool archive
 
+The R2 site laboratory adds a separate, file-based selection path:
+
+    site/hosts.tsv + site/roles.tsv
+              |                  \
+      site-inventory       site-classes
+              |                    |
+              +----------> site-audit ---> sasd-config-drift ---> SASD status record
+
+The inventory is an operator-maintained TSV contract. It is not DNS, a CMDB, or a CFEngine parser. Role manifests select reference paths; the existing byte comparator remains responsible for comparison and its exit semantics are preserved.
+
 Complementary independent tools also parse offline passwd snapshots (UID anomalies), traditional BSD syslog (program counts), configured NTP sources and bounded five-field user cron syntax. They do not access credentials, execute jobs, contact time servers or modify accounts.
 
 The layout intentionally avoids a mandatory shared library, database, agent framework or service manager. Historical Unix installations can use only the tools they need.
@@ -60,7 +70,7 @@ RRDtool bridge accepts explicit create or update commands. No archival deletion,
 
 - Status-store uses exclusive temporary-file creation and rename but should not run in a directory writable by untrusted users; race-free replacement of an attacker-controlled final path is not formally proven.
 - Status-board writes an explicitly chosen file. Do not run it as root or serve the generated HTML on an untrusted webserver without a separate access-control and exposure review.
-- Config-drift reads chosen directories and rejects symlink final objects, but ancestor directory symlink traversal is not comprehensively prevented: use only trusted lab roots.
+- Config-drift reads chosen directories and rejects symlink final objects, but ancestor directory symlink traversal is not comprehensively prevented: use only trusted lab roots. The R2 site audit inherits this limitation.
 - No remote transport, authentication, encryption or conflict handling exists in the status format. Adding a TCP listener requires a new security design.
 - The RRD bridge is useful only if an appropriate RRDtool is installed. A real historical target must be tested independently.
 - A modern Linux CI job does not prove Solaris, AIX, HP-UX, IRIX, OpenBSD, FreeBSD or historical Perl support.
@@ -68,3 +78,5 @@ RRDtool bridge accepts explicit create or update commands. No archival deletion,
 ## Site layout plan
 
 Classic deployment may eventually use /usr/local/sasd/bin and /usr/local/sasd/etc, but current code runs directly from the checkout and does not write to /etc or /usr/local. Configuration examples remain under cfengine/, mrtg/, rrd/ and etc/ in the repository.
+
+The current site layout is `site/hosts.tsv`, `site/roles.tsv`, and role manifests below the selected golden root. A host record has hostname, documentation IPv4 address, OS family, one role, comma-separated groups, and profile. All hosts receive the independent `baseline` class; the resolver adds `role_NAME` and `group_NAME`. These names only select SASD work and do not emulate CFEngine's class engine.

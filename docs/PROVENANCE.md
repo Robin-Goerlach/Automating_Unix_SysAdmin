@@ -13,6 +13,8 @@ SASD is authoring a new, stand-alone script collection in 2026 to explore classi
 ## Third-party product documentation
 
 - CFEngine — https://docs.cfengine.com/
+- GNU CFEngine archive index — https://ftp.gnu.org.uk/gnu/cfengine/ (lists cfengine-1.4.0.tar.gz dated 1997-06-12 and later releases).
+- GNU CFEngine historical reference — https://www.gnu.org/software/cfengine/docs/cfengine-Reference.html (action-sequence and file-policy background; version scope must be checked before acceptance).
 - MRTG external target reference — https://mrtg.org/mrtg/doc/mrtg-reference.en.html
 - RRDtool — https://oss.oetiker.ch/rrdtool/
 - Big Brother history — https://linuxgazette.net/issue15/bb-info.html
@@ -29,3 +31,7 @@ SASD-original project files use the repository's MIT license. An individually co
 ## How to record a new feature
 
 Record the feature's practical purpose, operating-system/period profile, independent implementation approach, authoring date, third-party interfaces and known compatibility tests. Never claim historical testing or publish staged screenshots as genuine 1990s evidence unless provenance is explicit.
+
+## R2 CFEngine 1 research boundary
+
+The R2 candidate uses the historically documented `cfagent.conf` and `actionsequence` shape because public reference material describes those interfaces and the archive index provides a dated 1.4.0 source archive. The archive was not imported into SASD, and no original binary was executed. The repository therefore records a candidate policy, not native CFEngine 1 compatibility. Modern CFEngine 3 and later CFEngine 2 syntax are not used as substitutes.

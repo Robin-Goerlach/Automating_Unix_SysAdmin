@@ -20,6 +20,9 @@ Eine eigenständig entwickelte SASD-Sammlung für klassische Unix-Systemadminist
 - bin/sasd-ntp-sources – NTP-Quellen aus Konfigurationsdatei auslesen.
 - bin/sasd-cron-inspect – klassische Benutzer-Crontabs ohne Befehlsausführung prüfen.
 - bin/sasd-bb-hosts-lint – historisches Big-Brother-Hostinventar ohne Netzwerkzugriff prüfen.
+- bin/sasd-site-inventory – ein tabellarisches, fiktives Standortinventar prüfen und abfragen.
+- bin/sasd-site-classes – Rollen in unabhängige SASD-Auswahlklassen auflösen.
+- bin/sasd-site-audit – rollenbezogene Soll-Dateien lesend mit sasd-config-drift vergleichen.
 
 ## Schnellstart
 
@@ -36,6 +39,8 @@ Eine lokale Statusseite wird beispielsweise so erzeugt:
     ./bin/sasd-status-board --spool /tmp/sasd-unix-status --out /tmp/sasd-unix-status/index.html
 
 Die Beispieldaten sind synthetisch. Ein Produktivsystem wird dadurch nicht untersucht oder verändert.
+
+Das R2-Labor liegt unter [site/README.md](site/README.md). Die Adressen aus `192.0.2.0/24` sind nur Dokumentationswerte; es gibt keine DNS-Auflösung. Die CFEngine-1-Dateien unter [cfengine/v1](cfengine/v1/README.md) sind weiterhin unbestätigte Kandidaten, solange kein originales Programm in einer passenden historischen Umgebung ausgeführt wurde.
 
 ## Entwicklungsgrundsätze
 

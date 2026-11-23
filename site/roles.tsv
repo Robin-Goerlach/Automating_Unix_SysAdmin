@@ -1,0 +1,5 @@
+# role	sasd-class	profile	manifest
+config	site_config	1999	roles/config.tsv
+mail	site_mail	1999	roles/mail.tsv
+monitoring	site_monitoring	1999	roles/monitoring.tsv
+web	site_web	1999	roles/web.tsv

@@ -14,6 +14,7 @@ Historical authenticity is not a security exemption. These examples may include 
 ## Data handling and output
 
 - Reject path traversal, symlink targets, control characters and unsafe status identifiers.
+- Site inventory rejects duplicate hostnames, duplicate addresses, invalid IPv4 values, unknown roles and unsafe identifiers before selection.
 - Use only an operator-owned private status spool, preferably mode 0700.
 - Treat generated static HTML as untrusted until encoding and content checks pass.
 - Limit history and discard stale alerts only under a documented retention policy.
@@ -21,7 +22,7 @@ Historical authenticity is not a security exemption. These examples may include 
 
 ## Limits of first implementation
 
-Status-store's file replacement is **not audited against hostile concurrent writers** in shared directories. Config-drift rejects symlink final paths but does not guarantee that every ancestor component is symlink-free. The HTML writer accepts an operator-selected target file. These tools must not run with elevated privileges or as exposed services until the relevant trust boundaries and race scenarios have been closed.
+Status-store's file replacement is **not audited against hostile concurrent writers** in shared directories. Config-drift rejects symlink final paths but does not guarantee that every ancestor component is symlink-free. The R2 site audit inherits that limitation and adds no apply mode. The HTML writer accepts an operator-selected target file. These tools must not run with elevated privileges or as exposed services until the relevant trust boundaries and race scenarios have been closed.
 
 ## External historical software
 

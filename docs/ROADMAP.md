@@ -41,7 +41,8 @@ The repository must never mislabel a fixture-based test as live network or histo
 
 ## R2 — Site role management and CFEngine 1 (P1/P2/P3)
 
-- Design simple file-based site inventory and role files.
+- [x] Design and validate simple file-based site inventory and role files.
+- [x] Add deterministic role/class selection and a role-aware read-only drift/status audit.
 - Evaluate CFEngine 1.4 historical syntax using a disposable VM and actual binary.
 - CFEngine helper: policy inspection, syntax checking, role classification, status reporting; scripts may cooperate with a real cfagent but cannot claim its behavior by emulation.
 - Provide read-only, independent SASD config audit for systems without CFEngine.
