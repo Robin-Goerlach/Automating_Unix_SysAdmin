@@ -22,6 +22,7 @@ The repository must never mislabel a fixture-based test as live network or histo
 - [x] External MRTG-style four-line counter adapter.
 - [x] Optional RRDtool create/update wrapper.
 - [x] Synthetic fixtures, negative smoke cases and GitHub Actions.
+- [x] First offline utilities for passwd UID review, classic syslog, NTP source inventory and user cron schedules.
 - [ ] Expand security negative testing (spool/ancestor symlink, truncation, double writers).
 - [ ] Prove Perl 5.004 or specify a narrower compatibility promise.
 

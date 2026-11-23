@@ -17,6 +17,8 @@
 
     counter stream ----> optional rrd-cycle ----> RRDtool archive
 
+Complementary independent tools also parse offline passwd snapshots (UID anomalies), traditional BSD syslog (program counts), configured NTP sources and bounded five-field user cron syntax. They do not access credentials, execute jobs, contact time servers or modify accounts.
+
 The layout intentionally avoids a mandatory shared library, database, agent framework or service manager. Historical Unix installations can use only the tools they need.
 
 ## Interfaces and status semantics

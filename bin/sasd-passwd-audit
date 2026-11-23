@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+# Offline Unix passwd-file audit. Never reads shadow files or prints passwords.
+use strict;
+my $file='';
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--input') { $file=shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-passwd-audit --input PASSWD_SNAPSHOT\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+defined $file && -f $file && !-l $file or die "invalid passwd snapshot\n";
+open(IN,"<$file") or die "cannot open passwd snapshot: $!\n";
+my (%uids,%names,$warn,$invalid,$rows)=((),(),0,0,0);
+while (<IN>) {
+    chomp;
+    s/\r\z//;
+    next if /^\s*$/ || /^\s*#/;
+    $rows++;
+    my @f=split /:/,$_,-1;
+    if (@f != 7) {
+        print "INVALID\tline:$.\texpected 7 colon fields\n";
+        $invalid++; next;
+    }
+    my ($name,$ignored,$uid,$gid,$comment,$home,$shell)=@f;
+    if ($name !~ /\A[A-Za-z_][A-Za-z0-9_.-]*\z/ ||
+        $uid !~ /\A[0-9]+\z/ || $gid !~ /\A[0-9]+\z/) {
+        print "INVALID\tline:$.\tinvalid identity fields\n";
+        $invalid++; next;
+    }
+    if ($names{$name}++) {
+        print "WARN\t$name\tduplicate username\n"; $warn++;
+    }
+    if (defined $uids{$uid} && $uids{$uid} ne $name) {
+        print "WARN\t$name\tUID $uid also used by $uids{$uid}\n"; $warn++;
+    } else { $uids{$uid}=$name; }
+    if ($uid == 0 && $name ne 'root') {
+        print "WARN\t$name\tunexpected uid 0\n"; $warn++;
+    }
+    if ($home !~ m!\A/! || $home =~ m!(?:^|/)\.\.(?:/|$)!) {
+        print "WARN\t$name\tsuspicious home path\n"; $warn++;
+    }
+    if ($shell ne '' && $shell !~ m!\A/!) {
+        print "WARN\t$name\tshell path not absolute\n"; $warn++;
+    }
+}
+close(IN);
+print "SUMMARY\taccounts=$rows\twarnings=$warn invalid=$invalid\n";
+exit($invalid ? 2 : $warn ? 1 : 0);

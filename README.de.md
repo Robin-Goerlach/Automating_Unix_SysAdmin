@@ -15,6 +15,10 @@ Eine eigenständig entwickelte SASD-Sammlung für klassische Unix-Systemadminist
 - bin/sasd-status-board – statische HTML-Übersicht ohne Webserver.
 - bin/sasd-mrtg-counter – vier Zeilen für einen externen MRTG-Target.
 - bin/sasd-rrd-cycle – optionaler Aufruf von RRDtool für eine Zählerdatenbank.
+- bin/sasd-passwd-audit – lokale Passwortdatei ohne Kennwortausgabe prüfen.
+- bin/sasd-syslog-count – klassische Syslog-Meldungen nach Programm zählen.
+- bin/sasd-ntp-sources – NTP-Quellen aus Konfigurationsdatei auslesen.
+- bin/sasd-cron-inspect – klassische Benutzer-Crontabs ohne Befehlsausführung prüfen.
 
 ## Schnellstart
 

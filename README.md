@@ -17,6 +17,10 @@ An independently developed SASD collection of Unix system-administration scripts
 | bin/sasd-status-board | Render a status overview to static HTML | Optional output write |
 | bin/sasd-mrtg-counter | Expose local interface counters in the MRTG external target four-line format | Read-only |
 | bin/sasd-rrd-cycle | Optional RRDtool creation and update wrapper | Explicit local RRD write |
+| bin/sasd-passwd-audit | Offline passwd account and UID audit (no hashes printed) | Read-only |
+| bin/sasd-syslog-count | BSD syslog program frequency, no severity guessing | Read-only |
+| bin/sasd-ntp-sources | Enumerate NTP servers/peers from a local config | Read-only |
+| bin/sasd-cron-inspect | Inspect simple 5-field user cron schedules | Read-only |
 
 The SASD status protocol is deliberately **not Big Brother's wire protocol**. There is no daemon, listening socket, remote command execution, or root-required installer in this milestone. Optional tools require their original external programs and must be separately validated.
 

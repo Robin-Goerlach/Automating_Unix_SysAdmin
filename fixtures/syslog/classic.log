@@ -1,0 +1,4 @@
+Nov 23 15:00:00 labhost cron[110]: periodic job started
+Nov 23 15:01:00 labhost ntpd[44]: time server selected
+Nov 23 15:02:00 labhost cron[110]: periodic job completed
+bad record

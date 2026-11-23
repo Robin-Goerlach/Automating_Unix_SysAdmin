@@ -1,0 +1,67 @@
+#!/usr/bin/env perl
+# Inspect a classic five-time-field user crontab; never execute or echo commands.
+# Syntax is a deliberately bounded subset, not a full Vixie cron parser.
+use strict;
+my $file='';
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--input') { $file=shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-cron-inspect --input USER_CRONTAB\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+defined $file && -f $file && !-l $file or die "invalid crontab input\n";
+open(IN,"<$file") or die "cannot read crontab: $!\n";
+my ($jobs,$unknown,$invalid)=(0,0,0);
+while (<IN>) {
+    chomp;
+    s/\r\z//;
+    next if /^\s*$/ || /^\s*#/;
+    next if /^\s*[A-Za-z_][A-Za-z0-9_]*=/; # environment assignment
+    s/^\s+//;
+    my @f=split /\s+/,$_,6;
+    if (@f != 6) {
+        print "INVALID\tline:$.\tmissing schedule or command\n";
+        $invalid++; next;
+    }
+    my @limits=([0,59],[0,23],[1,31],[1,12],[0,7]);
+    my $state=1;
+    for (my $i=0;$i<5;$i++) {
+        my $ok=field_ok($f[$i],$limits[$i][0],$limits[$i][1]);
+        if (!$ok) { $state=0; last; }
+        if ($ok < 0) { $state=-1; }
+    }
+    if ($state==0) {
+        print "INVALID\tline:$.\tout-of-range schedule\n";
+        $invalid++; next;
+    }
+    if ($state==-1) {
+        print "UNKNOWN\tline:$.\tcomplex expression not verified\n";
+        $unknown++; next;
+    }
+    # Print schedule but never echo the command, which may contain secrets.
+    print "JOB\tline:$.\t",join(" ",@f[0..4]),"\n";
+    $jobs++;
+}
+close(IN);
+print "SUMMARY\tjobs=$jobs\tinvalid=$invalid unknown=$unknown\n";
+exit($invalid ? 1 : $unknown ? 2 : 0);
+
+sub field_ok {
+    my ($text,$min,$max)=@_;
+    my @parts=split /,/,$text,-1;
+    my $unknown=0;
+    for my $p (@parts) {
+        next if $p eq '*';
+        if ($p =~ m!\A\*/([0-9]+)\z!) {
+            return 0 if $1 == 0 || $1 > $max-$min+1;
+            next;
+        }
+        if ($p =~ /\A(\d+)\z/) { return 0 if $1<$min || $1>$max; next; }
+        if ($p =~ /\A(\d+)-(\d+)\z/) {
+            return 0 if $1<$min || $2>$max || $1>$2;
+            next;
+        }
+        $unknown=1;
+    }
+    return $unknown ? -1 : 1;
+}

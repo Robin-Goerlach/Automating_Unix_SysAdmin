@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+# Read-only parser of historical ntp.conf server/peer directives.
+# Lists configured sources; does not claim network reachability or sync health.
+use strict;
+my $file='';
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--input') { $file=shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-ntp-sources --input NTP_CONF\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+defined $file && -f $file && !-l $file or die "invalid ntp config\n";
+open(IN,"<$file") or die "cannot read ntp config: $!\n";
+my $count=0;
+while (<IN>) {
+    s/#.*\z//;
+    s/^\s+//;
+    next if /^\s*$/;
+    my @a=split /\s+/;
+    next unless $a[0] eq 'server' || $a[0] eq 'peer';
+    if (@a < 2 || $a[1] !~ /\A[A-Za-z0-9][A-Za-z0-9.:-]{0,252}\z/) {
+        print "UNKNOWN\tinvalid source on line $.\n";
+        next;
+    }
+    print "SOURCE\t$a[0]\t$a[1]\n";
+    $count++;
+}
+close(IN);
+unless ($count) { print "UNKNOWN\tno NTP server/peer directives\n"; exit 1; }
+print "TOTAL\t$count\n";

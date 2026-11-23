@@ -1,0 +1,4 @@
+# Synthetic five-column user crontab (no username field)
+MAILTO=admin@example.invalid
+*/5 * * * * /usr/local/sasd/bin/sasd-disk-watch
+0 3 * * 1 /usr/local/sasd/bin/sasd-host-facts
