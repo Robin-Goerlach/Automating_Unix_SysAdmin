@@ -1,0 +1,42 @@
+# SASD Automating Unix SysAdmin — Agent Instructions
+
+These instructions apply to the entire repository.
+
+## Mission and non-goals
+
+Develop an original, reliable, historically plausible Unix administration collection. Preserve the feel of independently useful scripts collected across multiple technological generations. Do not rebuild Apress's tutorial infrastructure, copy its code, imitate its text, or claim to be a historically discovered archive.
+
+The primary target profile is 1999. Features from 2002–2009 require a clearly marked later profile. CFEngine 1 belongs to the 1999 profile; CFEngine 2, Nagios and 2009 book-specific components do not. See docs/TIMELINE.md.
+
+## Source boundaries
+
+- Books are references for general *ideas*, architecture concerns, and topic coverage. Design, naming, data formats, algorithms, fixtures and prose independently.
+- Preserve third-party copyright and license notices. Do not paste book listings or proprietary Big Brother code or configuration under the repository MIT license.
+- Keep docs/BOOK-MAP.md accurate but not a chapter-by-chapter code transcription.
+- Reference original third-party product names descriptively; avoid suggesting endorsement.
+
+## Engineering
+
+- Prefer POSIX sh, awk, sed and era-appropriate Perl core modules for historical programs.
+- No mandatory Node, Python, Docker, systemd, web service or new runtime in the historical execution path.
+- Use newline-oriented text and clear interfaces; permit independent tools without a forced central framework.
+- Explain source/input trust boundaries and errors. Reject unsafe identifiers and path traversal. Avoid executing untrusted input as shell code.
+- Administrative changes must require an explicit operation and be limited to disposable test systems until a separate acceptance gate is documented.
+- New CFEngine/MRTG/RRD examples are **unverified templates** until actually validated with the corresponding version. Record exact version/OS before claiming compatibility.
+- Testing on a modern CI runner does not prove operation on an original SunOS/Solaris/FreeBSD/AIX/HP-UX release or Perl 5.004.
+
+## Workflow
+
+1. Read the README, architecture, roadmap, security document, and affected source and tests.
+2. Identify the period profile and independently useful task.
+3. Implement the smallest bounded tool or integration. Update the fixtures and negative tests.
+4. Run make test, and record optional integration testing separately.
+5. Update roadmap and English/German entry documentation if user-visible behavior changes.
+6. Avoid unrequested changes to SASD-Sysadmin/freeware: that is a separate repository.
+7. Do not fabricate test results, release dates, history or provenance.
+
+Commits on main are acceptable for this solo experimental project when authorized and validated; do not force push, rewrite history, or delete unrelated work. Always confirm the current HEAD before publication.
+
+## Definition of done
+
+A new tool needs a documented purpose, supported input and output, a safe failure mode, an offline fixture and at least one negative test. A third-party integration additionally needs a version matrix and direct acceptance evidence before being described as functional on a historical target. Planned tasks are not completed tasks.

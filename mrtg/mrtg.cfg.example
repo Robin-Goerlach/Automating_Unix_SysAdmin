@@ -1,0 +1,9 @@
+# SASD integration example. Replace both path placeholders before use.
+# Not validated against a historical MRTG binary.
+WorkDir: PATH_TO_MRTG_WORKDIR
+Interval: 5
+Target[sasd_lab]: `PATH_TO_CHECKOUT/bin/sasd-mrtg-counter --input PATH_TO_CHECKOUT/fixtures/mrtg/ifcounters.tsv`
+MaxBytes[sasd_lab]: 1250000
+Options[sasd_lab]: growright,nopercent
+Title[sasd_lab]: SASD Lab Interface Counters
+PageTop[sasd_lab]: <h1>SASD Lab Interface</h1>
