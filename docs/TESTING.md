@@ -33,3 +33,7 @@ No archived CFEngine 1, RRDtool 1999 release, MRTG 1999 release, old Perl, legac
 - counter wraparound and unknown input behavior;
 - trusted host-key handling in a later SSH lab;
 - exact historical Perl and cfagent parser acceptance.
+
+## Git checkout line endings
+
+All Unix scripts and fixture text are normalized on checkout via `.gitattributes` with `* text=auto eol=lf`; the root `.editorconfig` also sets LF. The `make syntax` target checks for CR bytes before invoking any script interpreters, so a Windows CRLF checkout produces a clear diagnostic. If a user already checked out with CRLF, they may have to convert affected files after pulling the new attributes. This is a working-tree text normalization, not a semantic code change. See README.md for safe, non-destructive commands.

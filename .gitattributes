@@ -1,0 +1,8 @@
+# Unix-first repository: automatic text detection, with LF for all text checkouts.
+# This applies on Windows, WSL, Linux and macOS regardless of core.autocrlf.
+# Binary files detected by Git stay binary.
+* text=auto eol=lf
+
+# Reserve platform-specific line endings for future native Windows scripts.
+*.bat text eol=crlf
+*.cmd text eol=crlf

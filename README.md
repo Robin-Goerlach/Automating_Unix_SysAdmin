@@ -70,3 +70,27 @@ This repository's original SASD-authored materials are licensed under [MIT](LICE
 ## Current limitations
 
 CI tests run on a current Linux runner and demonstrate offline behavior only. CFEngine 1 syntax, real historical Perl interpreters, actual MRTG rendering and RRDtool database lifecycle are **not yet accepted on period operating systems**. Treat all example settings as laboratory material, not a production deployment guide.
+
+
+### Unix line endings on Windows or WSL
+
+All Unix source files use **LF**, not Windows **CRLF**, because POSIX `sh` interprets carriage returns literally. A CRLF file may fail with `Syntax error: end of file unexpected (expecting "then")` even when the visible `if`/`fi` syntax looks correct.
+
+Git's [.gitattributes](.gitattributes) pins text checkouts to LF regardless of `core.autocrlf`. [.editorconfig](.editorconfig) requests LF for compatible editors. Existing local files that were checked out before these rules may still have CRLF until converted.
+
+Check your local tree before making changes:
+
+```sh
+git status --short
+file bin/sasd-host-facts
+sed -n '1,20l' bin/sasd-host-facts
+```
+
+If `file` mentions CRLF or `sed` shows `\\r$`, normalize the affected shell scripts in your local clone without discarding unrelated source edits:
+
+```sh
+sed -i 's/\r$//' bin/sasd-host-facts
+make test
+```
+
+If `make test` reports additional CRLF files, convert only those reported files in the same way. **Do not run `git reset --hard` or `git clean` to solve a line-ending problem**; they can destroy local work.

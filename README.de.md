@@ -44,3 +44,21 @@ Historische Plausibilität hat Vorrang vor der bloßen Optik. Programme dürfen 
 Die beiden wichtigen Projektgrenzen: Bei 1999 bleiben wir bei CFEngine 1; CFEngine 2 gehört in die spätere Zeitstufe. Und das Buch von Campi/Bauer aus 2009 ist ein fachlicher Ideengeber für spätere Ausbauten, keine Vorlage für eine angeblich schon 1999 existierende Infrastruktur.
 
 Details: docs/BOOK-MAP.md, docs/TIMELINE.md, docs/ROADMAP.md, docs/SECURITY.md. MIT-Lizenz nur für die eigenständig erstellten Projektbestandteile; externe Werkzeuge haben eigene Lizenzen.
+
+
+### Unix-Zeilenenden unter Windows/WSL
+
+Alle Unix-Skripte müssen **LF** statt **CRLF** verwenden. Ansonsten kann `sh` trotz scheinbar korrektem `if`/`fi` einen Fehler wie `Syntax error: end of file unexpected (expecting "then")` melden.
+
+Die Datei [.gitattributes](.gitattributes) legt LF für Textdateien beim Git-Checkout fest; [.editorconfig](.editorconfig) hilft bei der Editor-Einstellung. Bereits vorhandene lokale CRLF-Dateien werden beim Aktualisieren nicht zwingend automatisch konvertiert.
+
+```sh
+git status --short
+file bin/sasd-host-facts
+sed -n '1,20l' bin/sasd-host-facts
+# Nur bei bestätigten CRLF-Zeilenenden:
+sed -i 's/\r$//' bin/sasd-host-facts
+make test
+```
+
+Falls `make test` weitere CRLF-Dateien meldet, nur diese gezielt auf LF normalisieren. `git reset --hard` und `git clean` sind dafür unnötig und können lokale Änderungen löschen.
