@@ -28,6 +28,17 @@ grep -q '^DRIFT' "$tmp/changed"
 ./bin/sasd-mrtg-counter --input fixtures/mrtg/ifcounters.tsv > "$tmp/counters"
 test "$(wc -l < "$tmp/counters")" -eq 4
 test "$(head -n 1 "$tmp/counters")" = 120000
+# The input fixture may have been checked out as CRLF on an existing WSL clone.
+# Accept CRLF data without accepting control characters in the device name.
+printf '120000\t340000\t86400\tlab-router\r\n' > "$tmp/mrtg-crlf.tsv"
+./bin/sasd-mrtg-counter --input "$tmp/mrtg-crlf.tsv" > "$tmp/mrtg-crlf-out"
+test "$(wc -l < "$tmp/mrtg-crlf-out")" -eq 4
+test "$(tail -n 1 "$tmp/mrtg-crlf-out")" = lab-router
+printf '120000\t340000\t86400\tlab-\rrouter\n' > "$tmp/mrtg-bad.tsv"
+if ./bin/sasd-mrtg-counter --input "$tmp/mrtg-bad.tsv" > /dev/null 2>&1; then
+    echo "MRTG adapter accepted an embedded control character" >&2
+    exit 1
+fi
 # HTML escape regression: status input must not become executable markup.
 printf 'lab-host\thttp\tred\t&lt;script&gt; no injection\n' > "$tmp/injection"
 ./bin/sasd-status-store --spool "$tmp/status" --input "$tmp/injection" > /dev/null

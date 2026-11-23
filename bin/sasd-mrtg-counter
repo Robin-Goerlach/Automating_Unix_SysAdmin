@@ -15,6 +15,9 @@ my $row=<IN>;
 close(IN);
 defined $row or die "counter input empty\n";
 chomp($row);
+# Accept a CRLF-terminated data record from older or cross-platform checkouts.
+# Keep script source itself LF-only; a trailing CR is data, not a hostname.
+$row =~ s/\r\z//;
 my @f=split /\t/,$row,-1;
 @f==4 or die "expected inbound, outbound, uptime, hostname (TSV)\n";
 $f[0]=~/\A\d{1,20}\z/ && $f[1]=~/\A\d{1,20}\z/ &&
