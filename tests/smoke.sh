@@ -37,4 +37,11 @@ if printf 'evil/host\tdisk\tred\tunsafe\n' | ./bin/sasd-status-store --spool "$t
     echo "unsafe host accepted" >&2
     exit 1
 fi
+# Verify CRLF detection with a synthetic file; no host files are changed.
+printf 'line with CRLF\r\n' > "$tmp/crlf-example"
+if perl tests/check-eol.pl "$tmp/crlf-example" > "$tmp/line-endings-out" 2>&1; then
+    echo "CRLF sample was not rejected" >&2
+    exit 1
+fi
+grep -q 'CRLF or carriage return' "$tmp/line-endings-out"
 echo "SASD smoke tests: PASS"
