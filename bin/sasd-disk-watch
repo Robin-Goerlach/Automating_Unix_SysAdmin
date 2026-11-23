@@ -1,0 +1,45 @@
+#!/usr/bin/env perl
+# SASD disk-space check: turns POSIX df -kP output into status records.
+# Runtime design: Perl 5, core modules only; no live scanning by default.
+use strict;
+my ($host,$warn,$crit,$input) = ('lab-host',80,90,'-');
+while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq '--host') { $host = shift @ARGV; }
+    elsif ($arg eq '--warn') { $warn = shift @ARGV; }
+    elsif ($arg eq '--crit') { $crit = shift @ARGV; }
+    elsif ($arg eq '--input') { $input = shift @ARGV; }
+    elsif ($arg eq '--help') {
+        print "usage: sasd-disk-watch [--host NAME] [--warn 0..100] [--crit 0..100] [--input FILE|-]\n";
+        exit 0;
+    }
+    else { die "unknown argument: $arg\n"; }
+}
+defined $host && $host =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,62}\z/
+    or die "invalid host\n";
+defined $warn && defined $crit && $warn =~ /\A\d{1,3}\z/ &&
+    $crit =~ /\A\d{1,3}\z/ && $warn <= $crit && $crit <= 100
+    or die "invalid thresholds\n";
+if ($input ne '-') {
+    -f $input && !-l $input or die "input must be a regular file\n";
+    open(INPUT,"<$input") or die "cannot read $input: $!\n";
+} else { *INPUT = *STDIN; }
+my $found = 0;
+while (<INPUT>) {
+    next if /^\s*Filesystem\s/;
+    next if /^\s*$/;
+    chomp;
+    my @f = split /\s+/;
+    # POSIX df -kP columns: filesystem blocks used available capacity mountpoint.
+    if (@f < 6 || $f[4] !~ /\A(\d{1,3})%\z/) {
+        print "$host\tdisk\tpurple\tunparseable df record\n";
+        next;
+    }
+    my $pct = $1;
+    my $mount = $f[5];
+    my $state = $pct >= $crit ? 'red' : $pct >= $warn ? 'yellow' : 'green';
+    $mount =~ s/[\t\r\n]//g;
+    print "$host\tdisk\t$state\t$mount utilization $pct percent\n";
+    $found++;
+}
+print "$host\tdisk\tpurple\tno filesystem records\n" unless $found;

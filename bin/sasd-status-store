@@ -1,0 +1,46 @@
+#!/usr/bin/env perl
+# Original SASD status spool format, NOT the Big Brother wire protocol.
+# Purposefully file-based and offline: no TCP listener and no HTTP daemon.
+use strict;
+use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
+my ($spool,$input) = ('','-');
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--spool') { $spool = shift @ARGV; }
+    elsif ($a eq '--input') { $input = shift @ARGV; }
+    elsif ($a eq '--help') {
+        print "usage: sasd-status-store --spool DIRECTORY [--input FILE|-]\n"; exit 0;
+    } else { die "unknown argument: $a\n"; }
+}
+defined $spool && -d $spool && !-l $spool or die "spool must be a real directory\n";
+if ($input ne '-') {
+    -f $input && !-l $input or die "input must be a regular file\n";
+    open(INPUT,"<$input") or die "cannot read input: $!\n";
+} else { *INPUT = *STDIN; }
+my $written = 0;
+while (<INPUT>) {
+    chomp;
+    s/\r\z//;
+    next if /^\s*$/ || /^#/;
+    my @a = split /\t/, $_, -1;
+    @a == 4 or die "status record needs four tab-separated fields\n";
+    my ($host,$check,$color,$message) = @a;
+    $host =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,62}\z/
+        or die "invalid hostname\n";
+    $check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/
+        or die "invalid check identifier\n";
+    $color =~ /\A(?:green|yellow|red|purple)\z/
+        or die "invalid status color\n";
+    $message !~ /[\x00-\x1f\x7f]/ && length($message) <= 240
+        or die "unsafe status message\n";
+    my $dest = "$spool/$host.$check.status";
+    -l $dest and die "refusing symlink status file\n";
+    my $tmp = "$spool/.$host.$check.$$.$written.tmp";
+    sysopen(OUT,$tmp,O_WRONLY|O_CREAT|O_EXCL,0600) or die "cannot create spool temp: $!\n";
+    print OUT join("\t",time(),$host,$check,$color,$message),"\n"
+        or die "cannot write status\n";
+    close(OUT) or die "cannot close status: $!\n";
+    rename($tmp,$dest) or die "cannot install status: $!\n";
+    $written++;
+}
+print "stored=$written\n";

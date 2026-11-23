@@ -1,0 +1,10 @@
+# Local-generated artifacts, never the historical source fixtures.
+*.rrd
+*.log
+*.pid
+*.bak
+.spool/
+tmp/
+out/
+site/
+.DS_Store

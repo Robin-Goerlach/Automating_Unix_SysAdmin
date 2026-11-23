@@ -1,0 +1,14 @@
+name: Offline UNIX regression checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Perl and POSIX shell smoke tests
+        run: make test

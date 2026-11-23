@@ -1,0 +1,23 @@
+#!/usr/bin/env perl
+# MRTG external target adapter. Input is a LOCAL sample of interface counters.
+# The four lines match the documented MRTG external target contract.
+use strict;
+my $input='';
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--input') { $input=shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-mrtg-counter --input COUNTERS.tsv\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+defined $input && -f $input && !-l $input or die "invalid counter input\n";
+open(IN,"<$input") or die "cannot read counters: $!\n";
+my $row=<IN>;
+close(IN);
+defined $row or die "counter input empty\n";
+chomp($row);
+my @f=split /\t/,$row,-1;
+@f==4 or die "expected inbound, outbound, uptime, hostname (TSV)\n";
+$f[0]=~/\A\d{1,20}\z/ && $f[1]=~/\A\d{1,20}\z/ &&
+    $f[2]=~/\A\d{1,12}\z/ && $f[3]=~/\A[A-Za-z0-9_.-]{1,63}\z/
+    or die "invalid counters\n";
+print join("\n",@f),"\n";

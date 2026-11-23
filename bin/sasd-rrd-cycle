@@ -1,0 +1,30 @@
+#!/bin/sh
+# Optional RRDtool bridge; historical 1999 profile. Explicit lab-only paths.
+# No network access or daemon. Creation is never implicit during update.
+set -eu
+usage() {
+    echo "usage: sasd-rrd-cycle create FILE | sasd-rrd-cycle update FILE IN OUT" >&2
+    exit 2
+}
+[ "$#" -ge 2 ] || usage
+command -v rrdtool >/dev/null 2>&1 || { echo "rrdtool is not installed" >&2; exit 3; }
+action=$1
+file=$2
+[ ! -L "$file" ] || { echo "refusing symlink" >&2; exit 3; }
+case "$action" in
+ create)
+    [ "$#" -eq 2 ] || usage
+    [ ! -e "$file" ] || { echo "database already exists" >&2; exit 3; }
+    rrdtool create "$file" --step 300 \
+      DS:in:COUNTER:600:0:U DS:out:COUNTER:600:0:U \
+      RRA:AVERAGE:0.5:1:288 RRA:AVERAGE:0.5:12:168 \
+      RRA:MAX:0.5:12:168
+    ;;
+ update)
+    [ "$#" -eq 4 ] || usage
+    [ -f "$file" ] || { echo "database not found" >&2; exit 3; }
+    case "$3:$4" in *[!0-9:]*|'') echo "counters must be nonnegative integers" >&2; exit 2;; esac
+    rrdtool update "$file" "N:$3:$4"
+    ;;
+ *) usage ;;
+esac

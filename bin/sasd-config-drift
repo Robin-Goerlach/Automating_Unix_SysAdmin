@@ -1,0 +1,60 @@
+#!/usr/bin/env perl
+# Read-only comparison of a live tree against SASD golden reference files.
+# Manifest columns: relative target TAB relative reference (no absolute paths).
+use strict;
+my ($root,$golden,$manifest)=('','','');
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--root') { $root=shift @ARGV; }
+    elsif ($a eq '--golden') { $golden=shift @ARGV; }
+    elsif ($a eq '--manifest') { $manifest=shift @ARGV; }
+    elsif ($a eq '--help') {
+        print "usage: sasd-config-drift --root DIR --golden DIR --manifest FILE\n";
+        exit 0;
+    } else { die "unknown argument: $a\n"; }
+}
+for ($root,$golden) { defined $_ && -d $_ && !-l $_ or die "invalid root directory\n"; }
+-f $manifest && !-l $manifest or die "invalid manifest\n";
+open(LIST,"<$manifest") or die "cannot read manifest: $!\n";
+my ($changed,$errors,$seen)=(0,0,0);
+while (<LIST>) {
+    chomp;
+    s/\r\z//;
+    next if /^\s*$/ || /^\s*#/;
+    my @v=split /\t/,$_,-1;
+    @v==2 or die "invalid manifest line $. (expected two TSV columns)\n";
+    for (@v) {
+        length($_) && $_ !~ m!^/! && $_ !~ m!(?:^|/)\.\.(?:/|$)! &&
+            $_ !~ m!(?:^|/)\.(?:/|$)! && $_ !~ m!//! &&
+            $_ =~ m!\A[A-Za-z0-9_./-]+\z! or die "unsafe manifest path at line $.\n";
+    }
+    my ($wanted,$reference)=("$root/$v[0]","$golden/$v[1]");
+    $seen++;
+    if (-l $wanted || -l $reference) {
+        print "UNSAFE\t$v[0]\tsymlink refused\n"; $errors++; next;
+    }
+    if (!-f $reference) {
+        print "UNKNOWN\t$v[0]\tmissing reference\n"; $errors++; next;
+    }
+    if (!-f $wanted) {
+        print "MISSING\t$v[0]\tnot present\n"; $changed++; next;
+    }
+    open(A,"<$wanted") or die "cannot read target: $!\n";
+    open(B,"<$reference") or die "cannot read reference: $!\n";
+    binmode A; binmode B;
+    my $same=1;
+    while (1) {
+        my ($a,$b)=('','');
+        my $na=read(A,$a,8192);
+        my $nb=read(B,$b,8192);
+        defined $na && defined $nb or die "read error: $!\n";
+        if ($na != $nb || $a ne $b) { $same=0; last; }
+        last if $na==0;
+    }
+    close(A); close(B);
+    print(($same ? "OK" : "DRIFT"),"\t$v[0]\t",($same ? "matches" : "content differs"),"\n");
+    $changed++ unless $same;
+}
+close LIST;
+$seen or die "manifest has no checks\n";
+exit($errors ? 2 : $changed ? 1 : 0);

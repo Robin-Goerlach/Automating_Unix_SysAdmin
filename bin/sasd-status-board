@@ -1,0 +1,48 @@
+#!/usr/bin/env perl
+# Generate a static HTML view from SASD status spool. No web server required.
+use strict;
+my ($spool,$out,$maxage) = ('','-',900);
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--spool') { $spool=shift @ARGV; }
+    elsif ($a eq '--out') { $out=shift @ARGV; }
+    elsif ($a eq '--max-age') { $maxage=shift @ARGV; }
+    elsif ($a eq '--help') {
+        print "usage: sasd-status-board --spool DIR [--out FILE|-] [--max-age SECONDS]\n";
+        exit 0;
+    } else { die "unknown argument: $a\n"; }
+}
+defined $spool && -d $spool && !-l $spool or die "invalid spool\n";
+defined $maxage && $maxage =~ /\A[0-9]{1,9}\z/ or die "invalid max-age\n";
+if ($out ne '-') {
+    -l $out and die "refusing symlink output\n";
+    open(OUT,">$out") or die "cannot write output: $!\n";
+} else { *OUT=*STDOUT; }
+opendir(DIR,$spool) or die "cannot open spool: $!\n";
+my @names = sort grep { /\A[A-Za-z0-9][A-Za-z0-9_.-]*\.[A-Za-z][A-Za-z0-9_-]*\.status\z/ } readdir(DIR);
+closedir(DIR);
+print OUT "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>SASD Unix Status</title>\n";
+print OUT "<style>body{font-family:monospace}table{border-collapse:collapse}td,th{padding:.4em;border:1px solid #666}.green{background:#b5efb5}.yellow{background:#ffe28a}.red{background:#ffadad}.purple{background:#d6c2ff}</style>\n";
+print OUT "</head><body><h1>SASD Unix Status</h1><table><thead><tr><th>Host</th><th>Check</th><th>State</th><th>Message</th></tr></thead><tbody>\n";
+foreach my $name (@names) {
+    my $path="$spool/$name";
+    next unless -f $path && !-l $path;
+    open(IN,"<$path") or die "cannot read spool entry: $!\n";
+    my $line=<IN>;
+    close(IN);
+    next unless defined $line;
+    chomp($line);
+    my @v=split /\t/,$line,5;
+    next unless @v==5 && $v[0] =~ /\A[0-9]{1,15}\z/ &&
+        $v[3] =~ /\A(?:green|yellow|red|purple)\z/;
+    my ($stamp,$host,$check,$color,$message)=@v;
+    next unless $host =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,62}\z/
+        && $check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/;
+    $color='purple' if $stamp > time() || time()-$stamp > $maxage;
+    for ($host,$check,$message) {
+        s/&/&amp;/g; s/</&lt;/g; s/>/&gt;/g; s/"/&quot;/g;
+    }
+    print OUT "<tr class=\"$color\"><td>$host</td><td>$check</td><td>$color</td><td>$message</td></tr>\n";
+}
+print OUT "</tbody></table><p>Generated from local SASD status files.</p></body></html>\n";
+close(OUT) if $out ne '-';
