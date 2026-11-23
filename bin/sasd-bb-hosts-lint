@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+# Validate a small documented subset of Big Brother-era bb-hosts syntax.
+# Never probes hosts or claims compatibility with every Big Brother release.
+use strict;
+my $input='';
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--input') { $input=shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-bb-hosts-lint --input BB_HOSTS\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+defined $input && -f $input && !-l $input or die "invalid host inventory\n";
+open(IN,"<$input") or die "cannot read host inventory: $!\n";
+my (%known,$good,$bad)=((),0,0);
+while (<IN>) {
+    chomp;
+    s/\r\z//;
+    next if /^\s*$/ || /^\s*#/;
+    # Product convention: IP hostname # optional tags and service checks.
+    my ($ip,$name,$tags) = /^\s*(\S+)\s+(\S+)(?:\s+#\s*(.*))?\s*$/;
+    unless (defined $name && $name =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,252}\z/) {
+        print "INVALID\tline:$.\tinvalid host record\n"; $bad++; next;
+    }
+    my @octets=split /\./,$ip,-1;
+    my $ip_ok=@octets==4;
+    for my $octet (@octets) {
+        $ip_ok=0 unless $octet =~ /\A\d{1,3}\z/ && $octet<=255;
+    }
+    unless ($ip_ok) {
+        print "INVALID\tline:$.\tinvalid IPv4 address\n"; $bad++; next;
+    }
+    if ($known{$name}++) {
+        print "INVALID\tline:$.\tduplicate hostname\n"; $bad++; next;
+    }
+    if (defined $tags && $tags =~ /[\x00-\x1f\x7f]/) {
+        print "INVALID\tline:$.\tunsafe tag characters\n"; $bad++; next;
+    }
+    # Tags remain opaque: different historical versions interpret them differently.
+    print "HOST\t$name\t$ip\n";
+    $good++;
+}
+close(IN);
+print "SUMMARY\thosts=$good\tinvalid=$bad\n";
+exit($bad ? 1 : 0);

@@ -21,6 +21,7 @@ An independently developed SASD collection of Unix system-administration scripts
 | bin/sasd-syslog-count | BSD syslog program frequency, no severity guessing | Read-only |
 | bin/sasd-ntp-sources | Enumerate NTP servers/peers from a local config | Read-only |
 | bin/sasd-cron-inspect | Inspect simple 5-field user cron schedules | Read-only |
+| bin/sasd-bb-hosts-lint | Inspect a subset of historical bb-hosts inventory syntax, without network activity | Read-only |
 
 The SASD status protocol is deliberately **not Big Brother's wire protocol**. There is no daemon, listening socket, remote command execution, or root-required installer in this milestone. Optional tools require their original external programs and must be separately validated.
 
@@ -49,7 +50,7 @@ Get the external MRTG data lines:
 
     ./bin/sasd-mrtg-counter --input fixtures/mrtg/ifcounters.tsv
 
-See [mrtg/README.md](mrtg/README.md) for optional MRTG integration and [rrd/README.md](rrd/README.md) for RRDtool. For an end-to-end walkthrough, use examples/demo.sh.
+See [bigbrother/README.md](bigbrother/README.md) for the period-style host inventory and [mrtg/README.md](mrtg/README.md) for optional MRTG integration and [rrd/README.md](rrd/README.md) for RRDtool. For an end-to-end walkthrough, use examples/demo.sh.
 
 ## Product direction
 

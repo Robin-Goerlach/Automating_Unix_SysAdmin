@@ -8,7 +8,6 @@ mkdir "$tmp/status"
 ./bin/sasd-host-facts > "$tmp/host"
 test -s "$tmp/host"
 ./bin/sasd-disk-watch --host lab-host --input fixtures/df/healthy.txt > "$tmp/disk"
-grep -q 'lab-host.disk.green' /dev/null 2>/dev/null || :
 grep -q 'lab-host[[:space:]]disk[[:space:]]yellow' "$tmp/disk"
 ./bin/sasd-disk-watch --host lab-host --input fixtures/df/critical.txt > "$tmp/disk-red"
 grep -q 'red' "$tmp/disk-red"

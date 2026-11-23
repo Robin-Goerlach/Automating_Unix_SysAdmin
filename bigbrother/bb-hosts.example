@@ -1,0 +1,5 @@
+# Candidate 1990s Big Brother bb-hosts, adapted to fictional TEST-NET addresses.
+# Do not put these entries onto a live network or copy into licensed BB untested.
+192.0.2.10 cfg.lab.invalid # BBDISPLAY BBPAGER BBNET
+192.0.2.20 mail.lab.invalid # smtp pop3
+192.0.2.30 web.lab.invalid # ssh http://web.lab.invalid/

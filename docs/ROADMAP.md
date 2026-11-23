@@ -65,6 +65,7 @@ The repository must never mislabel a fixture-based test as live network or histo
 ## R4 — Independent centralized monitoring (P2/P3)
 
 - [x] Local status writer, status board, stale evidence.
+- [x] Independent sample and offline syntax linter for a small 1990s bb-hosts subset (unverified against original BB).
 - [ ] Host and service inventory, scheduled checks, fault/history retention.
 - [ ] Acknowledge/maintenance state with expiry and audit logs.
 - [ ] Alert throttling and escalation with documented false-positive behavior.

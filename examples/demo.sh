@@ -10,7 +10,7 @@ root=$1
     echo "output must be an existing private directory" >&2
     exit 2
 }
-repo=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+repo=$(CDPATH= cd "$(dirname "$0")/.." && pwd)
 mkdir "$root/status"
 "$repo/bin/sasd-disk-watch" --host lab-host --input "$repo/fixtures/df/healthy.txt"
 "$repo/bin/sasd-status-store" --spool "$root/status" --input "$repo/fixtures/status/disk.tsv"

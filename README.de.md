@@ -19,6 +19,7 @@ Eine eigenständig entwickelte SASD-Sammlung für klassische Unix-Systemadminist
 - bin/sasd-syslog-count – klassische Syslog-Meldungen nach Programm zählen.
 - bin/sasd-ntp-sources – NTP-Quellen aus Konfigurationsdatei auslesen.
 - bin/sasd-cron-inspect – klassische Benutzer-Crontabs ohne Befehlsausführung prüfen.
+- bin/sasd-bb-hosts-lint – historisches Big-Brother-Hostinventar ohne Netzwerkzugriff prüfen.
 
 ## Schnellstart
 
