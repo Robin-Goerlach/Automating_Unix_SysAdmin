@@ -67,7 +67,7 @@ See [bigbrother/README.md](bigbrother/README.md) for the period-style host inven
 
 The R2 site inventory is documented in [site/README.md](site/README.md). It uses reserved `192.0.2.0/24` documentation records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native acceptance.
 
-The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. The bounded M2 enrollment and SSH-signed offline status workflow is documented in [docs/monitoring/enrollment.md](docs/monitoring/enrollment.md); it does not expose a network service.
+The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. The bounded M2 enrollment and M2.1 fixed-command SSH transport are documented under [docs/monitoring/enrollment.md](docs/monitoring/enrollment.md) and [docs/monitoring/transport.md](docs/monitoring/transport.md); no listening service is added by SASD.
 
 ## Product direction
 

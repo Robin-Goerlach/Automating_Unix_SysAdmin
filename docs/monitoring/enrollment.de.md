@@ -46,6 +46,8 @@ Die bestehenden Vierfeld-Datensätze bleiben erhalten:
 
 Dies ist ein Datei-Austausch- und Staging-Vertrag, kein Nachweis eines sicheren Netzwerktransports. Ein späterer SSH-Transport benötigt eine eigene Prüfung von Hostschlüsseln, Kontobeschränkungen, Dateirechten und Aufräumen. Dieses Repository implementiert keinen SSH-Listener, keine `authorized_keys`-Command-Schranke und keinen beliebigen Remote-Befehlspfad.
 
+Der begrenzte SSH-Adapter ist in [transport.de.md](transport.de.md) dokumentiert. Er benötigt weiterhin einen administrativ eingerichteten OpenSSH-Dienst und einen nativen Integrationstest.
+
 ## Sperrung und Wiederaufnahme
 
 `disable` verhindert sofort authentifizierte Importe und meldet den Rechner im M1-Zyklus als purple mit Hinweis auf die gesperrte Registrierung. `enable` setzt einen noch gültigen Datensatz auf `approved`; anschließend ist eine neue signierte Sequenz nötig. Sequenzen bleiben über Sperrung und Wiederaufnahme erhalten. Abgelehnte Hosts haben keinen aktiven Registrierungsdatensatz.

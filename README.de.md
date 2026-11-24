@@ -52,7 +52,7 @@ Die Beispieldaten sind synthetisch. Ein Produktivsystem wird dadurch nicht unter
 
 Das R2-Rechnerinventar ist unter [site/README.de.md](site/README.de.md) beschrieben. Die Adressen aus `192.0.2.0/24` sind Dokumentationswerte; es gibt keine DNS-Auflösung. Die CFEngine-1-Dateien unter [cfengine/v1/README.de.md](cfengine/v1/README.de.md) sind unbestätigte Kandidaten, solange kein originales Programm in einer passenden Umgebung ausgeführt wurde.
 
-Der M1-Monitoring-Server ist unter [docs/monitoring/README.de.md](docs/monitoring/README.de.md) beschrieben. Er installiert sicher in ein Wegwerfverzeichnis, verarbeitet lokale Vierfeld-Statusmeldungen, erkennt veraltete Zustände, führt eine begrenzte Historie und erzeugt statisches HTML. Der begrenzte M2-Ablauf für Registrierung und SSH-signierte Offline-Statusmeldungen ist unter [docs/monitoring/enrollment.de.md](docs/monitoring/enrollment.de.md) beschrieben; ein Netzwerkdienst wird nicht bereitgestellt.
+Der M1-Monitoring-Server ist unter [docs/monitoring/README.de.md](docs/monitoring/README.de.md) beschrieben. Er installiert sicher in ein Wegwerfverzeichnis, verarbeitet lokale Vierfeld-Statusmeldungen, erkennt veraltete Zustände, führt eine begrenzte Historie und erzeugt statisches HTML. M2-Registrierung und der feste M2.1-SSH-Transport sind unter [docs/monitoring/enrollment.de.md](docs/monitoring/enrollment.de.md) und [docs/monitoring/transport.de.md](docs/monitoring/transport.de.md) beschrieben; SASD fügt keinen Listener hinzu.
 
 ## Produktentwicklung
 

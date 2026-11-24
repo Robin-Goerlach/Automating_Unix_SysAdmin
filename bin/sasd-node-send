@@ -1,0 +1,59 @@
+#!/usr/bin/env perl
+use strict;
+use FindBin;
+use File::Basename qw(dirname);
+use File::Spec;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(valid_host valid_identifier);
+
+my ($server, $user, $port, $identity, $known_hosts, $payload, $signature, $timeout, $mode) = ('','','','','','','',10,'dry-run');
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--server') { $server = shift @ARGV; }
+    elsif ($a eq '--user') { $user = shift @ARGV; }
+    elsif ($a eq '--port') { $port = shift @ARGV; }
+    elsif ($a eq '--identity') { $identity = shift @ARGV; }
+    elsif ($a eq '--known-hosts') { $known_hosts = shift @ARGV; }
+    elsif ($a eq '--payload') { $payload = shift @ARGV; }
+    elsif ($a eq '--signature') { $signature = shift @ARGV; }
+    elsif ($a eq '--timeout') { $timeout = shift @ARGV; }
+    elsif ($a eq '--dry-run') { $mode = 'dry-run'; }
+    elsif ($a eq '--send') { $mode = 'send'; }
+    elsif ($a eq '--help') { print "usage: sasd-node-send --server HOST --user USER --port PORT --identity FILE --known-hosts FILE --payload FILE --signature FILE [--timeout SECONDS] [--dry-run|--send]\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+valid_host($server) or die "invalid server host\n";
+valid_identifier($user) or die "invalid SSH user\n";
+$port =~ /\A[1-9][0-9]{0,4}\z/ && $port <= 65535 or die "invalid SSH port\n";
+$timeout =~ /\A[1-9][0-9]{0,2}\z/ && $timeout <= 120 or die "invalid timeout\n";
+sub safe_file {
+    my ($path, $private) = @_;
+    $path && -f $path && !-l $path or return 0;
+    my $p = File::Spec->rel2abs($path);
+    while ($p ne '/' && length($p)) {
+        -l $p and return 0;
+        my $next = dirname($p);
+        last if $next eq $p;
+        $p = $next;
+    }
+    my $mode = (stat($path))[2];
+    return 0 unless defined $mode;
+    return ($mode & 0077) == 0 if $private;
+    return ($mode & 0022) == 0;
+}
+safe_file($identity, 1) or die "invalid private identity file\n";
+safe_file($known_hosts, 0) or die "invalid known-hosts file\n";
+safe_file($payload, 0) && safe_file($signature, 0) or die "invalid transport file\n";
+sub bytes { my ($p) = @_; open(my $fh, '<', $p) or die "cannot read $p: $!\n"; binmode $fh; local $/; my $x = <$fh>; close $fh; return $x; }
+my $body = bytes($payload); my $sig = bytes($signature);
+length($body) > 0 && length($body) <= 262144 or die "payload exceeds transport limit\n";
+length($sig) > 0 && length($sig) <= 16384 or die "signature exceeds transport limit\n";
+$body =~ /\ASASD-AUTH-1\t([A-Za-z0-9_.-]+)\t/ && valid_host($1) or die "invalid signed payload\n";
+my $claimed_host = $1;
+my $frame = "SASD-SSH-1\t$claimed_host\t" . length($body) . "\t" . length($sig) . "\n" . $body . $sig;
+print "server=$server port=$port user=$user payload-bytes=", length($body), " signature-bytes=", length($sig), " mode=$mode\n";
+exit 0 if $mode eq 'dry-run';
+my @ssh = ('ssh', '-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', "UserKnownHostsFile=$known_hosts", '-o', 'IdentitiesOnly=yes', '-o', 'ForwardAgent=no', '-o', 'ClearAllForwardings=yes', '-o', "ConnectTimeout=$timeout", '-o', 'RequestTTY=no', '-i', $identity, '-p', $port, "$user\@$server", 'sasd-monitor-receive --stdio');
+open(my $pipe, '|-', @ssh) or die "cannot start ssh: $!\n";
+binmode $pipe; print $pipe $frame or die "cannot write SSH transport: $!\n"; close $pipe or die "SSH transport failed\n";
+print "transport-send=OK server=$server\n";

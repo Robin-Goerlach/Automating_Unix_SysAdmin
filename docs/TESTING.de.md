@@ -24,4 +24,4 @@ Fehlendes MRTG oder RRDtool wird als `SKIPPED` gemeldet und lässt Offline-Tests
 
 Die Dokumentationsprüfung `tests/docs-pairs.pl` meldet fehlende deutsche Partner und offensichtliche defekte lokale Markdown-Links. Sie prüft nicht die semantische Übersetzungsqualität.
 
-M2 benötigt die lokale `ssh-keygen`-Implementierung mit RSA-Erzeugung und `ssh-keygen -Y sign/verify`. Die M2-Tests prüfen nur den Offline-Dateiaustausch; ein Live-SSH-Kanal, Host-Key-Policy, Kontobeschränkung, Schlüsselwechsel und Produktionstransport sind nicht abgenommen.
+M2 benötigt die lokale `ssh-keygen`-Implementierung mit RSA-Erzeugung und `ssh-keygen -Y sign/verify`. `tests/m2-transport.sh` prüft das begrenzte M2.1-Framing und Ablehnungen. Die Suite beweist weiterhin keinen Live-SSH-Kanal, keine Hostschlüssel-Installation, Kontobeschränkung, Schlüsselrotation oder Produktionstransport; dafür ist ein isolierter `sshd`-Abnahmelauf erforderlich.

@@ -30,6 +30,7 @@ my @rows; my %seen;
 if ($input eq '-') { *INPUT = *STDIN; }
 else { -f $input && !-l $input or die "invalid status input\n"; open(INPUT, '<', $input) or die "cannot read status input: $!\n"; }
 while (<INPUT>) {
+    @rows < 512 or die "too many status records\n";
     chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
     my @v = split /\t/, $_, -1;
     @v == 4 or die "status record needs four fields\n";
@@ -40,7 +41,9 @@ while (<INPUT>) {
 }
 close INPUT if $input ne '-';
 @rows or die "status input is empty\n";
-atomic_write($out, join("\n", "SASD-AUTH-1\t$host\t$sequence\t$sent", @rows) . "\n", 0600);
+my $payload = join("\n", "SASD-AUTH-1\t$host\t$sequence\t$sent", @rows) . "\n";
+length($payload) <= 262144 or die "status payload is too large\n";
+atomic_write($out, $payload, 0600);
 my $ssh = '';
 for my $d (split /:/, ($ENV{PATH} || '')) { if (-x "$d/ssh-keygen") { $ssh = "$d/ssh-keygen"; last; } }
 $ssh or die "ssh-keygen is required for SSH signing\n";

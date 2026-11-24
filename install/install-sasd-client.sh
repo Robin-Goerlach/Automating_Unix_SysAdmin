@@ -46,7 +46,7 @@ echo "transport=offline request drop; authenticated SSH submission is not perfor
 [ "$mode" = apply ] || { echo "dry-run: no files written"; exit 0; }
 umask 077
 mkdir -p "$prefix/bin" "$prefix/etc/cron" "$prefix/lib/SASD" "$prefix/var"
-for x in sasd-host-facts sasd-disk-watch sasd-node-status; do
+for x in sasd-host-facts sasd-disk-watch sasd-node-status sasd-node-send; do
     [ -f "$ROOT/bin/$x" ] && [ ! -L "$ROOT/bin/$x" ] || die "missing approved client source: $x"
     cp "$ROOT/bin/$x" "$prefix/bin/$x"
     chmod 0755 "$prefix/bin/$x"

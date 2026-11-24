@@ -54,6 +54,8 @@ The client preserves the existing four-column records:
 
 This is a file-exchange test and staging contract, not proof of a secure network transport. A later deployment may carry the payload over an operator-controlled SSH channel, but must validate host keys, account restrictions, file permissions, and cleanup separately. The repository does not implement an SSH listener, `authorized_keys` command restriction, or arbitrary remote command path.
 
+The bounded SSH adapter is documented in [transport.md](transport.md). It still requires an administrator-managed OpenSSH service and a native integration test.
+
 ## Revocation and recovery
 
 `disable` immediately prevents authenticated imports and makes the M1 cycle report the enrolled host as purple with an enrollment-disabled message. `enable` returns an unexpired record to `approved`; a new signed sequence is then required. Sequence numbers are retained across disable/enable to prevent replay of old payloads. Rejected hosts have no active enrollment record and cannot import status.

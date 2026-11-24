@@ -22,6 +22,8 @@ while (@ARGV) {
 $config && -f $config && !-l $config or die "invalid configuration file\n";
 $input && -f $input && !-l $input or die "invalid authenticated payload\n";
 $signature && -f $signature && !-l $signature or die "invalid payload signature\n";
+(-s $input) <= 262144 or die "authenticated payload is too large\n";
+(-s $signature) <= 16384 or die "payload signature is too large\n";
 valid_epoch($now) && valid_epoch($skew) or die "invalid time argument\n";
 my $cfg = read_config($config);
 my ($hosts, $roles) = read_inventory($cfg->{inventory_path}, $cfg->{roles_path});
@@ -30,6 +32,7 @@ my $checks = read_checks($cfg->{checks_path});
 open(my $fh, '<', $input) or die "cannot read authenticated payload: $!\n";
 my @lines = <$fh>; close $fh;
 @lines or die "empty authenticated payload\n";
+@lines <= 513 or die "too many authenticated status records\n";
 chomp @lines; s/\r\z// for @lines;
 my @header = split /\t/, shift(@lines), -1;
 @header == 4 && $header[0] eq 'SASD-AUTH-1' && valid_host($header[1]) &&

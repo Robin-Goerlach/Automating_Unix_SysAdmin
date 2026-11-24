@@ -1,0 +1,70 @@
+#!/usr/bin/env perl
+use strict;
+use FindBin;
+use File::Spec;
+use Fcntl qw(O_WRONLY O_CREAT O_EXCL LOCK_EX);
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_config ensure_dir valid_host);
+
+my ($config, $host) = ('', '');
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--config') { $config = shift @ARGV; }
+    elsif ($a eq '--host') { $host = shift @ARGV; }
+    elsif ($a eq '--stdio') { next; }
+    elsif ($a eq '--help') { print "usage: sasd-monitor-receive --config FILE --host HOST --stdio\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+$config && -f $config && !-l $config or die "invalid configuration file\n";
+valid_host($host) or die "invalid receiver host\n";
+defined($ENV{SSH_ORIGINAL_COMMAND}) && length($ENV{SSH_ORIGINAL_COMMAND}) &&
+    $ENV{SSH_ORIGINAL_COMMAND} ne 'sasd-monitor-receive --stdio'
+    and die "unexpected remote command\n";
+my $cfg = read_config($config);
+my $stage = File::Spec->catdir($cfg->{enrollment_dir_path}, 'replay');
+ensure_dir($stage, 0700);
+my $lockpath = File::Spec->catfile($stage, '.receive.lock');
+sysopen(my $lock, $lockpath, O_WRONLY|O_CREAT, 0600) or die "cannot open receiver lock: $!\n";
+flock($lock, LOCK_EX) or die "cannot lock receiver: $!\n";
+sub read_exact {
+    my ($fh, $want) = @_;
+    my $got = '';
+    while (length($got) < $want) {
+        my $n = sysread($fh, my $part, $want - length($got));
+        defined($n) or die "cannot read transport frame: $!\n";
+        $n or die "truncated transport frame\n";
+        $got .= $part;
+    }
+    return $got;
+}
+my $header = <STDIN>;
+defined($header) or die "empty transport frame\n";
+$header =~ s/\r?\n\z//;
+my @h = split /\t/, $header, -1;
+@h == 4 && $h[0] eq 'SASD-SSH-1' && $h[1] eq $host && valid_host($h[1]) &&
+    $h[2] =~ /\A[1-9][0-9]{0,8}\z/ && $h[3] =~ /\A[1-9][0-9]{0,7}\z/ or die "invalid transport frame header\n";
+my ($payload_len, $signature_len) = ($h[2] + 0, $h[3] + 0);
+$payload_len <= 262144 or die "payload exceeds transport limit\n";
+$signature_len <= 16384 or die "signature exceeds transport limit\n";
+my $payload = read_exact(*STDIN, $payload_len);
+my $signature = read_exact(*STDIN, $signature_len);
+my $extra = sysread(STDIN, my $trailing, 1);
+defined($extra) or die "cannot inspect transport end: $!\n";
+$extra == 0 or die "unexpected trailing transport data\n";
+my $base = ".receive.$$";
+my $payload_path = File::Spec->catfile($stage, "$base.payload");
+my $signature_path = File::Spec->catfile($stage, "$base.signature");
+eval {
+    sysopen(my $pf, $payload_path, O_WRONLY|O_CREAT|O_EXCL, 0600) or die "cannot stage payload: $!\n";
+    print $pf $payload or die "cannot write staged payload: $!\n"; close $pf or die "cannot close staged payload: $!\n";
+    sysopen(my $sf, $signature_path, O_WRONLY|O_CREAT|O_EXCL, 0600) or die "cannot stage signature: $!\n";
+    print $sf $signature or die "cannot write staged signature: $!\n"; close $sf or die "cannot close staged signature: $!\n";
+    my $importer = File::Spec->catfile($FindBin::Bin, 'sasd-monitor-auth-import');
+    -f $importer && !-l $importer or die "authenticated importer is unavailable\n";
+    my $pid = fork(); defined $pid or die "cannot start authenticated importer: $!\n";
+    if (!$pid) { exec {$importer} $importer, '--config', $config, '--input', $payload_path, '--signature', $signature_path; exit 2; }
+    waitpid($pid, 0); $? == 0 or die "authenticated import rejected transport payload\n";
+    1;
+} or do { my $e = $@ || 'receiver failed\n'; unlink $payload_path, $signature_path; die $e; };
+unlink $payload_path, $signature_path or die "cannot remove staged transport files: $!\n";
+print "transport-import=OK host=$host\n";
