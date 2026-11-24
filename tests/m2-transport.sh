@@ -20,6 +20,6 @@ grep -q 'Host key verification failed\|Could not resolve hostname\|Connection re
 "$server/bin/sasd-monitor-receive" --config "$server/etc/sasd-monitor.conf" --host enrolled.lab.invalid --stdio < "$tmp/payload" >"$tmp/truncated.out" 2>"$tmp/truncated.err" || true
 grep -q 'invalid transport frame\|truncated transport frame' "$tmp/truncated.err"
 printf 'SASD-SSH-1\tenrolled.lab.invalid\t1\t1\nX' | "$server/bin/sasd-monitor-receive" --config "$server/etc/sasd-monitor.conf" --host enrolled.lab.invalid --stdio >"$tmp/frame.out" 2>"$tmp/frame.err" || true
-grep -q 'truncated transport frame' "$tmp/frame.err"
+grep -q 'truncated.*transport frame' "$tmp/frame.err"
 if "$tmp/client/bin/sasd-node-send" --server monitor.lab.invalid --user sasd --port 22 --identity "$tmp/client/etc/identity" --known-hosts "$tmp/known_hosts" --payload "$tmp/payload" --signature "$tmp/payload.sig" --dry-run >/dev/null; then :; else exit 1; fi
 echo "M2.1 transport validation: PASS (offline framing/negative checks; live sshd unavailable)"

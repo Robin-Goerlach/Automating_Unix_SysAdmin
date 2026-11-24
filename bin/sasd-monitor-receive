@@ -6,7 +6,7 @@ use Fcntl qw(O_WRONLY O_CREAT O_EXCL LOCK_EX);
 use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_config ensure_dir valid_host);
 
-my ($config, $host) = ('', '');
+my ($config, $host, $max_payload, $max_signature) = ('', '', 262144, 16384);
 while (@ARGV) {
     my $a = shift @ARGV;
     if ($a eq '--config') { $config = shift @ARGV; }
@@ -26,31 +26,29 @@ ensure_dir($stage, 0700);
 my $lockpath = File::Spec->catfile($stage, '.receive.lock');
 sysopen(my $lock, $lockpath, O_WRONLY|O_CREAT, 0600) or die "cannot open receiver lock: $!\n";
 flock($lock, LOCK_EX) or die "cannot lock receiver: $!\n";
-sub read_exact {
-    my ($fh, $want) = @_;
-    my $got = '';
-    while (length($got) < $want) {
-        my $n = sysread($fh, my $part, $want - length($got));
-        defined($n) or die "cannot read transport frame: $!\n";
-        $n or die "truncated transport frame\n";
-        $got .= $part;
-    }
-    return $got;
+my $wire = '';
+while (1) {
+    my $n = sysread(STDIN, my $part, 8192);
+    defined($n) or die "cannot read transport frame: $!\n";
+    last if $n == 0;
+    $wire .= $part;
+    length($wire) <= $max_payload + $max_signature + 128 or die "transport frame exceeds limit\n";
 }
-my $header = <STDIN>;
-defined($header) or die "empty transport frame\n";
-$header =~ s/\r?\n\z//;
+length($wire) or die "empty transport frame\n";
+my $newline = index($wire, "\n");
+$newline > 0 or die "invalid transport frame header\n";
+my $header = substr($wire, 0, $newline);
+my $body = substr($wire, $newline + 1);
+$header =~ s/\r\z//;
 my @h = split /\t/, $header, -1;
 @h == 4 && $h[0] eq 'SASD-SSH-1' && $h[1] eq $host && valid_host($h[1]) &&
     $h[2] =~ /\A[1-9][0-9]{0,8}\z/ && $h[3] =~ /\A[1-9][0-9]{0,7}\z/ or die "invalid transport frame header\n";
 my ($payload_len, $signature_len) = ($h[2] + 0, $h[3] + 0);
 $payload_len <= 262144 or die "payload exceeds transport limit\n";
 $signature_len <= 16384 or die "signature exceeds transport limit\n";
-my $payload = read_exact(*STDIN, $payload_len);
-my $signature = read_exact(*STDIN, $signature_len);
-my $extra = sysread(STDIN, my $trailing, 1);
-defined($extra) or die "cannot inspect transport end: $!\n";
-$extra == 0 or die "unexpected trailing transport data\n";
+length($body) == $payload_len + $signature_len or die "truncated or trailing transport frame\n";
+my $payload = substr($body, 0, $payload_len);
+my $signature = substr($body, $payload_len, $signature_len);
 my $base = ".receive.$$";
 my $payload_path = File::Spec->catfile($stage, "$base.payload");
 my $signature_path = File::Spec->catfile($stage, "$base.signature");
