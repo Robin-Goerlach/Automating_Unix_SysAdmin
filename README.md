@@ -25,6 +25,12 @@ An independently developed SASD collection of Unix system-administration scripts
 | bin/sasd-site-inventory | Validate and query a fictional TSV host inventory | Read-only |
 | bin/sasd-site-classes | Resolve roles to independent SASD selection classes | Read-only |
 | bin/sasd-site-audit | Select a role manifest and delegate a read-only drift audit | Read-only |
+| bin/sasd-monitor-config | Validate bounded central-monitor configuration | Read-only |
+| bin/sasd-monitor-hosts | List and inspect monitored R2 hosts | Read-only |
+| bin/sasd-monitor-import | Validate and store local status observations | Explicit local runtime write |
+| bin/sasd-monitor-cycle | Derive freshness-aware state and bounded history | Explicit local runtime write |
+| bin/sasd-monitor-report | Render the central state as static HTML | Optional output write |
+| bin/sasd-monitor-mrtg | Generate a candidate MRTG configuration | Optional output write |
 
 The SASD status protocol is deliberately **not Big Brother's wire protocol**. There is no daemon, listening socket, remote command execution, or root-required installer in this milestone. Optional tools require their original external programs and must be separately validated.
 
@@ -56,6 +62,8 @@ Get the external MRTG data lines:
 See [bigbrother/README.md](bigbrother/README.md) for the period-style host inventory and [mrtg/README.md](mrtg/README.md) for optional MRTG integration and [rrd/README.md](rrd/README.md) for RRDtool. For an end-to-end walkthrough, use examples/demo.sh.
 
 The R2 site laboratory is under [site/README.md](site/README.md). It uses fictional `192.0.2.0/24` records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native historical acceptance.
+
+The M1 central monitoring laboratory is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. It does not expose a network service or implement secure enrollment; those belong to M2.
 
 ## Product direction
 

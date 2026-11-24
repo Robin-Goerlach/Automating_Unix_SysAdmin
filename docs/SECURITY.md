@@ -19,10 +19,14 @@ Historical authenticity is not a security exemption. These examples may include 
 - Treat generated static HTML as untrusted until encoding and content checks pass.
 - Limit history and discard stale alerts only under a documented retention policy.
 - Config-drift has no apply mode. Do not interpret a detected difference as authorization to repair it.
+- M1 monitoring has no listener or remote enrollment. The installer requires `--apply`, rejects system prefixes and symlink path components, preserves existing files, and writes only to an explicit laboratory prefix.
+- M1 import trusts only operator-selected local input. It validates host/check assignment and writes normalized local records; this is not authenticated transport.
 
 ## Limits of first implementation
 
 Status-store's file replacement is **not audited against hostile concurrent writers** in shared directories. Config-drift rejects symlink final paths but does not guarantee that every ancestor component is symlink-free. The R2 site audit inherits that limitation and adds no apply mode. The HTML writer accepts an operator-selected target file. These tools must not run with elevated privileges or as exposed services until the relevant trust boundaries and race scenarios have been closed.
+
+M1 state/history writes use private runtime directories and bounded retention, but the laboratory does not provide rollback, remote authentication, or a hostile multi-writer protocol. M2 must add identity validation, approval, short-lived enrollment credentials, authenticated reporting, revocation, and key rotation before remote status acceptance.
 
 ## External historical software
 

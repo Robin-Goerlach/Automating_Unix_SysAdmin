@@ -23,6 +23,12 @@ Eine eigenständig entwickelte SASD-Sammlung für klassische Unix-Systemadminist
 - bin/sasd-site-inventory – ein tabellarisches, fiktives Standortinventar prüfen und abfragen.
 - bin/sasd-site-classes – Rollen in unabhängige SASD-Auswahlklassen auflösen.
 - bin/sasd-site-audit – rollenbezogene Soll-Dateien lesend mit sasd-config-drift vergleichen.
+- bin/sasd-monitor-config – zentrale Monitoring-Konfiguration ohne Shell-Auswertung prüfen.
+- bin/sasd-monitor-hosts – überwachte R2-Hosts auflisten und prüfen.
+- bin/sasd-monitor-import – lokale Statusmeldungen validieren und speichern.
+- bin/sasd-monitor-cycle – Zustände, Frische und begrenzte Historie berechnen.
+- bin/sasd-monitor-report – statisches HTML für den aktuellen Zustand erzeugen.
+- bin/sasd-monitor-mrtg – eine zu prüfende MRTG-Kandidatenkonfiguration erzeugen.
 
 ## Schnellstart
 
@@ -41,6 +47,8 @@ Eine lokale Statusseite wird beispielsweise so erzeugt:
 Die Beispieldaten sind synthetisch. Ein Produktivsystem wird dadurch nicht untersucht oder verändert.
 
 Das R2-Labor liegt unter [site/README.md](site/README.md). Die Adressen aus `192.0.2.0/24` sind nur Dokumentationswerte; es gibt keine DNS-Auflösung. Die CFEngine-1-Dateien unter [cfengine/v1](cfengine/v1/README.md) sind weiterhin unbestätigte Kandidaten, solange kein originales Programm in einer passenden historischen Umgebung ausgeführt wurde.
+
+Das M1-Monitoring-Labor ist unter [docs/monitoring/README.md](docs/monitoring/README.md) beschrieben. Es installiert sicher in ein Wegwerfverzeichnis, verarbeitet lokale Vierfeld-Statusmeldungen, erkennt veraltete Zustände, führt eine begrenzte Historie und erzeugt statisches HTML. Ein Netzwerkdienst und sichere Registrierung gehören erst zu M2.
 
 ## Entwicklungsgrundsätze
 
