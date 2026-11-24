@@ -28,7 +28,8 @@ for i in 1 2 3 4 5 6 7 8 9 10; do ssh-keyscan -T 1 -p "$port" 127.0.0.1 > "$tmp/
 kill -0 "$pid" 2>/dev/null || { cat "$tmp/sshd.log" >&2; exit 4; }
 [ -s "$tmp/known_hosts" ] || { cat "$tmp/sshd.log" >&2; exit 4; }
 printf 'enrolled.lab.invalid\tdisk\tgreen\tactual ssh fixture\n' > "$tmp/status.tsv"
-"$client/bin/sasd-node-status" --host enrolled.lab.invalid --key "$client/etc/identity" --sequence 1 --sent-at 1000 --input "$tmp/status.tsv" --out "$tmp/payload" >/dev/null
+sent=$(date +%s)
+"$client/bin/sasd-node-status" --host enrolled.lab.invalid --key "$client/etc/identity" --sequence 1 --sent-at "$sent" --input "$tmp/status.tsv" --out "$tmp/payload" >/dev/null
 "$client/bin/sasd-node-send" --server 127.0.0.1 --user "$(id -un)" --port "$port" --identity "$client/etc/identity" --known-hosts "$tmp/known_hosts" --payload "$tmp/payload" --signature "$tmp/payload.sig" --send > "$tmp/send.log"
 grep -q 'transport-send=OK' "$tmp/send.log"
 grep -q 'web.lab.invalid.disk' "$server/var/status/latest"/*
