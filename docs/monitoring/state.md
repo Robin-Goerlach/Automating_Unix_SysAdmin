@@ -1,5 +1,7 @@
 # M1 state and lifecycle model
 
+Deutsch: [Deutsche Fassung](state.de.md)
+
 Health color and enrollment lifecycle are separate concepts. M1 health states are `green`, `yellow`, `red`, and `purple`; `purple` means missing, stale, invalid, or otherwise unknown. A report color is retained as `observed`; freshness may derive a different current `state`.
 
 Rules:

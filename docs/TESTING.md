@@ -1,4 +1,6 @@
-# Testing and historical acceptance
+# Testing and compatibility acceptance
+
+Deutsch: [Deutsche Fassung](TESTING.de.md)
 
 ## Run the provided suite
 
@@ -6,7 +8,7 @@
 
 make syntax runs perl -c on the Perl scripts and sh -n on the POSIX shell scripts. tests/smoke.sh exercises synthetic df data, creates a private status spool, checks HTML output, verifies the drift outcome and confirms the MRTG four-line contract. tests/classic.sh additionally exercises passwd UID-0 anomalies, BSD syslog aggregation, NTP source extraction and cron schedule validation.
 
-No network activity or root permissions are needed. `tests/r2-site.sh` validates the four-host role laboratory, including malformed inventory rejection, clean and changed role manifests, and the green/yellow status transition. `tests/m1-monitoring.sh` validates configuration, dry-run/apply/repeat installation, preservation, symlink/system-prefix rejection, imports, deterministic stale state, HTML escaping, MRTG template generation, and CRLF configuration input. `examples/monitoring-lab.sh` is the end-to-end disposable demonstration.
+No network activity or root permissions are needed. `tests/r2-site.sh` validates the four-host role inventory, including malformed inventory rejection, clean and changed role manifests, and the green/yellow status transition. `tests/m1-monitoring.sh` validates configuration, dry-run/apply/repeat installation, preservation, symlink/system-prefix rejection, imports, deterministic stale state, HTML escaping, MRTG template generation, and CRLF configuration input. `examples/monitoring-lab.sh` is the end-to-end disposable demonstration.
 
 CI workflow: .github/workflows/test.yml. The workflow runs on a current Ubuntu GitHub Actions image. This only establishes the current source's contemporary smoke-test behavior.
 

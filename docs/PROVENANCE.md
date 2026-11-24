@@ -1,5 +1,7 @@
 # Independent development and source provenance
 
+Deutsch: [Deutsche Fassung](PROVENANCE.de.md)
+
 ## What this project is
 
 SASD is authoring a new, stand-alone script collection in 2026 to explore classical Unix operational practice from the 1980s to 2009. Historical profiles refer to the chosen technical environment, *not* to the actual code's date, authorship or revision history. All Git metadata remains genuine.

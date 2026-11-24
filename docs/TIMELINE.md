@@ -1,5 +1,7 @@
 # Historical compatibility profiles
 
+Deutsch: [Deutsche Fassung](TIMELINE.de.md)
+
 This document separates the **target period represented by a feature** from the actual date when SASD authored it. Development began in 2026. Git commit history is never backdated.
 
 | Profile | Period | Technology available | Appropriate SASD work | Excluded until later |

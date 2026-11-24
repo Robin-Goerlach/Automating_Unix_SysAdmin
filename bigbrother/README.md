@@ -1,4 +1,6 @@
-# Big Brother-era monitoring, without reproducing Big Brother
+# Big Brother host inventory format, without reproducing Big Brother
+
+Deutsch: [Deutsche Fassung](README.de.md)
 
 A core early Big Brother site inventory convention was to identify hosts by address/name and append network checks or server roles after a # separator. This folder provides an **original illustrative configuration** using TEST-NET addresses and fictional .invalid names. It contains no Big Brother executables, source, authentication data, alert implementation or network packets.
 

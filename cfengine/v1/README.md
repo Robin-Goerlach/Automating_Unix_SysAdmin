@@ -1,6 +1,8 @@
-# Candidate CFEngine 1 laboratory configuration
+# CFEngine 1 configuration candidate
 
-The year-1999 profile uses **CFEngine 1**, not the later CFEngine 2 configuration demonstrated in the 2009 reference book. This folder is a minimal, independently authored **experimental teaching configuration** for checking file metadata without making changes.
+Deutsch: [Deutsche Fassung](README.de.md)
+
+The 1999 compatibility profile uses **CFEngine 1**, not the later CFEngine 2 configuration described in the 2009 reference book. This folder contains a minimal, independently authored read-only configuration example for checking file metadata without making changes.
 
 `cfagent.conf` is deliberately tiny. It names a harmless disposable lab marker under `/tmp` and requests warning-only action. The candidate follows the historically documented `control`, `actionsequence`, `files`, `any::`, `mode` and `action=warn` shape. It is **not** claimed parsed or executed by CFEngine 1.4.0: no original binary or period operating-system guest was available during this milestone.
 

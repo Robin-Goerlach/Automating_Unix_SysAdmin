@@ -1,5 +1,7 @@
 # M1 integrations and future adapters
 
+Deutsch: [Deutsche Fassung](integrations.de.md)
+
 ## MRTG
 
 `bin/sasd-monitor-mrtg` generates a reviewable candidate configuration with one target per approved R2 host and metric. It maps each target to a local `sasd-mrtg-counter` input path and embeds no SNMP address, community, or credential. Existing `sasd-mrtg-counter` remains the four-line external-target adapter. Native MRTG parsing and graph generation are not claimed; run an optional version-specific test only when MRTG is explicitly installed.

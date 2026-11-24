@@ -2,7 +2,7 @@
 
 **English (default)** | [Deutsch](README.de.md) | [Roadmap](docs/ROADMAP.md) | [Architecture](docs/ARCHITECTURE.md) | [Historical scope](docs/TIMELINE.md)
 
-An independently developed SASD collection of Unix system-administration scripts and historically informed integration examples. The initial working profile represents a **late-1990s Unix site (target year: 1999)**, with development pathways for earlier Bourne-shell environments and later 2002–2009 infrastructure automation.
+An independently developed SASD collection of Unix system-administration scripts and integrations. The initial compatibility profile covers a **late-1990s Unix site (reference year: 1999)**, with separate pathways for earlier Bourne-shell environments and later 2002–2009 infrastructure automation.
 
 **This is a present-day educational and research project, not an unearthed original historical archive.** Its components are written independently. It is not an official CFEngine, MRTG, RRDtool, or Big Brother distribution, and it does not embed those projects' proprietary source code.
 
@@ -34,7 +34,7 @@ An independently developed SASD collection of Unix system-administration scripts
 
 The SASD status protocol is deliberately **not Big Brother's wire protocol**. There is no daemon, listening socket, remote command execution, or root-required installer in this milestone. Optional tools require their original external programs and must be separately validated.
 
-## Try the offline laboratory
+## Run the offline examples
 
 On a Unix host with Perl and a POSIX-compatible shell:
 
@@ -61,9 +61,9 @@ Get the external MRTG data lines:
 
 See [bigbrother/README.md](bigbrother/README.md) for the period-style host inventory and [mrtg/README.md](mrtg/README.md) for optional MRTG integration and [rrd/README.md](rrd/README.md) for RRDtool. For an end-to-end walkthrough, use examples/demo.sh.
 
-The R2 site laboratory is under [site/README.md](site/README.md). It uses fictional `192.0.2.0/24` records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native historical acceptance.
+The R2 site inventory is documented in [site/README.md](site/README.md). It uses reserved `192.0.2.0/24` documentation records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native acceptance.
 
-The M1 central monitoring laboratory is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. It does not expose a network service or implement secure enrollment; those belong to M2.
+The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. It does not expose a network service or implement secure enrollment; those belong to M2.
 
 ## Product direction
 
@@ -82,7 +82,7 @@ This repository's original SASD-authored materials are licensed under [MIT](LICE
 
 ## Current limitations
 
-CI tests run on a current Linux runner and demonstrate offline behavior only. CFEngine 1 syntax, real historical Perl interpreters, actual MRTG rendering and RRDtool database lifecycle are **not yet accepted on period operating systems**. Treat all example settings as laboratory material, not a production deployment guide.
+CI tests run on a current Linux runner and demonstrate offline behavior only. CFEngine 1 syntax, older Perl interpreters, actual MRTG rendering and RRDtool database lifecycle are **not yet accepted on period operating systems**. Treat all example settings as controlled administrative examples, not a production deployment guide.
 
 
 ### Unix line endings on Windows or WSL

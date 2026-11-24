@@ -1,6 +1,8 @@
-# SASD site inventory and role laboratory
+# SASD site inventory and role assignment
 
-This directory is a small, fictional laboratory for the 1999 profile. It does not resolve names or contact the documentation addresses.
+Deutsch: [Deutsche Fassung](README.de.md)
+
+This directory contains a small site inventory for the 1999 compatibility profile. The records use reserved documentation addresses; the tools do not resolve names or contact those addresses.
 
 `hosts.tsv` has six tab-separated fields:
 
@@ -20,4 +22,4 @@ The audit command delegates file comparison to the existing `bin/sasd-config-dri
       --host web.lab.invalid --root fixtures/site/actual \
       --golden fixtures/site/golden --status
 
-Pipe the final status record to `sasd-status-store` if a local status snapshot is desired. No command in this laboratory copies files, changes modes, resolves fictional DNS, or writes `/etc`.
+Pipe the final status record to `sasd-status-store` if a local status snapshot is desired. These commands do not copy files, change modes, resolve DNS, or write `/etc`.

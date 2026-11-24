@@ -1,5 +1,7 @@
 # RRDtool archive experiment (1999 extension)
 
+Deutsch: [Deutsche Fassung](README.de.md)
+
 RRDtool can retain and consolidate periodic measurements independently of MRTG's HTML presentation. This module is intentionally a small command wrapper, not a reimplementation of RRDtool.
 
     ./bin/sasd-rrd-cycle create /tmp/sasd-traffic.rrd

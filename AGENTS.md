@@ -1,5 +1,7 @@
 # SASD Automating Unix SysAdmin — Agent Instructions
 
+Deutsch: [Deutsche Fassung](AGENTS.de.md)
+
 These instructions apply to the entire repository.
 
 ## Mission and non-goals
@@ -27,13 +29,19 @@ The primary target profile is 1999. Features from 2002–2009 require a clearly 
 
 ## Workflow
 
-1. Read the README, architecture, roadmap, security document, and affected source and tests.
-2. Identify the period profile and independently useful task.
-3. Implement the smallest bounded tool or integration. Update the fixtures and negative tests.
-4. Run make test, and record optional integration testing separately.
-5. Update roadmap and English/German entry documentation if user-visible behavior changes.
-6. Avoid unrequested changes to SASD-Sysadmin/freeware: that is a separate repository.
-7. Do not fabricate test results, release dates, history or provenance.
+1. Update local `main` with `git pull --ff-only` and verify a clean working tree.
+2. Read the README, architecture, roadmap, security document, and affected source and tests.
+3. Identify the compatibility profile and independently useful task.
+4. Implement the smallest bounded tool or integration. Update fixtures and negative tests.
+5. Run `make test`, and record optional integration testing separately.
+6. Update English and German technical documentation in the same change; run the documentation-pair check.
+7. Review the diff, commit directly to `main` for ordinary work, push it, and verify GitHub Actions. Temporary branches are reserved for risky or separately reviewed work.
+8. Avoid unrequested changes to SASD-Sysadmin/freeware: that is a separate repository.
+9. Do not fabricate test results, release dates, history or provenance.
+
+## Documentation maintenance
+
+English Markdown is canonical and German Markdown is maintained in parallel using the `.de.md` suffix. Every meaningful change to an English technical document must update its German companion in the same commit. `make test` runs a lightweight pair and relative-link check; it does not prove translation quality.
 
 Commits on main are acceptable for this solo experimental project when authorized and validated; do not force push, rewrite history, or delete unrelated work. Always confirm the current HEAD before publication.
 

@@ -1,5 +1,7 @@
 # Technical architecture — 1999 profile
 
+Deutsch: [Deutsche Fassung](ARCHITECTURE.de.md)
+
 ## System boundary
 
     POSIX df output / selected local reference files / counter sample
@@ -29,7 +31,7 @@ M1 adds a local central state path without adding a daemon:
                          |
                   monitor-report ---> static HTML
 
-The R2 site laboratory adds a separate, file-based selection path:
+The R2 site inventory adds a separate, file-based selection path:
 
     site/hosts.tsv + site/roles.tsv
               |                  \
@@ -41,7 +43,7 @@ The inventory is an operator-maintained TSV contract. It is not DNS, a CMDB, or 
 
 Complementary independent tools also parse offline passwd snapshots (UID anomalies), traditional BSD syslog (program counts), configured NTP sources and bounded five-field user cron syntax. They do not access credentials, execute jobs, contact time servers or modify accounts.
 
-The layout intentionally avoids a mandatory shared library, database, agent framework or service manager. Historical Unix installations can use only the tools they need.
+The layout intentionally avoids a mandatory shared library, database, agent framework or service manager. Unix installations can use only the tools they need.
 
 ## Interfaces and status semantics
 
@@ -84,8 +86,8 @@ RRDtool bridge accepts explicit create or update commands. No archival deletion,
 - Status-board writes an explicitly chosen file. Do not run it as root or serve the generated HTML on an untrusted webserver without a separate access-control and exposure review.
 - Config-drift reads chosen directories and rejects symlink final objects, but ancestor directory symlink traversal is not comprehensively prevented: use only trusted lab roots. The R2 site audit inherits this limitation.
 - No remote transport, authentication, encryption or conflict handling exists in the status format. Adding a TCP listener requires a new security design.
-- The RRD bridge is useful only if an appropriate RRDtool is installed. A real historical target must be tested independently.
-- A modern Linux CI job does not prove Solaris, AIX, HP-UX, IRIX, OpenBSD, FreeBSD or historical Perl support.
+- The RRD bridge is useful only if an appropriate RRDtool is installed. A selected target must be tested independently.
+- A modern Linux CI job does not prove Solaris, AIX, HP-UX, IRIX, OpenBSD, FreeBSD or older Perl support.
 
 ## Site layout plan
 

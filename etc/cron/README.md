@@ -1,6 +1,8 @@
 # Scheduled operation notes
 
-The historical environment relies on cron rather than a permanently running Python/Node monitoring service.
+Deutsch: [Deutsche Fassung](README.de.md)
+
+The supported Unix arrangement relies on cron rather than a permanently running Python or Node monitoring service.
 
 An operator might later schedule independent collectors at five-minute intervals and rebuild a static board, but cron entries must use absolute paths, non-root service accounts, a private spool and no inherited secrets. There is currently no automatic installer for system crontabs.
 

@@ -1,6 +1,8 @@
-# Security rules for a historical Unix laboratory
+# Security rules for SASD Unix administration
 
-Historical authenticity is not a security exemption. These examples may include protocols and daemons that are unsafe when exposed to current networks.
+Deutsch: [Deutsche Fassung](SECURITY.de.md)
+
+Compatibility with older Unix software is not a security exemption. Some optional protocols and daemons are unsafe when exposed to current networks.
 
 ## Default safe operation
 

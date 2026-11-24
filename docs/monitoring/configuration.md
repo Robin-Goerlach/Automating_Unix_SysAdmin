@@ -1,5 +1,7 @@
 # M1 configuration reference
 
+Deutsch: [Deutsche Fassung](configuration.de.md)
+
 `site/monitoring.conf` is a bounded `key=value` file. Blank lines and comments are accepted. Unknown keys, duplicate keys, control characters, absolute paths, and unsafe path traversal are rejected. Values are not shell code and are never evaluated.
 
 Required keys:

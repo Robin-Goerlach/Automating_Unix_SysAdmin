@@ -1,6 +1,8 @@
 # SASD Automating Unix SysAdmin — development roadmap
 
-**Status date:** 2026-11-24. **Initial target environment:** educational late-1990s Unix site, centered on 1999. The 2009 book is a subject reference for later profiles only.
+Deutsch: [Deutsche Fassung](ROADMAP.de.md)
+
+**Status date:** 2026-11-24. **Initial compatibility environment:** late-1990s Unix site, centered on 1999. The 2009 book is a subject reference for later profiles only.
 
 ## Gate definitions
 
@@ -90,7 +92,7 @@ The repository must never mislabel a fixture-based test as live network or histo
 - [ ] Host and service inventory, scheduled checks, fault/history retention.
 - [ ] Acknowledge/maintenance state with expiry and audit logs.
 - [ ] Alert throttling and escalation with documented false-positive behavior.
-- [ ] A read-only TUI or CGI static-file front end for retro operators.
+- [ ] A read-only TUI or CGI static-file front end for Unix operators.
 - [ ] Optional inbound daemon **only after** authentication, bounded protocol, isolation and fail-safe analysis.
 - [ ] Separate licensed Big Brother/Xymon interoperability research. Default is no wire compatibility.
 

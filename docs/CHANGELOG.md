@@ -1,5 +1,7 @@
 # Development log
 
+Deutsch: [Deutsche Fassung](CHANGELOG.de.md)
+
 ## 2026-11-23 — first independent SASD laboratory baseline
 
 - Established late-1990s profile and separate later-era scope.
@@ -8,7 +10,7 @@
 - Added golden-file drift audit, MRTG-compatible local target output and optional RRDtool commands.
 - Added sample fixtures, CLI smoke tests, GitHub Actions and license/provenance boundary.
 - Extended early Unix utilities with offline passwd, syslog, NTP and cron read-only checks.
-- Added a documented Big Brother-era host inventory example and a subset linter without network activity.
+- Added a documented Big Brother host inventory example and a subset linter without network activity.
 - Recorded missing verification for real period environments, third-party binaries and operational security.
 
 This document records real development activity, not a fictitious historical chronology. For period interpretation, see TIMELINE.md.
@@ -27,3 +29,10 @@ This document records real development activity, not a fictitious historical chr
 - Added candidate MRTG configuration generation and explicit optional RRDtool/MRTG dependency reporting.
 - Added offline end-to-end laboratory demonstration and negative regression coverage.
 - Documented the separate enrollment lifecycle and left authenticated remote transport for M2.
+
+## 2026-11-24 — repository consolidation and documentation maintenance
+
+- Merged the completed M1 monitoring implementation into `main` and removed its integrated feature branches.
+- Added a main-first maintenance workflow and a lightweight English/German documentation-pair check.
+- Added German companion manuals and revised operator-facing terminology while retaining factual provenance and compatibility limits.
+- Added a factual note on possible CVS/Subversion working arrangements without claiming that either system was used by the project.

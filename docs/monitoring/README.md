@@ -1,5 +1,7 @@
 # M1 central monitoring server
 
+Deutsch: [Deutsche Fassung](README.de.md)
+
 M1 is an offline, directory-based monitoring server for the 1999 profile. It is a collection of independent Perl and POSIX shell commands, not a daemon or database-backed framework.
 
 ## Installation

@@ -1,5 +1,7 @@
 # Research map: Campi/Bauer (2009) to original SASD work
 
+Deutsch: [Deutsche Fassung](BOOK-MAP.de.md)
+
 Primary reference: Nate Campi and Kirk Bauer, *Automating Linux and Unix System Administration*, Second Edition, Apress (2009), ISBN 978-1-4302-1059-7. The book's contents, including example code, are copyrighted. This document is a **conceptual coverage map**, not a derivative implementation plan or a reproduction of book code.
 
 The 2009 text was written well after the 1999 baseline. As a result, modules have been reassigned to an independent SASD evolution in historical sequence instead of preserving the original tutorial steps, names, hosts, directory trees or policy text.
