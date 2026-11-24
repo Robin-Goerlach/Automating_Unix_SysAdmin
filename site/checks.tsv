@@ -1,0 +1,6 @@
+# check	applicable-role	description
+config-audit	baseline	Role-specific configuration audit
+disk	*	Filesystem capacity observation
+http	web	Web service observation
+smtp	mail	Mail service observation
+monitoring	monitoring	Monitoring host self-check

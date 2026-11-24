@@ -17,6 +17,18 @@
 
     counter stream ----> optional rrd-cycle ----> RRDtool archive
 
+M1 adds a local central state path without adding a daemon:
+
+    R2 inventory + checks.tsv + local observations
+                         |
+                  monitor-import
+                         |
+                  latest/ records
+                         |
+                  monitor-cycle ---> state.tsv + bounded events.tsv
+                         |
+                  monitor-report ---> static HTML
+
 The R2 site laboratory adds a separate, file-based selection path:
 
     site/hosts.tsv + site/roles.tsv
@@ -80,3 +92,5 @@ RRDtool bridge accepts explicit create or update commands. No archival deletion,
 Classic deployment may eventually use /usr/local/sasd/bin and /usr/local/sasd/etc, but current code runs directly from the checkout and does not write to /etc or /usr/local. Configuration examples remain under cfengine/, mrtg/, rrd/ and etc/ in the repository.
 
 The current site layout is `site/hosts.tsv`, `site/roles.tsv`, and role manifests below the selected golden root. A host record has hostname, documentation IPv4 address, OS family, one role, comma-separated groups, and profile. All hosts receive the independent `baseline` class; the resolver adds `role_NAME` and `group_NAME`. These names only select SASD work and do not emulate CFEngine's class engine.
+
+M1 uses the same inventory and adds `site/checks.tsv` for check applicability. Its installation template is `site/monitoring.conf`; runtime files are kept under a selected prefix and are separate from source-controlled configuration. `sasd-monitor-import` accepts the existing four-column status contract from local files, while `sasd-monitor-cycle` owns freshness-derived state and bounded transitions. There is no central socket or remote transport.

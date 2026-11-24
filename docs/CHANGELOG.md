@@ -19,3 +19,11 @@ This document records real development activity, not a fictitious historical chr
 - Added deterministic SASD class selection and a read-only role-aware configuration audit/status adapter.
 - Added offline fixtures and negative tests for duplicate, malformed and unsafe inventory data and configuration drift.
 - Documented archived CFEngine 1.4.0 evidence and kept native historical compatibility explicitly open.
+
+## 2026-11-24 — M1 central monitoring laboratory
+
+- Added bounded monitoring configuration, host/check reuse, and safe disposable-prefix installer.
+- Added local status import, deterministic freshness classification, bounded state history, and static HTML reporting.
+- Added candidate MRTG configuration generation and explicit optional RRDtool/MRTG dependency reporting.
+- Added offline end-to-end laboratory demonstration and negative regression coverage.
+- Documented the separate enrollment lifecycle and left authenticated remote transport for M2.

@@ -15,7 +15,7 @@ The 2009 text was written well after the 1999 baseline. As a result, modules hav
 | 7: Shared infrastructure | NTP, DNS, accounts, mail | independent audit and distribution helpers | P1–P5 | NTP file comparison fixture; services planned |
 | 8: Application distribution | Safe deployment and rollback | manifest comparator, staged rsync/NFS/Apache examples | P3–P5 | Comparator only; application deployment planned |
 | 9: Status and logs | Useful operator status without a large platform | file spool, report generator, syslog parser | P0–P5 | First two implemented; syslog planned |
-| 10: Monitoring | Services, network metrics, proper alerting | SASD status board, MRTG target, RRDtool bridge; later NetSaint/Nagios, Ganglia, NRPE | P2–P5 | Initial core implemented; original product integration unverified |
+| 10: Monitoring | Services, network metrics, proper alerting | M1 local state/history server, SASD status board, MRTG target, RRDtool bridge; later NetSaint/Nagios, Ganglia, NRPE | P2–P5 | M1 offline server implemented; original product integration unverified |
 | 11: Maintenance/recovery | Config history, backups, restore evidence | backup inventory, controlled restore tests | P0–P5 | Planned |
 | 12: Security | Least privilege, permitted processes and configuration checks | read-only permissions and service policy, controlled remediation | P1–P5 | Config drift implemented; remainder planned |
 | Appendix A: Basic tools | Small understandable utilities | POSIX shell, sed, awk, Perl, man pages | all | Shell/Perl foundation present |

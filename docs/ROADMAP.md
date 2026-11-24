@@ -1,6 +1,6 @@
 # SASD Automating Unix SysAdmin — development roadmap
 
-**Status date:** 2026-11-23. **Initial target environment:** educational late-1990s Unix site, centered on 1999. The 2009 book is a subject reference for later profiles only.
+**Status date:** 2026-11-24. **Initial target environment:** educational late-1990s Unix site, centered on 1999. The 2009 book is a subject reference for later profiles only.
 
 ## Gate definitions
 
@@ -50,6 +50,26 @@ The repository must never mislabel a fixture-based test as live network or histo
 - Refuse to manage production /etc, user accounts or services by default.
 
 **Acceptance:** archived CFEngine version, exact operating system, policy dry-run evidence and idempotence test. No unverified auto-remediation.
+
+## M1 — Central SASD monitoring server (P2/P3)
+
+- [x] Bounded central configuration and disposable-prefix installer with dry-run/apply gate.
+- [x] Reuse R2 inventory and check applicability records.
+- [x] Import local four-column observations with strict validation.
+- [x] Deterministic freshness-derived state, bounded transition history, and static HTML report.
+- [x] Candidate MRTG configuration generation without SNMP credentials or polling.
+- [x] RRDtool storage mapping and optional dependency reporting; native lifecycle remains open.
+- [x] Document adapter boundaries for NetSaint, later Nagios/Ganglia, MRTG/RRDtool, and CFEngine.
+- [x] Define the future enrollment lifecycle without accepting remote submissions.
+
+**Acceptance:** offline installer, status transitions, stale detection, safe HTML, bounded history, and no listener or privileged operation. Native external-monitoring acceptance remains separate.
+
+## M2 — SASD Unix node bootstrap and secure enrollment (planned)
+
+- Host identity validation and operator approval before activation.
+- Short-lived enrollment credentials and authenticated status transport.
+- Constrained client installation, configuration assignment, revocation, and key rotation.
+- No remote shell or arbitrary command submission.
 
 ## R3 — MRTG, SNMP, RRDtool (P2/P3)
 

@@ -1,0 +1,11 @@
+#!/usr/bin/env perl
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_config read_inventory);
+my ($file,$host,$list)=('','','');
+while(@ARGV){my $a=shift @ARGV;if($a eq '--config'){$file=shift @ARGV;}elsif($a eq '--host'){$host=shift @ARGV;}elsif($a eq '--list'){$list=1;}elsif($a eq '--help'){print "usage: sasd-monitor-hosts --config FILE [--list|--host HOST]\n";exit 0;}else{die "unknown argument: $a\n";}}
+$file && -f $file && !-l $file or die "invalid configuration file\n";($list||$host) or die "select --list or --host\n";
+my($hosts,$roles)=read_inventory(read_config($file)->{inventory_path},read_config($file)->{roles_path});
+if($host){exists $hosts->{$host} or die "unknown host: $host\n";my $h=$hosts->{$host};print join("\t",@$h{qw(host address os role groups profile)}),"\n";}else{for my $n(sort keys %$hosts){my $h=$hosts->{$n};print join("\t",@$h{qw(host address os role groups profile)}),"\n";}}
+exit 0;
