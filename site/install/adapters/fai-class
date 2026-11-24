@@ -1,0 +1,4 @@
+# SASD candidate Debian FAI class selection; validate against the selected FAI release.
+FAIBASE
+SASD_PROFILE
+SASD_ROLE

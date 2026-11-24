@@ -1,0 +1,4 @@
+# SASD candidate FAI disk_config/DEFAULT; target disk is deliberately a placeholder.
+disk_config diskformat:preserve
+primary / 2048 ext4 rw,errors=remount-ro
+primary swap 512 swap sw

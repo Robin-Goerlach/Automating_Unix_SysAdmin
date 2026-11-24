@@ -17,3 +17,5 @@ The tools do not create bootable disks, write block devices, configure DHCP, or 
 Capture excludes temporary/runtime trees and private SSH/SASD identity material. Hostname, network settings, bootloader state, hardware drivers, SSH host keys and monitoring identity require post-installation work; an archive is not a golden identity.
 
 See [golden-images.md](golden-images.md), [security.md](security.md) and [testing.md](testing.md). The repeatable offline acceptance is `tests/m5-golden.sh`; the operator walkthrough is `examples/m5-golden-lab.sh`.
+
+M6 offline network-installation preparation is documented in [netboot.md](netboot.md) and [installation-profiles.md](installation-profiles.md). It generates reviewed configuration text and stages explicit boot files, but does not start DHCP/TFTP or claim a native boot.

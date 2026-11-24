@@ -123,8 +123,8 @@ Priorität haben R0-Härtung und R1-Werkzeuge; R2–R4 können bei unabhängigen
 
 ### M6 — Netzwerkinstallation
 
-- [ ] Kontrollierte Erzeugung von BOOTP-/DHCP-/PXE-Konfiguration und TFTP-Staging.
-- [ ] Explizite Installationsprofile und getrennte JumpStart-/Kickstart-/FAI-Adapter.
+- [x] Kontrollierte Erzeugung von BOOTP-/DHCP-/dnsmasq-Konfiguration und TFTP-Staging (nur offline).
+- [x] Explizite Installationsprofile und getrennte Kandidaten für JumpStart/Kickstart/FAI (native Syntax unverifiziert).
 - [ ] Isolierte native Netzwerkboot-Abnahme.
 
 ### M7 — Postinstallation und Monitoring-Enrollment

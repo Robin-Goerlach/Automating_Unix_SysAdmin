@@ -1,0 +1,53 @@
+#!/bin/sh
+set -eu
+usage(){ echo "usage: sasd-netboot-stage --source FILE --tftp-root DIR --profile NAME --boot-file PATH [--sha256 HEX] [--dry-run|--apply] [--force]" >&2; exit 2; }
+source= root= profile= bootfile= expected= mode= force=0
+die(){ echo "sasd-netboot-stage: $*" >&2; exit 2; }
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source) [ "$#" -ge 2 ] || usage; source=$2; shift 2 ;;
+        --tftp-root) [ "$#" -ge 2 ] || usage; root=$2; shift 2 ;;
+        --profile) [ "$#" -ge 2 ] || usage; profile=$2; shift 2 ;;
+        --boot-file) [ "$#" -ge 2 ] || usage; bootfile=$2; shift 2 ;;
+        --sha256) [ "$#" -ge 2 ] || usage; expected=$2; shift 2 ;;
+        --dry-run) mode=dry-run; shift ;;
+        --apply) mode=apply; shift ;;
+        --force) force=1; shift ;;
+        --help) usage ;;
+        *) die "unknown argument: $1" ;;
+    esac
+done
+[ -n "$source" ] && [ -n "$root" ] && [ -n "$profile" ] && [ -n "$bootfile" ] || usage
+[ "$mode" = dry-run ] || [ "$mode" = apply ] || die "select --dry-run or --apply"
+[ -f "$source" ] && [ ! -L "$source" ] || die "invalid boot source"
+case "$root" in /*) ;; *) die "TFTP root must be absolute" ;; esac
+case "$root" in */../*|*/..|*/./*|*/.) die "unsafe TFTP root" ;; esac
+case "$profile" in ''|*[!A-Za-z0-9._-]*) die "unsafe profile" ;; esac
+case "$bootfile" in /*|*../*|../*|*'/./'*|*[!A-Za-z0-9_./-]*) die "unsafe boot file" ;; esac
+sha=$(sha256sum "$source" | awk '{print $1}')
+[ -z "$expected" ] || [ "$expected" = "$sha" ] || die "boot source checksum mismatch"
+if [ -n "$expected" ]; then
+    case "$expected" in *[!0-9a-fA-F]*) die "invalid checksum" ;; esac
+    [ "$(printf '%s' "$expected" | awk '{print length}')" -eq 64 ] || die "invalid checksum"
+fi
+target="$root/$bootfile"; manifest="$root/tftp-manifest.tsv"
+parent=$(dirname "$target")
+check_ancestors(){ p=$1; while [ "$p" != "/" ] && [ -n "$p" ]; do [ ! -L "$p" ] || die "symlink path component: $p"; n=$(dirname "$p"); [ "$n" != "$p" ] || break; p=$n; done; }
+if [ "$mode" = dry-run ]; then echo "stage=dry-run profile=$profile target=$target sha256=$sha"; exit 0; fi
+[ -e "$root" ] || mkdir -p "$root"; [ -d "$root" ] && [ ! -L "$root" ] || die "invalid TFTP root"; check_ancestors "$root"
+mkdir -p "$parent"; check_ancestors "$parent"
+[ "$force" -eq 1 ] || [ ! -e "$target" ] || die "boot target exists; use --force explicitly"
+if [ -e "$manifest" ]; then
+    awk -F '\t' -v p="$profile" -v b="$bootfile" 'NR > 1 && $1 == p && $2 == b { found=1 } END { exit found ? 0 : 1 }' "$manifest" && die "profile/boot file already staged; use a new profile or --force"
+fi
+tmp="$target.tmp.$$"; trap 'rm -f "$tmp"' EXIT HUP INT TERM
+cp "$source" "$tmp"; chmod 0644 "$tmp"; mv "$tmp" "$target"
+if [ -e "$manifest" ]; then
+    cp "$manifest" "$manifest.tmp.$$"
+else
+    printf 'profile\tboot_file\tsha256\tsource\n' > "$manifest.tmp.$$"
+fi
+printf '%s\t%s\t%s\t%s\n' "$profile" "$bootfile" "$sha" "$source" >> "$manifest.tmp.$$"
+mv "$manifest.tmp.$$" "$manifest"; chmod 0644 "$manifest"
+trap - EXIT HUP INT TERM
+echo "stage=OK profile=$profile target=$target sha256=$sha"

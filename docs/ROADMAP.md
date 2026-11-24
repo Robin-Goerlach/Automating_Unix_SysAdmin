@@ -155,8 +155,8 @@ Open policy decisions: per-module packaging, real legacy OS installation media r
 
 ### M6 — Network installation
 
-- [ ] Controlled BOOTP/DHCP/PXE configuration generation and TFTP staging.
-- [ ] Explicit installation profiles and separate JumpStart/Kickstart/FAI adapters.
+- [x] Controlled BOOTP/DHCP/dnsmasq configuration generation and TFTP staging (offline only).
+- [x] Explicit installation profiles and separate candidate JumpStart/Kickstart/FAI adapters (native syntax unverified).
 - [ ] Isolated native network-boot acceptance.
 
 ### M7 — Postinstallation and monitoring enrollment

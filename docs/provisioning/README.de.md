@@ -17,3 +17,5 @@ Die Werkzeuge erzeugen keine bootfähigen Datenträger, schreiben keine Blockger
 Capture schließt temporäre Laufzeitbäume sowie private SSH-/SASD-Identitätsdaten aus. Hostname, Netzwerkeinstellungen, Bootloader, Hardwaretreiber, SSH-Hostschlüssel und Monitoring-Identität benötigen Nacharbeiten; ein Archiv ist keine fertige Golden-Identität.
 
 Siehe [golden-images.md](golden-images.md), [security.md](security.md) und [testing.md](testing.md). Die reproduzierbare Offline-Abnahme ist `tests/m5-golden.sh`; der Bedienablauf steht in `examples/m5-golden-lab.sh`.
+
+Die Offline-Vorbereitung der M6-Netzwerkinstallation ist in [netboot.de.md](netboot.de.md) und [installation-profiles.de.md](installation-profiles.de.md) beschrieben. Sie erzeugt geprüften Konfigurationstext und staged ausdrücklich ausgewählte Bootdateien, startet aber kein DHCP/TFTP und behauptet keinen nativen Boot.

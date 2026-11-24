@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+my ($hosts_file, $profiles_file, $images_file, $format, $out, $mode, $force) = ('', '', '', '', '-', '', 0);
+sub usage { die "usage: sasd-netboot-config --hosts FILE --profiles FILE --images FILE --format isc-dhcp|dnsmasq|bootp [--out FILE] [--dry-run|--apply] [--force]\n"; }
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--hosts') { $hosts_file = shift @ARGV // usage(); }
+    elsif ($a eq '--profiles') { $profiles_file = shift @ARGV // usage(); }
+    elsif ($a eq '--images') { $images_file = shift @ARGV // usage(); }
+    elsif ($a eq '--format') { $format = shift @ARGV // usage(); }
+    elsif ($a eq '--out') { $out = shift @ARGV // usage(); }
+    elsif ($a eq '--dry-run') { $mode = 'dry-run'; }
+    elsif ($a eq '--apply') { $mode = 'apply'; }
+    elsif ($a eq '--force') { $force = 1; }
+    elsif ($a eq '--help') { usage(); }
+    else { die "unknown argument: $a\n"; }
+}
+$hosts_file && $profiles_file && $images_file && $format =~ /\A(?:isc-dhcp|dnsmasq|bootp)\z/ or usage();
+$mode = 'dry-run' if $mode eq '';
+$mode ne 'apply' || $out ne '-' or die "--apply requires --out FILE\n";
+for my $file ($hosts_file, $profiles_file, $images_file) { -f $file && !-l $file or die "invalid input file\n"; }
+if ($out ne '-') { $out =~ m!^/! && $out !~ m!(?:^|/)\.\.(?:/|$)! or die "unsafe output path\n"; }
+sub safe { defined $_[0] && $_[0] !~ /[\x00-\x1f\x7f]/ && $_[0] !~ /[\r\n]/; }
+sub ident { defined $_[0] && $_[0] =~ /\A[A-Za-z][A-Za-z0-9_.-]{0,62}\z/; }
+sub field { my ($v, $name) = @_; safe($v) or die "unsafe $name\n"; $v ne '' or die "empty $name\n"; return $v; }
+sub ipv4 { defined $_[0] && $_[0] =~ /\A(\d+)\.(\d+)\.(\d+)\.(\d+)\z/ && $1 < 256 && $2 < 256 && $3 < 256 && $4 < 256; }
+sub mac { defined $_[0] && $_[0] =~ /\A(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\z/; }
+sub rows {
+    my ($file, $count, $kind) = @_;
+    open my $fh, '<', $file or die "cannot read $kind: $!\n";
+    my @rows;
+    while (<$fh>) { chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/; my @v = split /\t/, $_, -1; @v == $count or die "invalid $kind record at line $.\n"; push @rows, \@v; }
+    close $fh; @rows or die "$kind has no records\n"; return @rows;
+}
+my %images;
+for my $r (rows($images_file, 4, 'image')) {
+    my ($id, $version, $sha, $source) = @$r;
+    ident($id) && field($version,'image version') && $sha =~ /\A[0-9a-fA-F]{64}\z/ && field($source,'image source') or die "invalid image record\n";
+    exists $images{$id} and die "duplicate image: $id\n"; $images{$id} = $r;
+}
+my %profiles;
+for my $r (rows($profiles_file, 10, 'profile')) {
+    my ($id, $os, $arch, $method, $source, $image, $role, $partition, $postinstall, $monitor) = @$r;
+    ident($id) && field($os,'OS') && field($arch,'architecture') && $method =~ /\A(?:image|jumpstart|kickstart|fai)\z/ && field($source,'install source') && ident($image) && ident($role) && field($partition,'partition layout') && field($postinstall,'postinstall') && ident($monitor) or die "invalid profile record for $id\n";
+    exists $profiles{$id} and die "duplicate profile: $id\n";
+    exists $images{$image} or die "profile $id references unknown image $image\n";
+    for ($source, $partition, $postinstall) { /(?:password|secret|private|BEGIN [A-Z ]+ KEY)/i and die "secret-like profile value in $id\n"; }
+    $profiles{$id} = $r;
+}
+my (@hosts, %macs, %ips, %names);
+for my $r (rows($hosts_file, 8, 'host')) {
+    my ($name, $mac, $ip, $bootserver, $tftp, $bootfile, $arch, $profile) = @$r;
+    ident($name) && mac($mac) && ipv4($ip) && field($bootserver,'boot server') && $tftp =~ /\A[A-Za-z0-9_.\/-]+\z/ && $tftp !~ m!(?:^|/)\.\.(?:/|$)! && $bootfile =~ /\A[A-Za-z0-9_.\/-]+\z/ && $bootfile !~ m!(?:^|/)\.\.(?:/|$)! && field($arch,'architecture') && ident($profile) or die "invalid host record for $name\n";
+    $bootserver =~ /[;"'`\$]/ and die "unsafe boot server for $name\n";
+    exists $names{$name} && die "duplicate hostname: $name\n"; exists $macs{lc $mac} && die "duplicate MAC: $mac\n"; exists $ips{$ip} && die "duplicate address: $ip\n";
+    exists $profiles{$profile} or die "host $name references unknown profile $profile\n";
+    $profiles{$profile}->[2] eq $arch or die "architecture mismatch for $name\n";
+    $names{$name}=1; $macs{lc $mac}=1; $ips{$ip}=1; push @hosts, $r;
+}
+sub q { my ($s) = @_; $s =~ s/(["\\])/\\$1/g; return $s; }
+my @lines = ("# SASD generated network-boot configuration; target format=$format");
+for my $r (sort { $a->[0] cmp $b->[0] } @hosts) {
+    my ($name,$mac,$ip,$bootserver,$tftp,$bootfile,$arch,$profile) = @$r;
+    if ($format eq 'dnsmasq') {
+        push @lines, "dhcp-host=$mac,$ip,$name,set:$profile", "dhcp-boot=tag:$profile,$bootfile,$bootserver";
+    } elsif ($format eq 'isc-dhcp') {
+        push @lines, "host $name {", "  hardware ethernet $mac;", "  fixed-address $ip;", "  next-server $bootserver;", "  filename \"" . q($bootfile) . "\";", "  option host-name \"" . q($name) . "\";", "}";
+    } else {
+        push @lines, "host $name {", "  hardware ethernet $mac;", "  fixed-address $ip;", "  next-server $bootserver;", "  filename \"" . q($bootfile) . "\";", "}";
+    }
+}
+my $text = join("\n", @lines) . "\n";
+if ($mode eq 'dry-run' || $out eq '-') { print $text; exit 0; }
+$force || !-e $out or die "output exists; use --force explicitly\n";
+open my $fh, '>', $out or die "cannot write output: $!\n"; print {$fh} $text; close $fh or die "cannot close output: $!\n"; chmod 0644, $out;
+print STDERR "netboot-config=OK format=$format hosts=" . scalar(@hosts) . " output=$out\n";
