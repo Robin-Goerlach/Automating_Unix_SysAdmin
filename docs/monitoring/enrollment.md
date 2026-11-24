@@ -12,8 +12,9 @@ The server stores requests and records below `var/enrollment/`:
 
     requests/HOST.request
     records/HOST.tsv
-    replay/HOST.seq
     events.tsv
+
+The approved public key and last accepted sequence are kept in the host record; `replay/` is a private temporary verification area.
 
 The lifecycle is `pending-approval`, `approved`, `active`, `rejected`, or `disabled`. The operator uses `sasd-enrollment` to import a request, list or check records, approve, reject, disable, re-enable, and inspect a host. Approval does not activate a host until a valid signed status payload is accepted.
 

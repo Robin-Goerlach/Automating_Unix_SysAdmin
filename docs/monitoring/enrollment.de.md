@@ -12,8 +12,9 @@ Unter `var/enrollment/` speichert der Server Anträge und Datensätze:
 
     requests/HOST.request
     records/HOST.tsv
-    replay/HOST.seq
     events.tsv
+
+Public Key und letzte akzeptierte Sequenz stehen im Host-Datensatz; `replay/` ist ein privater temporärer Prüfbereich.
 
 Der Lifecycle lautet `pending-approval`, `approved`, `active`, `rejected` oder `disabled`. `sasd-enrollment` importiert Anträge, listet und prüft Datensätze, genehmigt, verwirft, sperrt, reaktiviert und zeigt Rechnerstatus. Eine Freigabe aktiviert den Host erst nach einer gültigen signierten Statusdatei.
 
