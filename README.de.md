@@ -29,6 +29,10 @@ Eine eigenständig entwickelte SASD-Sammlung für Unix-Systemadministration. Aus
 - bin/sasd-monitor-cycle – Zustände, Frische und begrenzte Historie berechnen.
 - bin/sasd-monitor-report – statisches HTML für den aktuellen Zustand erzeugen.
 - bin/sasd-monitor-mrtg – eine zu prüfende MRTG-Kandidatenkonfiguration erzeugen.
+- bin/sasd-enrollment – Registrierungsanträge genehmigen, verwerfen und sperren.
+- bin/sasd-node-status – bestehende Statusdatensätze mit SSH signieren.
+- bin/sasd-monitor-auth-import – genehmigte Identität prüfen und signierte Statusdaten importieren.
+- install/install-sasd-client.sh – einen Wegwerf-Client und Registrierungsantrag vorbereiten.
 
 ## Schnellstart
 
@@ -48,7 +52,7 @@ Die Beispieldaten sind synthetisch. Ein Produktivsystem wird dadurch nicht unter
 
 Das R2-Rechnerinventar ist unter [site/README.de.md](site/README.de.md) beschrieben. Die Adressen aus `192.0.2.0/24` sind Dokumentationswerte; es gibt keine DNS-Auflösung. Die CFEngine-1-Dateien unter [cfengine/v1/README.de.md](cfengine/v1/README.de.md) sind unbestätigte Kandidaten, solange kein originales Programm in einer passenden Umgebung ausgeführt wurde.
 
-Der M1-Monitoring-Server ist unter [docs/monitoring/README.de.md](docs/monitoring/README.de.md) beschrieben. Er installiert sicher in ein Wegwerfverzeichnis, verarbeitet lokale Vierfeld-Statusmeldungen, erkennt veraltete Zustände, führt eine begrenzte Historie und erzeugt statisches HTML. Ein Netzwerkdienst und sichere Registrierung gehören erst zu M2.
+Der M1-Monitoring-Server ist unter [docs/monitoring/README.de.md](docs/monitoring/README.de.md) beschrieben. Er installiert sicher in ein Wegwerfverzeichnis, verarbeitet lokale Vierfeld-Statusmeldungen, erkennt veraltete Zustände, führt eine begrenzte Historie und erzeugt statisches HTML. Der begrenzte M2-Ablauf für Registrierung und SSH-signierte Offline-Statusmeldungen ist unter [docs/monitoring/enrollment.de.md](docs/monitoring/enrollment.de.md) beschrieben; ein Netzwerkdienst wird nicht bereitgestellt.
 
 ## Produktentwicklung
 
@@ -69,7 +73,7 @@ Details: [Themenübersicht](docs/BOOK-MAP.de.md), [Zeitprofile](docs/TIMELINE.de
 
 ## Aktuelle Grenzen
 
-CI läuft auf einem aktuellen Linux-System und prüft nur Offline-Verhalten. CFEngine-1-Syntax, ältere Perl-Interpreter, echte MRTG-Diagramme und der RRDtool-Datenbanklebenszyklus sind auf historischen Betriebssystemen noch nicht abgenommen. Beispiele sind kontrollierte Verwaltungsbeispiele und keine Produktionsanleitung.
+CI läuft auf einem aktuellen Linux-System und prüft nur Offline-Verhalten. CFEngine-1-Syntax, ältere Perl-Interpreter, echte MRTG-Diagramme, der RRDtool-Datenbanklebenszyklus und ein Live-SSH-Transport sind auf historischen Betriebssystemen oder in Produktionsnetzen noch nicht abgenommen. Beispiele sind kontrollierte Verwaltungsbeispiele und keine Produktionsanleitung.
 
 
 ### Unix-Zeilenenden unter Windows/WSL

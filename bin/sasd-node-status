@@ -1,0 +1,57 @@
+#!/usr/bin/env perl
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(atomic_write valid_epoch valid_host valid_identifier valid_color validate_status);
+
+my ($host, $key, $sequence, $sent, $input, $out, $signature) = ('', '', '', '', '-', '', '');
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--host') { $host = shift @ARGV; }
+    elsif ($a eq '--key') { $key = shift @ARGV; }
+    elsif ($a eq '--sequence') { $sequence = shift @ARGV; }
+    elsif ($a eq '--sent-at') { $sent = shift @ARGV; }
+    elsif ($a eq '--input') { $input = shift @ARGV; }
+    elsif ($a eq '--out') { $out = shift @ARGV; }
+    elsif ($a eq '--signature') { $signature = shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-node-status --host HOST --key PRIVATE-KEY --sequence N --sent-at EPOCH --input FILE|- --out PAYLOAD [--signature FILE]\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+valid_host($host) or die "invalid host\n";
+-f $key && !-l $key or die "invalid private key\n";
+valid_epoch($sequence) && $sequence > 0 or die "invalid sequence\n";
+valid_epoch($sent) or die "invalid sent-at\n";
+$out or die "--out is required\n";
+$signature = "$out.sig" unless length $signature;
+-e $out && !-l $out and die "payload output exists\n";
+-e $signature && !-l $signature and die "signature output exists\n";
+
+my @rows; my %seen;
+if ($input eq '-') { *INPUT = *STDIN; }
+else { -f $input && !-l $input or die "invalid status input\n"; open(INPUT, '<', $input) or die "cannot read status input: $!\n"; }
+while (<INPUT>) {
+    chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
+    my @v = split /\t/, $_, -1;
+    @v == 4 or die "status record needs four fields\n";
+    $v[0] eq $host or die "status host does not match identity\n";
+    validate_status(@v);
+    !$seen{$v[1]}++ or die "duplicate status check\n";
+    push @rows, join("\t", @v);
+}
+close INPUT if $input ne '-';
+@rows or die "status input is empty\n";
+atomic_write($out, join("\n", "SASD-AUTH-1\t$host\t$sequence\t$sent", @rows) . "\n", 0600);
+my $ssh = '';
+for my $d (split /:/, ($ENV{PATH} || '')) { if (-x "$d/ssh-keygen") { $ssh = "$d/ssh-keygen"; last; } }
+$ssh or die "ssh-keygen is required for SSH signing\n";
+my $pid = fork(); defined $pid or die "cannot fork for ssh-keygen: $!\n";
+if (!$pid) { exec {$ssh} $ssh, '-q', '-Y', 'sign', '-f', $key, '-n', 'sasd-status', $out; die "cannot execute ssh-keygen: $!\n"; }
+waitpid($pid, 0); $? == 0 or die "ssh-keygen signature failed\n";
+my $generated = "$out.sig";
+-f $generated && !-l $generated or die "ssh-keygen did not create signature\n";
+if ($signature ne $generated) {
+    -e $signature || -l $signature and die "signature output exists\n";
+    rename($generated, $signature) or die "cannot install signature output: $!\n";
+}
+-f $signature && !-l $signature or die "invalid signature output\n";
+print "payload=$out signature=$signature sequence=$sequence\n";

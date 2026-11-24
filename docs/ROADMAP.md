@@ -66,12 +66,17 @@ The repository must never mislabel a fixture-based test as live network or histo
 
 **Acceptance:** offline installer, status transitions, stale detection, safe HTML, bounded history, and no listener or privileged operation. Native external-monitoring acceptance remains separate.
 
-## M2 — SASD Unix node bootstrap and secure enrollment (planned)
+## M2 — SASD Unix node bootstrap and secure enrollment (bounded offline implementation)
 
-- Host identity validation and operator approval before activation.
-- Short-lived enrollment credentials and authenticated status transport.
-- Constrained client installation, configuration assignment, revocation, and key rotation.
-- No remote shell or arbitrary command submission.
+- [x] SSH public-key identity request with explicit operator approval before activation.
+- [x] Signed offline status payloads with role/check validation, expiry, clock window and replay sequence checks.
+- [x] Constrained disposable client bootstrap, explicit apply gate, key generation and cron template.
+- [x] Persistent approval, rejection, disable/enable lifecycle and enrollment audit events.
+- [x] M1 integration for dynamically enrolled and disabled hosts.
+- [ ] Secure live SSH transport, host-key policy, credential rotation and compromised-key recovery.
+- [ ] No remote shell or arbitrary command submission; this boundary remains enforced.
+
+**Acceptance:** two-client offline lab with one approved and one rejected client, signed status import, tamper/replay/disable negatives, static report, no listener and no privileged operation. This is not native network-transport acceptance.
 
 ## R3 — MRTG, SNMP, RRDtool (P2/P3)
 

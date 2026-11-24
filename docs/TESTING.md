@@ -8,7 +8,7 @@ Deutsch: [Deutsche Fassung](TESTING.de.md)
 
 make syntax runs perl -c on the Perl scripts and sh -n on the POSIX shell scripts. tests/smoke.sh exercises synthetic df data, creates a private status spool, checks HTML output, verifies the drift outcome and confirms the MRTG four-line contract. tests/classic.sh additionally exercises passwd UID-0 anomalies, BSD syslog aggregation, NTP source extraction and cron schedule validation.
 
-No network activity or root permissions are needed. `tests/r2-site.sh` validates the four-host role inventory, including malformed inventory rejection, clean and changed role manifests, and the green/yellow status transition. `tests/m1-monitoring.sh` validates configuration, dry-run/apply/repeat installation, preservation, symlink/system-prefix rejection, imports, deterministic stale state, HTML escaping, MRTG template generation, and CRLF configuration input. `examples/monitoring-lab.sh` is the end-to-end disposable demonstration.
+No network activity or root permissions are needed. `tests/r2-site.sh` validates the four-host role inventory, including malformed inventory rejection, clean and changed role manifests, and the green/yellow status transition. `tests/m1-monitoring.sh` validates configuration, dry-run/apply/repeat installation, preservation, symlink/system-prefix rejection, imports, deterministic stale state, HTML escaping, MRTG template generation, and CRLF configuration input. `tests/m2-enrollment.sh` creates two disposable clients, approves one, rejects the other, verifies SSH signatures, replay and tamper rejection, and checks disable behavior. `examples/monitoring-lab.sh` and `examples/m2-enrollment-lab.sh` are the end-to-end disposable demonstrations.
 
 CI workflow: .github/workflows/test.yml. The workflow runs on a current Ubuntu GitHub Actions image. This only establishes the current source's contemporary smoke-test behavior.
 
@@ -36,6 +36,8 @@ No archived CFEngine 1, RRDtool 1999 release, MRTG 1999 release, old Perl, legac
 - trusted host-key handling in a later SSH lab;
 - exact historical Perl and cfagent parser acceptance.
 - native MRTG parsing and RRDtool lifecycle on selected versions.
+
+M2 additionally requires the local `ssh-keygen` implementation for RSA key generation and `ssh-keygen -Y sign/verify`. The M2 tests verify an offline file-exchange contract only; they do not prove a live SSH channel, host-key policy, account restriction, key rotation, or production transport.
 
 M1 optional dependency checks intentionally report `SKIPPED` when MRTG or RRDtool is unavailable. This is not a successful native integration result.
 

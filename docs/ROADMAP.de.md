@@ -35,12 +35,17 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 
 **Abnahme:** Offline-Installer, Zustandswechsel, Stale-Erkennung, HTML-Escaping, begrenzte Historie, kein Listener und keine privilegierte Operation. Native externe Integrationen bleiben getrennt.
 
-## M2 — Unix-Node-Bootstrap und sichere Registrierung
+## M2 — Unix-Node-Bootstrap und sichere Registrierung (begrenzte Offline-Implementierung)
 
-- Rechneridentität und Betreiberfreigabe.
-- Kurzlebige Enrollment-Zugangsdaten und authentifizierter Transport.
-- Begrenzte Clientinstallation, Konfigurationszuordnung, Widerruf und Schlüsselwechsel.
-- Keine Remote-Shell und keine beliebige Befehlsausführung.
+- [x] SSH-Public-Key-Identität mit ausdrücklicher Betreiberfreigabe.
+- [x] Signierte Offline-Statusdateien mit Rollen-/Checkprüfung, Ablauf, Zeitfenster und Replay-Sequenz.
+- [x] Begrenzter Wegwerf-Client mit Apply-Schranke, Schlüssel und Cron-Vorlage.
+- [x] Dauerhafter Freigabe-, Ablehnungs-, Sperr-/Wiederaufnahme-Lifecycle mit Audit-Ereignissen.
+- [x] M1-Einbindung dynamisch registrierter und gesperrter Rechner.
+- [ ] Sicherer Live-SSH-Transport, Host-Key-Policy, Credential-Wechsel und Recovery kompromittierter Schlüssel.
+- [ ] Keine Remote-Shell und keine beliebige Befehlsausführung; diese Grenze bleibt bestehen.
+
+**Abnahme:** Zwei-Client-Offline-Labor mit einem genehmigten und einem abgelehnten Client, signiertem Import, Manipulations-/Replay-/Sperrtests, statischem Bericht, keinem Listener und ohne privilegierte Operation. Dies ist keine Abnahme eines Netzwerktransports.
 
 ## R0 — Eigenständige Grundlage
 

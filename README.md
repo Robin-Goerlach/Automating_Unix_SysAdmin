@@ -31,6 +31,10 @@ An independently developed SASD collection of Unix system-administration scripts
 | bin/sasd-monitor-cycle | Derive freshness-aware state and bounded history | Explicit local runtime write |
 | bin/sasd-monitor-report | Render the central state as static HTML | Optional output write |
 | bin/sasd-monitor-mrtg | Generate a candidate MRTG configuration | Optional output write |
+| bin/sasd-enrollment | Review, approve, reject and disable enrollment records | Explicit local runtime write |
+| bin/sasd-node-status | Create an SSH-signed status payload from existing records | Read-only input; explicit payload write |
+| bin/sasd-monitor-auth-import | Verify approved SSH identity and import signed status | Explicit local runtime write |
+| install/install-sasd-client.sh | Prepare a disposable client and enrollment request | Explicit local prefix write |
 
 The SASD status protocol is deliberately **not Big Brother's wire protocol**. There is no daemon, listening socket, remote command execution, or root-required installer in this milestone. Optional tools require their original external programs and must be separately validated.
 
@@ -63,7 +67,7 @@ See [bigbrother/README.md](bigbrother/README.md) for the period-style host inven
 
 The R2 site inventory is documented in [site/README.md](site/README.md). It uses reserved `192.0.2.0/24` documentation records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native acceptance.
 
-The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. It does not expose a network service or implement secure enrollment; those belong to M2.
+The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. The bounded M2 enrollment and SSH-signed offline status workflow is documented in [docs/monitoring/enrollment.md](docs/monitoring/enrollment.md); it does not expose a network service.
 
 ## Product direction
 
@@ -82,7 +86,7 @@ This repository's original SASD-authored materials are licensed under [MIT](LICE
 
 ## Current limitations
 
-CI tests run on a current Linux runner and demonstrate offline behavior only. CFEngine 1 syntax, older Perl interpreters, actual MRTG rendering and RRDtool database lifecycle are **not yet accepted on period operating systems**. Treat all example settings as controlled administrative examples, not a production deployment guide.
+CI tests run on a current Linux runner and demonstrate offline behavior only. CFEngine 1 syntax, older Perl interpreters, actual MRTG rendering, RRDtool database lifecycle and a live SSH transport are **not yet accepted on period operating systems or production networks**. Treat all example settings as controlled administrative examples, not a production deployment guide.
 
 
 ### Unix line endings on Windows or WSL

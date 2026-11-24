@@ -12,7 +12,7 @@ Regeln:
 - Eine spätere aktuelle Meldung kann zu `green`, `yellow` oder `red` zurückkehren.
 - Ungültige Importe werden vor jedem Schreiben des neuesten Datensatzes zurückgewiesen.
 
-Der zukünftige Lifecycle ist `unknown`, `enrollment-requested`, `pending-approval`, `approved`, `active`, `stale`, `disabled`. M1 implementiert nur Inventar und lokalen Import; ein Hostname aus dem Netz wird nicht vertrauenswürdig.
+Der M2-Lifecycle lautet `pending-approval`, `approved`, `active`, `rejected` und `disabled`. M1 leitet den Gesundheitszustand weiterhin getrennt ab; eine gesperrte Registrierung wird purple angezeigt und darf keine signierten Statusdaten importieren. Der Dateiaustausch vertraut einem Hostnamen nicht ohne den genehmigten SSH-Public-Key.
 
 ## Datensätze
 

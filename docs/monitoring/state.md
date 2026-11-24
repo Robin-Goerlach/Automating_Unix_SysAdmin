@@ -12,7 +12,7 @@ Rules:
 - A later current report can transition the state back to green, yellow, or red.
 - Invalid imports are rejected before any latest record is written.
 
-The local lifecycle for future enrollment is `unknown`, `enrollment-requested`, `pending-approval`, `approved`, `active`, `stale`, and `disabled`. M1 only implements the inventory and local import portions; it does not trust a hostname submitted over a network.
+The M2 lifecycle is `pending-approval`, `approved`, `active`, `rejected`, and `disabled`. M1 still derives health state separately; a disabled enrollment is rendered purple and cannot import signed status. The file exchange does not trust a hostname without the approved SSH public key.
 
 ## Records
 

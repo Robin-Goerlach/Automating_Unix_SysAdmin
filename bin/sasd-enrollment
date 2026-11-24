@@ -1,0 +1,165 @@
+#!/usr/bin/env perl
+use strict;
+use FindBin;
+use File::Spec;
+use File::Basename qw(dirname);
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(atomic_write append_event ensure_dir read_enrollment_record
+    enrollment_record_line valid_epoch valid_fingerprint valid_host
+    valid_identifier valid_os_value valid_path_value valid_public_key);
+
+my ($dir, $action, $request, $host, $operator, $at, $reason) = ('', '', '', '', '', '', '');
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--dir') { $dir = shift @ARGV; }
+    elsif ($a eq '--action') { $action = shift @ARGV; }
+    elsif ($a eq '--request') { $request = shift @ARGV; }
+    elsif ($a eq '--host') { $host = shift @ARGV; }
+    elsif ($a eq '--operator') { $operator = shift @ARGV; }
+    elsif ($a eq '--at') { $at = shift @ARGV; }
+    elsif ($a eq '--reason') { $reason = shift @ARGV; }
+    elsif ($a eq '--help') {
+        print "usage: sasd-enrollment --dir DIR --action ACTION [options]\n",
+            "actions: import-request list check status approve reject disable enable\n";
+        exit 0;
+    } else { die "unknown argument: $a\n"; }
+}
+
+$dir && $dir =~ m!^/! && $dir !~ m!(?:^|/)\.\.(?:/|$)! or die "unsafe enrollment directory\n";
+$action =~ /\A(?:import-request|list|check|status|approve|reject|disable|enable)\z/
+    or die "invalid enrollment action\n";
+sub path { return File::Spec->catfile($dir, @_); }
+sub record_path { return path('records', $_[0] . '.tsv'); }
+sub request_path { return path('requests', $_[0] . '.request'); }
+sub valid_dir {
+    my ($p) = @_;
+    my $q = $p;
+    while ($q ne '/' && length $q) {
+        -l $q and die "refusing symlink path component: $q\n";
+        my $n = dirname($q);
+        last if $n eq $q;
+        $q = $n;
+    }
+}
+valid_dir($dir);
+ensure_dir($dir, 0700);
+for my $d (qw(requests records replay keys)) { ensure_dir(path($d), 0700); }
+my $events = path('events.tsv');
+
+sub read_request {
+    my ($file) = @_;
+    -f $file && !-l $file or die "invalid enrollment request\n";
+    open(my $fh, '<', $file) or die "cannot read enrollment request: $!\n";
+    my $line = <$fh>; close $fh; defined $line or die "empty enrollment request\n";
+    chomp $line; $line =~ s/\r\z//;
+    my @v = split /\t/, $line, -1;
+    @v == 10 && $v[0] eq 'SASD-ENROLL-1' or die "invalid enrollment request fields\n";
+    valid_host($v[1]) && valid_fingerprint($v[2]) && valid_os_value($v[3]) &&
+        length($v[4]) && length($v[4]) <= 63 && $v[4] !~ /[\x00-\x1f\x7f]/ &&
+        valid_identifier($v[5]) && valid_path_value($v[6]) && valid_epoch($v[7]) &&
+        valid_epoch($v[8]) && $v[8] > $v[7] && valid_public_key($v[9])
+        or die "invalid enrollment request values\n";
+    return { version=>$v[0], host=>$v[1], fingerprint=>$v[2], os=>$v[3],
+        os_version=>$v[4], role=>$v[5], profile=>$v[6], requested=>$v[7],
+        expires=>$v[8], public_key=>$v[9] };
+}
+
+sub require_host {
+    $host && valid_host($host) or die "--host is required\n";
+    return $host;
+}
+sub require_operator {
+    $operator && valid_identifier($operator) or die "--operator is required\n";
+    return $operator;
+}
+sub epoch {
+    $at eq '' and $at = time();
+    valid_epoch($at) or die "invalid --at\n";
+    return $at;
+}
+sub event {
+    my ($h, $what, $who, $why) = @_;
+    $why = '-' unless defined($why) && length($why);
+    $why !~ /[\t\r\n]/ or die "invalid event reason\n";
+    append_event($events, join("\t", time(), $h, $what, $who, $why));
+}
+sub current_record {
+    my ($h) = @_;
+    return read_enrollment_record(record_path($h));
+}
+sub save_record {
+    my ($r) = @_;
+    atomic_write(record_path($r->{host}), enrollment_record_line($r), 0600);
+}
+
+if ($action eq 'import-request') {
+    $request && -f $request or die "--request is required\n";
+    my $r = read_request($request);
+    my $old = current_record($r->{host});
+    $old && $old->{state} ne 'rejected' and die "host already has an active or disabled enrollment\n";
+    atomic_write(request_path($r->{host}), join("\t", @$r{qw(version host fingerprint os os_version role profile requested expires public_key)}) . "\n", 0600);
+    event($r->{host}, 'request-imported', 'operator', 'offline request accepted for review');
+    print "request=pending host=$r->{host}\n";
+    exit 0;
+}
+
+if ($action eq 'list' || $action eq 'check') {
+    opendir(my $qh, path('requests')) or die "cannot list requests: $!\n";
+    my @names = grep { /\.request\z/ } readdir($qh); closedir $qh;
+    my $bad = 0;
+    for my $name (sort @names) {
+        my $r;
+        eval { $r = read_request(request_path($name =~ s/\.request\z//r)); 1 } or do { print "invalid-request\t$name\n"; $bad = 1; next; };
+        my $state = current_record($r->{host});
+        my $label = $state ? $state->{state} : ($r->{expires} < time() ? 'expired' : 'pending-approval');
+        print join("\t", $r->{host}, $label, $r->{fingerprint}, $r->{role}, $r->{expires}), "\n";
+        $bad = 1 if $label eq 'expired';
+    }
+    opendir(my $rh, path('records')) or die "cannot list records: $!\n";
+    my @records = grep { /\.tsv\z/ } readdir($rh); closedir $rh;
+    for my $name (sort @records) {
+        my $h = $name; $h =~ s/\.tsv\z//;
+        my $r = eval { current_record($h) };
+        if (!$r) { print "invalid-record\t$name\n"; $bad = 1; next; }
+        print join("\t", $r->{host}, $r->{state}, $r->{fingerprint}, $r->{role}, $r->{expires}), "\n";
+        $bad = 1 if $r->{expires} < time() && $r->{state} =~ /\A(?:approved|active)\z/;
+    }
+    exit($action eq 'check' && $bad ? 1 : 0);
+}
+
+$host = require_host();
+if ($action eq 'status') {
+    my $r = current_record($host);
+    if ($r) { print join("\t", @$r{qw(host state fingerprint os os_version role profile requested expires operator approved sequence)}), "\n"; exit 0; }
+    -f request_path($host) or die "unknown enrollment host\n";
+    my $q = read_request(request_path($host));
+    print join("\t", $q->{host}, 'pending-approval', $q->{fingerprint}, $q->{os}, $q->{os_version}, $q->{role}, $q->{profile}, $q->{requested}, $q->{expires}, '-', '-'), "\n";
+    exit 0;
+}
+
+if ($action eq 'approve' || $action eq 'reject') {
+    my $who = require_operator(); my $when = epoch();
+    my $q = read_request(request_path($host));
+    $q->{expires} >= $when or die "enrollment request is expired\n";
+    my $state = $action eq 'approve' ? 'approved' : 'rejected';
+    my $r = { %$q, operator=>$who, approved=>$when, state=>$state, sequence=>0 };
+    save_record($r);
+    event($host, $action eq 'approve' ? 'approved' : 'rejected', $who, $reason);
+    print "host=$host state=$state\n";
+    exit 0;
+}
+
+my $r = current_record($host) or die "no enrollment record for host\n";
+my $who = require_operator(); my $when = epoch();
+if ($action eq 'disable') {
+    $r->{state} =~ /\A(?:approved|active)\z/ or die "host is not active or approved\n";
+    $r->{operator}=$who; $r->{approved}=$when; $r->{state}='disabled'; save_record($r);
+    event($host, 'disabled', $who, $reason); print "host=$host state=disabled\n"; exit 0;
+}
+if ($action eq 'enable') {
+    $r->{state} eq 'disabled' or die "host is not disabled\n";
+    $r->{expires} >= $when or die "enrollment has expired\n";
+    $r->{operator}=$who; $r->{approved}=$when; $r->{state}='approved'; save_record($r);
+    event($host, 'enabled', $who, $reason); print "host=$host state=approved\n"; exit 0;
+}
+die "unsupported enrollment action\n";

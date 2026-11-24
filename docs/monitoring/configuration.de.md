@@ -13,6 +13,7 @@ English: [English version](configuration.md)
 | `report_file` | Standardziel für statisches HTML |
 | `mrtg_file` | Ziel für eine zu prüfende MRTG-Konfiguration |
 | `rrd_dir` | Messwert-/RRD-Verzeichnis; keine automatische Datenbankerzeugung |
+| `enrollment_dir` | Privater M2-Bereich für Anträge, Freigaben, Replay und Audit |
 | `profile` | Profilbezeichnung, derzeit `1999` |
 | `freshness` | Maximales Alter in Sekunden vor `purple` |
 | `history_retention` | Maximale Zahl gespeicherter Ereignisse |

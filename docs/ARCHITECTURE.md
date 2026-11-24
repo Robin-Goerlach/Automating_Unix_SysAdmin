@@ -31,6 +31,14 @@ M1 adds a local central state path without adding a daemon:
                          |
                   monitor-report ---> static HTML
 
+M2 adds an offline enrollment and authenticated staging path:
+
+    client bootstrap ---> enrollment.request ---> operator approval
+          |                                      |
+       SSH key + signed payload                 records/ + events.tsv
+          |                                      |
+          +----------> monitor-auth-import ----> M1 latest/ -> cycle -> report
+
 The R2 site inventory adds a separate, file-based selection path:
 
     site/hosts.tsv + site/roles.tsv
@@ -43,7 +51,7 @@ The inventory is an operator-maintained TSV contract. It is not DNS, a CMDB, or 
 
 Complementary independent tools also parse offline passwd snapshots (UID anomalies), traditional BSD syslog (program counts), configured NTP sources and bounded five-field user cron syntax. They do not access credentials, execute jobs, contact time servers or modify accounts.
 
-The layout intentionally avoids a mandatory shared library, database, agent framework or service manager. Unix installations can use only the tools they need.
+The layout intentionally avoids a mandatory shared library, database, agent framework or service manager. Unix installations can use only the tools they need. M2 uses the established `ssh-keygen -Y sign/verify` mechanism; it does not define cryptography or a network protocol.
 
 ## Interfaces and status semantics
 
@@ -95,4 +103,4 @@ Classic deployment may eventually use /usr/local/sasd/bin and /usr/local/sasd/et
 
 The current site layout is `site/hosts.tsv`, `site/roles.tsv`, and role manifests below the selected golden root. A host record has hostname, documentation IPv4 address, OS family, one role, comma-separated groups, and profile. All hosts receive the independent `baseline` class; the resolver adds `role_NAME` and `group_NAME`. These names only select SASD work and do not emulate CFEngine's class engine.
 
-M1 uses the same inventory and adds `site/checks.tsv` for check applicability. Its installation template is `site/monitoring.conf`; runtime files are kept under a selected prefix and are separate from source-controlled configuration. `sasd-monitor-import` accepts the existing four-column status contract from local files, while `sasd-monitor-cycle` owns freshness-derived state and bounded transitions. There is no central socket or remote transport.
+M1 uses the same inventory and adds `site/checks.tsv` for check applicability. Its installation template is `site/monitoring.conf`; runtime files are kept under a selected prefix and are separate from source-controlled configuration. `sasd-monitor-import` accepts the existing four-column status contract from local files, while `sasd-monitor-cycle` owns freshness-derived state and bounded transitions. There is no central socket or remote transport. M2's file exchange verifies an approved SSH public-key identity, a signed payload, role/check applicability, expiry, clock window and monotonic sequence before handing records to M1. A live SSH channel remains a separate deployment and acceptance task.

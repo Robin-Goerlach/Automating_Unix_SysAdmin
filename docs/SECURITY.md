@@ -23,12 +23,15 @@ Compatibility with older Unix software is not a security exemption. Some optiona
 - Config-drift has no apply mode. Do not interpret a detected difference as authorization to repair it.
 - M1 monitoring has no listener or remote enrollment. The installer requires `--apply`, rejects system prefixes and symlink path components, preserves existing files, and writes only to an explicit laboratory prefix.
 - M1 import trusts only operator-selected local input. It validates host/check assignment and writes normalized local records; this is not authenticated transport.
+- M2 enrollment stores an SSH public-key fingerprint and requires explicit operator approval. A hostname or inventory record alone is never an identity.
+- M2 signed payloads use the established `ssh-keygen -Y sign/verify` mechanism. The importer checks the approved key, role/check applicability, expiry, clock window and monotonic sequence before writing M1 state.
+- Rejected and disabled records cannot import status. Sequence numbers survive disable/enable to prevent replay.
 
 ## Limits of first implementation
 
 Status-store's file replacement is **not audited against hostile concurrent writers** in shared directories. Config-drift rejects symlink final paths but does not guarantee that every ancestor component is symlink-free. The R2 site audit inherits that limitation and adds no apply mode. The HTML writer accepts an operator-selected target file. These tools must not run with elevated privileges or as exposed services until the relevant trust boundaries and race scenarios have been closed.
 
-M1 state/history writes use private runtime directories and bounded retention, but the laboratory does not provide rollback, remote authentication, or a hostile multi-writer protocol. M2 must add identity validation, approval, short-lived enrollment credentials, authenticated reporting, revocation, and key rotation before remote status acceptance.
+M1 state/history writes use private runtime directories and bounded retention, but the laboratory does not provide rollback or a hostile multi-writer protocol. M2 does not provide a live transport; host-key policy, SSH account restrictions, key rotation, compromised-key recovery and clock trust remain required before remote status acceptance in a deployed network.
 
 ## External historical software
 

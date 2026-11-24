@@ -23,6 +23,6 @@ Kompatibilität mit älterer Unix-Software ist keine Sicherheitsausnahme. Option
 
 ## M1-Grenze
 
-M1 besitzt keinen Listener und kein remote Enrollment. Der Installer verlangt `--apply`, weist Systempräfixe und symbolische Pfadkomponenten zurück, erhält vorhandene Dateien und schreibt nur in ein ausdrückliches Präfix. Der Import vertraut nur einer lokal ausgewählten Eingabedatei; er ist kein authentifizierter Transport.
+M1 besitzt keinen Listener und kein remote Enrollment. Der Installer verlangt `--apply`, weist Systempräfixe und symbolische Pfadkomponenten zurück, erhält vorhandene Dateien und schreibt nur in ein ausdrückliches Präfix. Der Import vertraut nur einer lokal ausgewählten Eingabedatei; er ist kein authentifizierter Transport. M2 speichert einen SSH-Public-Key-Fingerprint und verlangt ausdrückliche Betreiberfreigabe; Hostname und Inventar sind allein keine Identität.
 
-Die Laufzeitprüfung bietet kein Rollback und kein Protokoll für feindliche Mehrfachschreiber. M2 muss Rechneridentität, Betreiberfreigabe, kurzlebige Zugangsdaten, authentifizierte Meldungen, Widerruf und Schlüsselwechsel ergänzen.
+Signierte M2-Dateien verwenden `ssh-keygen -Y sign/verify`. Vor dem Schreiben prüft der Import Schlüssel, Rollen-/Check-Zuordnung, Ablauf, Zeitfenster und steigende Sequenz. Abgelehnte und gesperrte Datensätze dürfen nicht importieren; Sequenzen bleiben über die Wiederaufnahme erhalten. M2 bietet keinen Live-Transport. Vor einem Netzwerkbetrieb sind Host-Key-Policy, SSH-Kontobeschränkungen, Schlüsselwechsel, Recovery kompromittierter Schlüssel, Zeitvertrauen und Schutz gegen feindliche Mehrfachschreiber zusätzlich abzunehmen.

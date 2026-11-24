@@ -1,0 +1,97 @@
+#!/usr/bin/env perl
+use strict;
+use FindBin;
+use File::Spec;
+use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_config read_inventory read_checks applicable_checks
+    validate_status valid_epoch valid_host atomic_write ensure_dir
+    read_enrollment_record enrollment_record_line append_event);
+
+my ($config, $input, $signature, $now, $skew) = ('', '', '', time(), 900);
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--config') { $config = shift @ARGV; }
+    elsif ($a eq '--input') { $input = shift @ARGV; }
+    elsif ($a eq '--signature') { $signature = shift @ARGV; }
+    elsif ($a eq '--now') { $now = shift @ARGV; }
+    elsif ($a eq '--max-skew') { $skew = shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-monitor-auth-import --config FILE --input PAYLOAD --signature FILE [--now EPOCH] [--max-skew SECONDS]\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+$config && -f $config && !-l $config or die "invalid configuration file\n";
+$input && -f $input && !-l $input or die "invalid authenticated payload\n";
+$signature && -f $signature && !-l $signature or die "invalid payload signature\n";
+valid_epoch($now) && valid_epoch($skew) or die "invalid time argument\n";
+my $cfg = read_config($config);
+my ($hosts, $roles) = read_inventory($cfg->{inventory_path}, $cfg->{roles_path});
+my $checks = read_checks($cfg->{checks_path});
+
+open(my $fh, '<', $input) or die "cannot read authenticated payload: $!\n";
+my @lines = <$fh>; close $fh;
+@lines or die "empty authenticated payload\n";
+chomp @lines; s/\r\z// for @lines;
+my @header = split /\t/, shift(@lines), -1;
+@header == 4 && $header[0] eq 'SASD-AUTH-1' && valid_host($header[1]) &&
+    valid_epoch($header[2]) && valid_epoch($header[3]) or die "invalid authenticated payload header\n";
+my ($host, $sequence, $sent) = @header[1..3];
+@lines or die "authenticated payload has no status records\n";
+my $record_path = File::Spec->catfile($cfg->{enrollment_dir_path}, 'records', "$host.tsv");
+my $record = read_enrollment_record($record_path) or die "no enrollment record for host\n";
+$record->{host} eq $host or die "enrollment host mismatch\n";
+$record->{state} =~ /\A(?:approved|active)\z/ or die "host enrollment is not active\n";
+$record->{expires} >= $now or die "host enrollment is expired\n";
+$sequence > $record->{sequence} or die "replayed or out-of-order sequence\n";
+abs($now - $sent) <= $skew or die "authenticated payload outside time window\n";
+
+sub find_program {
+    my ($name) = @_;
+    for my $d (split /:/, ($ENV{PATH} || '')) { return "$d/$name" if -x "$d/$name"; }
+    return '';
+}
+my $ssh = find_program('ssh-keygen') or die "ssh-keygen is required for authenticated import\n";
+my $tmpbase = File::Spec->catfile($cfg->{enrollment_dir_path}, 'replay', ".verify.$$" );
+ensure_dir(File::Spec->catdir($cfg->{enrollment_dir_path}, 'replay'), 0700);
+my $pubfile = "$tmpbase.pub";
+my $allowed = "$tmpbase.allowed";
+atomic_write($pubfile, $record->{public_key} . "\n", 0600);
+atomic_write($allowed, "$host $record->{public_key}\n", 0600);
+sub cleanup { unlink $pubfile, $allowed; }
+my $fpout = open(my $fp, '-|', $ssh, '-lf', $pubfile, '-E', 'sha256') or die "cannot inspect host key: $!\n";
+my $fpline = <$fp>; close $fp; $fpline ||= '';
+$fpline =~ /\b(SHA256:[A-Za-z0-9+\/=]+)\b/ && $1 eq $record->{fingerprint} or do { cleanup(); die "approved fingerprint does not match public key\n"; };
+my $pid = fork(); defined $pid or do { cleanup(); die "cannot fork verification: $!\n"; };
+if (!$pid) {
+    open(STDIN, '<', $input) or exit 2;
+    exec {$ssh} $ssh, '-Y', 'verify', '-f', $allowed, '-I', $host, '-n', 'sasd-status', '-s', $signature;
+    exit 2;
+}
+waitpid($pid, 0); my $verified = $? == 0;
+cleanup();
+$verified or die "SSH signature verification failed\n";
+
+my %seen;
+my @records;
+my $host_role = exists($hosts->{$host}) ? $hosts->{$host}->{role} : $record->{role};
+exists($hosts->{$host}) && $hosts->{$host}->{role} ne $record->{role}
+    and die "approved role differs from inventory role\n";
+for my $line (@lines) {
+    my @v = split /\t/, $line, -1;
+    @v == 4 or die "status record needs four fields\n";
+    $v[0] eq $host or die "status host does not match authenticated identity\n";
+    exists($checks->{$v[1]}) or die "unknown check: $v[1]\n";
+    my $r = $checks->{$v[1]}->{role};
+    ($r eq '*' || $r eq 'baseline' || $r eq $host_role) or die "check is not assigned to approved role\n";
+    !$seen{$v[1]}++ or die "duplicate authenticated check\n";
+    validate_status(@v);
+    push @records, \@v;
+}
+my $latest = File::Spec->catdir($cfg->{status_dir_path}, 'latest');
+ensure_dir($cfg->{status_dir_path}, 0750); ensure_dir($latest, 0750);
+for my $v (@records) {
+    atomic_write(File::Spec->catfile($latest, "$v->[0].$v->[1]"), join("\t", $sent, @$v[0..3], "ssh") . "\n", 0640);
+}
+$record->{state} = 'active'; $record->{sequence} = $sequence;
+atomic_write($record_path, enrollment_record_line($record), 0600);
+append_event(File::Spec->catfile($cfg->{enrollment_dir_path}, 'events.tsv'), join("\t", $now, $host, 'status-imported', $host, "sequence=$sequence"));
+print "authenticated-import=OK host=$host sequence=$sequence records=", scalar(@records), "\n";

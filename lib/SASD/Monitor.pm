@@ -9,11 +9,13 @@ use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
 
 our @EXPORT_OK = qw(read_config read_inventory read_checks applicable_checks
     validate_status atomic_write read_state read_latest html_escape ensure_dir
-    valid_identifier valid_host valid_color valid_path_value now_seconds);
+    valid_identifier valid_host valid_color valid_path_value valid_epoch
+    valid_fingerprint valid_public_key valid_os_value read_enrollment_record
+    enrollment_record_line append_event now_seconds);
 
 my %CONFIG_KEYS = map { $_ => 1 } qw(inventory roles checks status_dir history_file
-    state_file report_file mrtg_file rrd_dir profile freshness history_retention
-    mrtg_command);
+    state_file report_file mrtg_file rrd_dir enrollment_dir profile freshness
+    history_retention mrtg_command);
 
 sub _real_file {
     my ($path, $label) = @_;
@@ -38,6 +40,26 @@ sub valid_host {
 sub valid_color {
     my ($s) = @_;
     return defined($s) && $s =~ /\A(?:green|yellow|red|purple)\z/;
+}
+
+sub valid_epoch {
+    my ($s) = @_;
+    return defined($s) && $s =~ /\A[0-9]{1,15}\z/;
+}
+
+sub valid_fingerprint {
+    my ($s) = @_;
+    return defined($s) && $s =~ /\ASHA256:[A-Za-z0-9+\/=]{20,64}\z/;
+}
+
+sub valid_public_key {
+    my ($s) = @_;
+    return defined($s) && $s =~ /\A(?:ssh-rsa|ssh-ed25519|ssh-dss|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) [A-Za-z0-9+\/=]+(?: [^\t\r\n]*)?\z/;
+}
+
+sub valid_os_value {
+    my ($s) = @_;
+    return defined($s) && $s =~ /\A[A-Za-z][A-Za-z0-9_.-]{0,31}\z/;
 }
 
 sub valid_path_value {
@@ -81,7 +103,8 @@ sub read_config {
     }
     close $fh;
     my @required = qw(inventory roles checks status_dir history_file state_file
-        report_file mrtg_file rrd_dir profile freshness history_retention mrtg_command);
+        report_file mrtg_file rrd_dir enrollment_dir profile freshness
+        history_retention mrtg_command);
     for (@required) { exists $raw{$_} or die "missing configuration key: $_\n"; }
     valid_path_value($raw{profile}) or die "invalid monitoring profile\n";
     $raw{freshness} =~ /\A[0-9]{1,9}\z/ or die "invalid freshness\n";
@@ -89,7 +112,7 @@ sub read_config {
     my %cfg = %raw;
     $cfg{config_file} = File::Spec->rel2abs($path);
     $cfg{config_dir} = $base;
-    for my $key (qw(inventory roles checks status_dir history_file state_file report_file mrtg_file rrd_dir mrtg_command)) {
+    for my $key (qw(inventory roles checks status_dir history_file state_file report_file mrtg_file rrd_dir enrollment_dir mrtg_command)) {
         $cfg{$key . '_path'} = _resolve($base, $raw{$key});
     }
     return \%cfg;
@@ -216,6 +239,40 @@ sub read_state {
     }
     close $fh;
     return \%state;
+}
+
+sub read_enrollment_record {
+    my ($path) = @_;
+    return undef unless -f $path && !-l $path;
+    open(my $fh, '<', $path) or die "cannot read enrollment record: $!\n";
+    my $line = <$fh>; close $fh; return undef unless defined $line;
+    chomp $line; $line =~ s/\r\z//;
+    my @v = split /\t/, $line, -1;
+    @v == 14 && $v[0] eq 'SASD-ENROLL-1' or die "invalid enrollment record\n";
+    valid_host($v[1]) && valid_fingerprint($v[2]) && valid_os_value($v[3]) &&
+        length($v[4]) && length($v[4]) <= 63 && $v[4] !~ /[\x00-\x1f\x7f]/ &&
+        valid_identifier($v[5]) && valid_path_value($v[6]) && valid_epoch($v[7]) &&
+        valid_epoch($v[8]) && valid_identifier($v[9]) && valid_epoch($v[10]) &&
+        $v[11] =~ /\A(?:approved|active|rejected|disabled)\z/ &&
+        $v[12] =~ /\A[0-9]{1,15}\z/ && valid_public_key($v[13])
+        or die "invalid enrollment record fields\n";
+    return { version=>$v[0], host=>$v[1], fingerprint=>$v[2], os=>$v[3],
+        os_version=>$v[4], role=>$v[5], profile=>$v[6], requested=>$v[7],
+        expires=>$v[8], operator=>$v[9], approved=>$v[10], state=>$v[11],
+        sequence=>$v[12], public_key=>$v[13] };
+}
+
+sub enrollment_record_line {
+    my ($r) = @_;
+    return join("\t", 'SASD-ENROLL-1', @$r{qw(host fingerprint os os_version role profile requested expires operator approved state sequence public_key)}) . "\n";
+}
+
+sub append_event {
+    my ($path, $line) = @_;
+    defined($line) && length($line) <= 512 && $line !~ /[\x00\r\n\x7f]/ or die "unsafe enrollment event\n";
+    open(my $fh, '>>', $path) or die "cannot append enrollment event: $!\n";
+    print $fh $line, "\n" or die "cannot write enrollment event: $!\n";
+    close($fh) or die "cannot close enrollment event: $!\n";
 }
 
 sub html_escape {

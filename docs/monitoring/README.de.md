@@ -19,7 +19,7 @@ Der Installer kopiert freigegebene SASD-Programme, R2-Inventar, Checks, Konfigur
 
 ## Laufzeitstruktur
 
-Das Präfix enthält `bin/`, `etc/`, `lib/SASD/`, `var/status/`, `var/history/`, `var/metrics/`, `var/reports/`, `share/mrtg/` und `log/`. Laufzeitdateien sind lokale Textdateien. Das Präfix sollte nur für das Monitoringkonto beschreibbar sein.
+Das Präfix enthält `bin/`, `etc/`, `lib/SASD/`, `var/status/`, `var/history/`, `var/metrics/`, `var/reports/`, `var/enrollment/`, `share/mrtg/` und `log/`. Laufzeitdateien sind lokale Textdateien. Das Präfix sollte nur für das Monitoringkonto beschreibbar sein.
 
 ## Ein Zyklus
 
@@ -35,4 +35,4 @@ Import, Frischebewertung und Bericht:
 
 Der M1-Import ist lokal und nur durch den vom Administrator gewählten Eingabepfad begrenzt. Er ist kein Netzwerkprotokoll und kein Enrollment.
 
-`examples/monitoring-lab.sh` führt die vollständige Wegwerf-Demonstration aus.
+`examples/monitoring-lab.sh` führt die vollständige Wegwerf-Demonstration aus. M2-Registrierung, Client-Bootstrap und signierter Offline-Import sind unter [enrollment.de.md](enrollment.de.md) dokumentiert. `examples/m2-enrollment-lab.sh` zeigt den positiven Ablauf; `tests/m2-enrollment.sh` prüft zwei Clients und Negativfälle.

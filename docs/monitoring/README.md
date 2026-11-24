@@ -19,7 +19,7 @@ The installer copies approved SASD programs, the R2 inventory, checks, the confi
 
 ## Runtime layout
 
-The installed prefix contains `bin/`, `etc/`, `lib/SASD/`, `var/status/`, `var/history/`, `var/metrics/`, `var/reports/`, `share/mrtg/`, and `log/`. Runtime files are local and plain text. The installer uses a private umask; operators should keep the prefix writable only by the monitoring account.
+The installed prefix contains `bin/`, `etc/`, `lib/SASD/`, `var/status/`, `var/history/`, `var/metrics/`, `var/reports/`, `var/enrollment/`, `share/mrtg/`, and `log/`. Runtime files are local and plain text. The installer uses a private umask; operators should keep the prefix writable only by the monitoring account.
 
 ## One cycle
 
@@ -36,3 +36,5 @@ Import, classify freshness, and render a report:
 The M1 import step is local and authenticated only by the operator-selected input path. It is not a network protocol and is not an enrollment mechanism. It validates the existing `sasd-status-store` four-column contract but keeps its own latest record because receipt time and source are central-server fields; the existing status store remains independently usable at the edge.
 
 Run `examples/monitoring-lab.sh` for the complete disposable demonstration.
+
+M2 enrollment, client bootstrap and signed offline status import are documented in [enrollment.md](enrollment.md). Run `examples/m2-enrollment-lab.sh` for the positive flow and `tests/m2-enrollment.sh` for the two-client negative regression.

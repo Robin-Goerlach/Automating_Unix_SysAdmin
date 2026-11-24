@@ -6,7 +6,7 @@ English: [English version](TESTING.md)
 
     make test
 
-`make syntax` prüft Perl-Syntax, POSIX-Shell-Syntax und LF-Zeilenenden. `tests/smoke.sh` prüft synthetische `df`-Daten, privaten Statusspool, HTML-Ausgabe, Drift und das MRTG-Vierzeilenformat. `tests/classic.sh` prüft passwd, BSD-Syslog, NTP und Cron. `tests/r2-site.sh` prüft Inventar, Rollen und Audit. `tests/m1-monitoring.sh` prüft Konfiguration, Dry-run/Apply/Wiederholung, Erhalt vorhandener Dateien, Symlink-/Systempfadschutz, Import, Stale-Zustand, Escaping, MRTG-Vorlage und CRLF-Konfiguration. `examples/monitoring-lab.sh` ist die vollständige Wegwerf-Demonstration.
+`make syntax` prüft Perl-Syntax, POSIX-Shell-Syntax und LF-Zeilenenden. `tests/smoke.sh` prüft synthetische `df`-Daten, privaten Statusspool, HTML-Ausgabe, Drift und das MRTG-Vierzeilenformat. `tests/classic.sh` prüft passwd, BSD-Syslog, NTP und Cron. `tests/r2-site.sh` prüft Inventar, Rollen und Audit. `tests/m1-monitoring.sh` prüft Konfiguration, Dry-run/Apply/Wiederholung, Erhalt vorhandener Dateien, Symlink-/Systempfadschutz, Import, Stale-Zustand, Escaping, MRTG-Vorlage und CRLF-Konfiguration. `tests/m2-enrollment.sh` erzeugt zwei Wegwerf-Clients, genehmigt einen, lehnt den anderen ab, prüft SSH-Signaturen, Replay-/Manipulationsschutz und Sperrung. `examples/monitoring-lab.sh` und `examples/m2-enrollment-lab.sh` sind die vollständigen Wegwerf-Demonstrationen.
 
 Es werden weder Netzwerkzugriff noch root-Rechte benötigt.
 
@@ -23,3 +23,5 @@ Es werden weder Netzwerkzugriff noch root-Rechte benötigt.
 Fehlendes MRTG oder RRDtool wird als `SKIPPED` gemeldet und lässt Offline-Tests passieren. Das ist kein Nachweis einer nativen Integration. CFEngine 1, ältere Perl-Versionen, historische Unix-Systeme sowie echte MRTG-/RRDtool-Läufe benötigen eigene Versionsevidenz mit Betriebssystem, Binary, Kommando, Ausgabe und Cleanup.
 
 Die Dokumentationsprüfung `tests/docs-pairs.pl` meldet fehlende deutsche Partner und offensichtliche defekte lokale Markdown-Links. Sie prüft nicht die semantische Übersetzungsqualität.
+
+M2 benötigt die lokale `ssh-keygen`-Implementierung mit RSA-Erzeugung und `ssh-keygen -Y sign/verify`. Die M2-Tests prüfen nur den Offline-Dateiaustausch; ein Live-SSH-Kanal, Host-Key-Policy, Kontobeschränkung, Schlüsselwechsel und Produktionstransport sind nicht abgenommen.
