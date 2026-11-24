@@ -1,0 +1,6 @@
+CFEngine 1 role-selection boundary
+
+The SASD resolver emits labels such as baseline, role_web and group_lab.
+Those labels select an external SASD manifest; they are not asserted to be
+native CFEngine classes. Native class syntax is intentionally not invented
+until cfengine-1.4.0 is exercised in a disposable historical environment.

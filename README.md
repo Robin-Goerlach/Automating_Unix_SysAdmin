@@ -22,6 +22,9 @@ An independently developed SASD collection of Unix system-administration scripts
 | bin/sasd-ntp-sources | Enumerate NTP servers/peers from a local config | Read-only |
 | bin/sasd-cron-inspect | Inspect simple 5-field user cron schedules | Read-only |
 | bin/sasd-bb-hosts-lint | Inspect a subset of historical bb-hosts inventory syntax, without network activity | Read-only |
+| bin/sasd-site-inventory | Validate and query a fictional TSV host inventory | Read-only |
+| bin/sasd-site-classes | Resolve roles to independent SASD selection classes | Read-only |
+| bin/sasd-site-audit | Select a role manifest and delegate a read-only drift audit | Read-only |
 
 The SASD status protocol is deliberately **not Big Brother's wire protocol**. There is no daemon, listening socket, remote command execution, or root-required installer in this milestone. Optional tools require their original external programs and must be separately validated.
 
@@ -51,6 +54,8 @@ Get the external MRTG data lines:
     ./bin/sasd-mrtg-counter --input fixtures/mrtg/ifcounters.tsv
 
 See [bigbrother/README.md](bigbrother/README.md) for the period-style host inventory and [mrtg/README.md](mrtg/README.md) for optional MRTG integration and [rrd/README.md](rrd/README.md) for RRDtool. For an end-to-end walkthrough, use examples/demo.sh.
+
+The R2 site laboratory is under [site/README.md](site/README.md). It uses fictional `192.0.2.0/24` records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native historical acceptance.
 
 ## Product direction
 

@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+# Select a role manifest, then delegate byte comparison to sasd-config-drift.
+# Output includes normal drift lines and one SASD status record.
+use strict;
+my ($input,$roles,$host,$root,$golden,$status) = ('','','','','','');
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if($a eq '--input'){$input=shift @ARGV;} elsif($a eq '--roles'){$roles=shift @ARGV;}
+    elsif($a eq '--host'){$host=shift @ARGV;} elsif($a eq '--root'){$root=shift @ARGV;}
+    elsif($a eq '--golden'){$golden=shift @ARGV;} elsif($a eq '--status'){$status=1;}
+    elsif($a eq '--help'){print "usage: sasd-site-audit --input hosts.tsv --roles roles.tsv --host HOST --root DIR --golden DIR [--status]\n";exit 0;}
+    else{die "unknown argument: $a\n";}
+}
+for($input,$roles,$root,$golden){defined($_)&&length($_) or die "missing required argument\n";}
+$host =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/ or die "invalid host\n";
+-f $input&&! -l $input && -f $roles&&! -l $roles && -d $root&&! -l $root && -d $golden&&! -l $golden or die "invalid audit path\n";
+my $class_tool=$0; $class_tool =~ s/sasd-site-audit\z/sasd-site-classes/;
+open(CLASS,"-|",$class_tool,'--input',$input,'--roles',$roles,'--host',$host) or die "cannot run class resolver: $!\n";
+my $line=<CLASS>; my $class_ok=close(CLASS); defined($line)&&$class_ok or die "class resolver rejected host\n";
+chomp($line); $line =~ s/\r\z//; my @c=split /\t/,$line,-1; @c==6 or die "invalid class resolver output\n";
+my $manifest=$c[5]; $manifest =~ m!\A[A-Za-z0-9_./-]+\z! && $manifest !~ m!^/! && $manifest !~ m!(?:^|/)\.\.(?:/|$)! or die "unsafe manifest selected\n";
+my $drift=$0; $drift =~ s/sasd-site-audit\z/sasd-config-drift/;
+open(DRIFT,"-|",$drift,'--root',$root,'--golden',$golden,'--manifest',"$golden/$manifest") or die "cannot run config drift: $!\n";
+my @out=<DRIFT>; close(DRIFT); my $raw=$?; my $exit=($raw >> 8);
+print @out;
+my $color='green'; my $message='role '.$c[2].' matches '.$manifest;
+if($exit==1){$color='yellow';$message='role '.$c[2].' has configuration drift';}
+elsif($exit!=0){$color='purple';$message='role '.$c[2].' audit unknown or unsafe';}
+print "$host\tconfig-audit\t$color\t$message\n" if $status;
+exit($exit==0 ? 0 : $exit==1 ? 1 : 2);

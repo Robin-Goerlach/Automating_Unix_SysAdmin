@@ -7,4 +7,12 @@
 tmp/
 out/
 site/
+# The R2 source inventory is intentionally tracked; only other site output stays ignored.
+!site/
+site/*
+!site/README.md
+!site/hosts.tsv
+!site/roles.tsv
+!fixtures/site/
+!fixtures/site/**
 .DS_Store
