@@ -2,7 +2,7 @@
 
 English: [English version](RELEASE-1.0.md)
 
-Status: Releasearbeit läuft. Ein `v1.0.0`-Tag ist erst zulässig, wenn jedes Pflichtgate belegt ist.
+Status: Die Pflichtnachweise sind für Commit `7920cad` vollständig. Der annotierte Tag `v1.0.0` und die GitHub-Veröffentlichung sind die verbleibenden Publikationsschritte.
 
 ## Enthalten und verifiziert
 
@@ -17,7 +17,7 @@ Status: Releasearbeit läuft. Ein `v1.0.0`-Tag ist erst zulässig, wenn jedes Pf
 
 ## Enthalten mit Einschränkungen
 
-- Der Live-SSH-Transport ist implementiert, benötigt aber noch einen echten eingeschränkten OpenSSH-Server, geprüften Hostschlüssel-Bootstrap sowie einen erfolgreichen und einen abgelehnten Transfer. Das ausgepackte OpenSSH-9.2-`sshd` konnte im unprivilegierten WSL-Sandbox-Test keinen Socket binden (`Operation not permitted`).
+- Der Live-SSH-Transport ist im GitHub-Actions-Lauf `45392269226` mit `/usr/sbin/sshd` abgenommen: erfolgreicher Transfer und Ablehnung mit leerer `known_hosts`-Datei wurden beobachtet. Die lokale unprivilegierte WSL-Sandbox kann den ausgepackten Daemon weiterhin nicht binden und ist daher nicht die Quelle des nativen Netzwerknachweises.
 - Die native M3-Evidenz verwendet Debian-Paketversionen 2.17.10 und 1.7.2, die unter `/tmp` ausgepackt wurden. Das ist kein Nachweis historischer Kompatibilität und pollt keine Produktionsschnittstelle.
 - Maintenance und Acknowledgement annotieren den kanonischen M1-Zustand; externe Mail/SMS-Zustellung und eine vollständige Eskalationsengine gehören nicht zum Umfang.
 - Historische Unix-, alte Perl-, CFEngine- und Produktkompatibilität bleibt ohne gesonderten Nachweis unverifiziert.
@@ -29,6 +29,13 @@ Status: Releasearbeit läuft. Ein `v1.0.0`-Tag ist erst zulässig, wenn jedes Pf
 - Historische MRTG-/RRDtool-/CFEngine- und originale Unix-Gasttests.
 - Nagios/Ganglia, SNMP-Polling, Provisioning und automatische Reparatur.
 
+## Abnahmenachweise
+
+- GitHub-Actions-Lauf `45392269226` bestand `make test`; im Log stehen `M2.1 SSH integration: PASS sshd=/usr/sbin/sshd` und `documents=52 missing=0 broken_links=0`.
+- Die native M3-Abnahme bestand mit den unter `/tmp` ausgepackten Debian-Paketen MRTG 2.17.10 und RRDtool 1.7.2; HTML-, PNG- und RRD-Fetch-Artefakte wurden erzeugt und geprüft.
+- M4 Backup/Restore, Maintenance/Acknowledgement, beide Beispiel-Labore und die saubere Release-Extraktion bestanden lokal.
+- Das Release-Paket erzeugte Quellarchiv, Manifest und SHA256-Checksum-Manifest ohne Laufzeitdaten oder private Schlüssel.
+
 ## Befehle für das Release-Gate
 
     make test
@@ -39,4 +46,4 @@ Status: Releasearbeit läuft. Ein `v1.0.0`-Tag ist erst zulässig, wenn jedes Pf
     tests/m4-operations.sh
     tests/m2-ssh-integration.sh --require
 
-Zusätzlich sind saubere Extraktion, Checksum-Manifeste, synchrones `main`/`origin/main`, erfolgreiche Actions für den exakten Commit und ein geprüfter annotierter Tag erforderlich. Solange der SSH-Befehl in einer kontrollierten Umgebung nicht erfolgreich läuft, bleibt das Stable-Release-Gate offen.
+Zusätzlich sind saubere Extraktion, Checksum-Manifeste, synchrones `main`/`origin/main`, erfolgreiche Actions für den exakten Commit und ein geprüfter annotierter Tag erforderlich. Diese Vorveröffentlichungsprüfungen sind für `7920cad` abgeschlossen; die Veröffentlichung muss noch exakt auf diesen geprüften Commit zeigen.

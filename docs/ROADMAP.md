@@ -74,7 +74,7 @@ The repository must never mislabel a fixture-based test as live network or histo
 - [x] Persistent approval, rejection, disable/enable lifecycle and enrollment audit events.
 - [x] M1 integration for dynamically enrolled and disabled hosts.
 - [x] Fixed-command SSH transport adapter with strict client-side host-key options and bounded framing.
-- [ ] Native live SSH transfer acceptance, host-key replacement, credential rotation and compromised-key recovery.
+- [x] Native live SSH transfer acceptance with a restricted OpenSSH fixture and host-key rejection test (CI evidence); replacement, rotation and compromised-key recovery remain open.
 - [ ] No remote shell or arbitrary command submission; this boundary remains enforced.
 
 **Acceptance:** two-client offline lab with one approved and one rejected client, signed status import, tamper/replay/disable negatives, static report, no listener and no privileged operation. This is not native network-transport acceptance.
@@ -87,10 +87,10 @@ The bounded V1.0 core is now frozen in [RELEASE-1.0.md](RELEASE-1.0.md): M2.1 tr
 
 - [x] External MRTG four-line data adapter from a local counter fixture.
 - [x] RRDtool wrapper for an opt-in file.
-- [ ] Run actual MRTG 2 with example config in isolated guest; capture a generated graph.
+- [x] Run actual MRTG 2 with example config in an isolated disposable prefix; capture generated HTML and PNG artifacts.
 - [ ] Explain counter wraparound, 32/64-bit SNMP counter limits and 5-minute polling.
 - [ ] Implement SNMP v1/v2c adapter **only in a tightly isolated lab** and without embedded community strings.
-- [ ] Run RRDtool create/update/fetch/graph lifecycle with deterministic sample timestamps and archive test.
+- [x] Run RRDtool create/update/fetch/graph lifecycle with deterministic sample timestamps and archive definitions.
 - [ ] Provide separate Nagios/Ganglia-era adapters only in P4/P5.
 
 **Acceptance:** four-line contract check plus archived MRTG and RRDtool exact version runs, verified graph and rate behavior, no production SNMP credentials.

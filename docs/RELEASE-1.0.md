@@ -2,7 +2,7 @@
 
 Deutsch: [Deutsche Fassung](RELEASE-1.0.de.md)
 
-Status: release work in progress. No `v1.0.0` tag is authorized until every mandatory gate has evidence.
+Status: mandatory acceptance evidence is complete on commit `7920cad`. The annotated `v1.0.0` tag and GitHub release are the remaining publication steps.
 
 ## Included and verified
 
@@ -17,7 +17,7 @@ Status: release work in progress. No `v1.0.0` tag is authorized until every mand
 
 ## Included with limitations
 
-- Live SSH transport is implemented but native network acceptance still requires an actual restricted OpenSSH server, reviewed host-key bootstrap and a successful plus rejected transfer. The present environment's extracted OpenSSH 9.2 `sshd` could not bind a test socket (`Operation not permitted`) under the unprivileged WSL sandbox.
+- Live SSH transport is accepted in GitHub Actions run `45392269226` using `/usr/sbin/sshd`, including a successful transfer and rejection with an empty `known_hosts` file. The local unprivileged WSL sandbox still cannot bind the extracted daemon and is not the native-network evidence source.
 - Native M3 evidence uses Debian package versions 2.17.10 and 1.7.2 unpacked under `/tmp`; it is not historical 1999 compatibility evidence and does not poll a production interface.
 - Maintenance and acknowledgement annotate canonical M1 state; external email/SMS delivery and a full alert escalation engine are outside this scope.
 - Historical Unix, old Perl, CFEngine and product-version compatibility remain unverified unless separately recorded.
@@ -29,6 +29,13 @@ Status: release work in progress. No `v1.0.0` tag is authorized until every mand
 - Historical MRTG/RRDtool/CFEngine and original Unix guest validation.
 - Nagios/Ganglia, SNMP polling, provisioning and automatic remediation.
 
+## Acceptance evidence
+
+- GitHub Actions run `45392269226` passed `make test`; its log records `M2.1 SSH integration: PASS sshd=/usr/sbin/sshd` and `documents=52 missing=0 broken_links=0`.
+- Native M3 acceptance passed with Debian packages MRTG 2.17.10 and RRDtool 1.7.2 unpacked under `/tmp`, creating and checking HTML, PNG and RRD fetch artifacts.
+- M4 backup/restore, maintenance/acknowledgement, both example laboratories and clean release extraction passed locally.
+- The release package produced a source archive, manifest and SHA256 checksum manifest without runtime data or private keys.
+
 ## Release gate commands
 
     make test
@@ -39,4 +46,4 @@ Status: release work in progress. No `v1.0.0` tag is authorized until every mand
     tests/m4-operations.sh
     tests/m2-ssh-integration.sh --require
 
-The final gate additionally requires clean extraction testing, checksum manifests, synchronized `main`/`origin/main`, successful Actions for the exact commit and a reviewed annotated tag. Until the SSH command succeeds in a controlled environment, the stable release gate remains open.
+The final gate additionally requires clean extraction testing, checksum manifests, synchronized `main`/`origin/main`, successful Actions for the exact commit and a reviewed annotated tag. These pre-publication checks are complete for `7920cad`; publication must still point exactly to that verified commit.

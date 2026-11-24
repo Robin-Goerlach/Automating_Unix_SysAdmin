@@ -43,14 +43,14 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 - [x] Dauerhafter Freigabe-, Ablehnungs-, Sperr-/Wiederaufnahme-Lifecycle mit Audit-Ereignissen.
 - [x] M1-Einbindung dynamisch registrierter und gesperrter Rechner.
 - [x] SSH-Transportadapter mit festem Befehl, strikten Client-Host-Key-Optionen und begrenztem Framing.
-- [ ] Native Live-SSH-Abnahme, Hostschlüssel-Austausch, Credential-Wechsel und Recovery kompromittierter Schlüssel.
+- [x] Native Live-SSH-Abnahme mit eingeschränktem OpenSSH-Fixture und Hostschlüssel-Ablehnung (CI-Nachweis); Austausch, Wechsel und Recovery kompromittierter Schlüssel bleiben offen.
 - [ ] Keine Remote-Shell und keine beliebige Befehlsausführung; diese Grenze bleibt bestehen.
 
 **Abnahme:** Zwei-Client-Offline-Labor mit einem genehmigten und einem abgelehnten Client, signiertem Import, Manipulations-/Replay-/Sperrtests, statischem Bericht, keinem Listener und ohne privilegierte Operation. Dies ist keine Abnahme eines Netzwerktransports.
 
 ## V1.0-Kernumfang
 
-Der begrenzte V1.0-Kern ist in [RELEASE-1.0.de.md](RELEASE-1.0.de.md) eingefroren: M2.1-Transport, ausgewählte MRTG-/RRDtool-Integration, sichere Installer, ablaufende Maintenance-/Acknowledgement-Annotationen, Backup/Restore und zweisprachige Betriebsdokumentation. Offen sind nur noch Evidenzgates statt neuer Roadmap-Erweiterungen: ein echter eingeschränkter `sshd`-Transfer mit Ablehnung, finale Extraktions-/Checksum-Prüfung und Release-Publikation.
+Der begrenzte V1.0-Kern ist in [RELEASE-1.0.de.md](RELEASE-1.0.de.md) eingefroren: M2.1-Transport, ausgewählte MRTG-/RRDtool-Integration, sichere Installer, ablaufende Maintenance-/Acknowledgement-Annotationen, Backup/Restore und zweisprachige Betriebsdokumentation. Die Evidenzgates sind für `7920cad` abgeschlossen; die Veröffentlichung bleibt als letzter Publikationsschritt.
 
 ## R0 — Eigenständige Grundlage
 
@@ -71,10 +71,10 @@ Der begrenzte V1.0-Kern ist in [RELEASE-1.0.de.md](RELEASE-1.0.de.md) eingefrore
 ## R3 — MRTG, SNMP und RRDtool
 
 - [x] Vierzeilige externe MRTG-Zählerausgabe und opt-in-RRDtool-Wrapper.
-- [ ] Echtes MRTG 2 in isolierter Umgebung mit Diagramm prüfen.
+- [x] Echtes MRTG 2 in einem isolierten Wegwerf-Präfix mit Diagramm prüfen.
 - [ ] Zählerüberlauf, 32-/64-Bit-Grenzen und 5-Minuten-Abfrage dokumentieren.
 - [ ] SNMP v1/v2c nur in isolierter Umgebung ohne eingebettete Communities.
-- [ ] RRDtool create/update/fetch/graph mit festen Zeitstempeln prüfen.
+- [x] RRDtool create/update/fetch/graph mit festen Zeitstempeln und Archivdefinitionen prüfen.
 - [ ] Nagios-/Ganglia-Adapter erst in späteren Profilen.
 
 ## R4 — Unabhängige zentrale Überwachung
