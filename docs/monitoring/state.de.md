@@ -14,6 +14,8 @@ Regeln:
 
 Der M2-Lifecycle lautet `pending-approval`, `approved`, `active`, `rejected` und `disabled`. M1 leitet den Gesundheitszustand weiterhin getrennt ab; eine gesperrte Registrierung wird purple angezeigt und darf keine signierten Statusdaten importieren. Der Dateiaustausch vertraut einem Hostnamen nicht ohne den genehmigten SSH-Public-Key.
 
+Maintenance und Acknowledgement sind Betreiberannotationen unter `operations_dir`. Sie ersetzen den kanonischen Gesundheitszustand nicht. Eine gültige Annotation wird im Zyklus an die Meldung angehängt; abgelaufene Einträge werden ignoriert.
+
 ## Datensätze
 
 Letzte Meldungen:

@@ -10,6 +10,8 @@ English: [English version](TESTING.md)
 
 Es werden weder Netzwerkzugriff noch root-Rechte benötigt.
 
+`tests/m3-native.sh --require` führt die bereitgestellten MRTG- und RRDtool-Binaries aus und prüft HTML-/PNG-/RRD-Artefakte; ohne diese wird `SKIPPED` gemeldet. `tests/m2-ssh-integration.sh --require` führt bei vorhandenem, unprivilegiert nutzbarem `sshd` einen echten OpenSSH-Client-/Servertest aus. `tests/m4-backup.sh` und `tests/m4-operations.sh` prüfen Restore-Integrität und ablaufende Betreibersteuerung.
+
 ## Zustands- und Exit-Verträge
 
 - `sasd-config-drift`: 0 ohne Abweichung, 1 bei fehlendem oder verändertem Ziel, 2 bei unbekanntem/unsicherem Referenzzustand.

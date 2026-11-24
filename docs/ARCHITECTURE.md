@@ -51,7 +51,7 @@ The inventory is an operator-maintained TSV contract. It is not DNS, a CMDB, or 
 
 Complementary independent tools also parse offline passwd snapshots (UID anomalies), traditional BSD syslog (program counts), configured NTP sources and bounded five-field user cron syntax. They do not access credentials, execute jobs, contact time servers or modify accounts.
 
-The layout intentionally avoids a mandatory shared library, database, agent framework or service manager. Unix installations can use only the tools they need. M2 uses the established `ssh-keygen -Y sign/verify` mechanism; it does not define cryptography or a network protocol.
+The layout intentionally avoids a mandatory shared library, database, agent framework or service manager. Unix installations can use only the tools they need. M2 uses the established `ssh-keygen -Y sign/verify` mechanism; M2.1 carries the signed payload through an administrator-configured OpenSSH forced command and does not define a general network protocol.
 
 ## Interfaces and status semantics
 
@@ -93,7 +93,7 @@ RRDtool bridge accepts explicit create or update commands. No archival deletion,
 - Status-store uses exclusive temporary-file creation and rename but should not run in a directory writable by untrusted users; race-free replacement of an attacker-controlled final path is not formally proven.
 - Status-board writes an explicitly chosen file. Do not run it as root or serve the generated HTML on an untrusted webserver without a separate access-control and exposure review.
 - Config-drift reads chosen directories and rejects symlink final objects, but ancestor directory symlink traversal is not comprehensively prevented: use only trusted lab roots. The R2 site audit inherits this limitation.
-- No remote transport, authentication, encryption or conflict handling exists in the status format. Adding a TCP listener requires a new security design.
+- The status format itself has no remote transport or authentication. M2.1 is a separate SSH adapter with explicit host-key trust, forced-command restrictions and serialized receiver staging; it does not add a TCP listener.
 - The RRD bridge is useful only if an appropriate RRDtool is installed. A selected target must be tested independently.
 - A modern Linux CI job does not prove Solaris, AIX, HP-UX, IRIX, OpenBSD, FreeBSD or older Perl support.
 
@@ -103,4 +103,4 @@ Classic deployment may eventually use /usr/local/sasd/bin and /usr/local/sasd/et
 
 The current site layout is `site/hosts.tsv`, `site/roles.tsv`, and role manifests below the selected golden root. A host record has hostname, documentation IPv4 address, OS family, one role, comma-separated groups, and profile. All hosts receive the independent `baseline` class; the resolver adds `role_NAME` and `group_NAME`. These names only select SASD work and do not emulate CFEngine's class engine.
 
-M1 uses the same inventory and adds `site/checks.tsv` for check applicability. Its installation template is `site/monitoring.conf`; runtime files are kept under a selected prefix and are separate from source-controlled configuration. `sasd-monitor-import` accepts the existing four-column status contract from local files, while `sasd-monitor-cycle` owns freshness-derived state and bounded transitions. There is no central socket or remote transport. M2's file exchange verifies an approved SSH public-key identity, a signed payload, role/check applicability, expiry, clock window and monotonic sequence before handing records to M1. A live SSH channel remains a separate deployment and acceptance task.
+M1 uses the same inventory and adds `site/checks.tsv` for check applicability. Its installation template is `site/monitoring.conf`; runtime files are kept under a selected prefix and are separate from source-controlled configuration. `sasd-monitor-import` accepts the existing four-column status contract from local files, while `sasd-monitor-cycle` owns freshness-derived state, operations annotations and bounded transitions. M2 verifies an approved SSH public-key identity, a signed payload, role/check applicability, expiry, clock window and monotonic sequence before handing records to M1. M2.1 provides the optional administrator-configured SSH channel; a live server acceptance remains separate.

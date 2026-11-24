@@ -29,6 +29,8 @@ Eine eigenständig entwickelte SASD-Sammlung für Unix-Systemadministration. Aus
 - bin/sasd-monitor-cycle – Zustände, Frische und begrenzte Historie berechnen.
 - bin/sasd-monitor-report – statisches HTML für den aktuellen Zustand erzeugen.
 - bin/sasd-monitor-mrtg – eine zu prüfende MRTG-Kandidatenkonfiguration erzeugen.
+- bin/sasd-monitor-control – ablaufende Maintenance- und Acknowledgement-Annotationen speichern.
+- bin/sasd-monitor-backup / restore – freigegebene Monitoringdaten sichern und wiederherstellen.
 - bin/sasd-enrollment – Registrierungsanträge genehmigen, verwerfen und sperren.
 - bin/sasd-node-status – bestehende Statusdatensätze mit SSH signieren.
 - bin/sasd-monitor-auth-import – genehmigte Identität prüfen und signierte Statusdaten importieren.
@@ -52,7 +54,7 @@ Die Beispieldaten sind synthetisch. Ein Produktivsystem wird dadurch nicht unter
 
 Das R2-Rechnerinventar ist unter [site/README.de.md](site/README.de.md) beschrieben. Die Adressen aus `192.0.2.0/24` sind Dokumentationswerte; es gibt keine DNS-Auflösung. Die CFEngine-1-Dateien unter [cfengine/v1/README.de.md](cfengine/v1/README.de.md) sind unbestätigte Kandidaten, solange kein originales Programm in einer passenden Umgebung ausgeführt wurde.
 
-Der M1-Monitoring-Server ist unter [docs/monitoring/README.de.md](docs/monitoring/README.de.md) beschrieben. Er installiert sicher in ein Wegwerfverzeichnis, verarbeitet lokale Vierfeld-Statusmeldungen, erkennt veraltete Zustände, führt eine begrenzte Historie und erzeugt statisches HTML. M2-Registrierung und der feste M2.1-SSH-Transport sind unter [docs/monitoring/enrollment.de.md](docs/monitoring/enrollment.de.md) und [docs/monitoring/transport.de.md](docs/monitoring/transport.de.md) beschrieben; SASD fügt keinen Listener hinzu.
+Der M1-Monitoring-Server ist unter [docs/monitoring/README.de.md](docs/monitoring/README.de.md) beschrieben. Er installiert sicher in ein Wegwerfverzeichnis, verarbeitet lokale Vierfeld-Statusmeldungen, erkennt veraltete Zustände, führt eine begrenzte Historie und erzeugt statisches HTML. M2-Registrierung und der feste M2.1-SSH-Transport sind unter [docs/monitoring/enrollment.de.md](docs/monitoring/enrollment.de.md) und [docs/monitoring/transport.de.md](docs/monitoring/transport.de.md) beschrieben; SASD fügt keinen Listener hinzu. Der genaue V1.0-Umfang steht in [docs/RELEASE-1.0.de.md](docs/RELEASE-1.0.de.md).
 
 ## Produktentwicklung
 

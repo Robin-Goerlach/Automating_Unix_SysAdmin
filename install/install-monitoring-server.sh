@@ -27,16 +27,16 @@ check_ancestors "$prefix"
 "$ROOT/bin/sasd-monitor-config" --config "$config" --check >/dev/null || die "source configuration validation failed"
 echo "prefix=$prefix"
 echo "config=$config -> $prefix/etc/sasd-monitor.conf"
-echo "runtime=$prefix/var/{status,history,metrics,reports,enrollment}"
+echo "runtime=$prefix/var/{status,history,metrics,reports,enrollment,operations}"
 echo "optional integrations are never installed or enabled automatically"
 [ "$mode" = apply ] || { echo "dry-run: no files written"; exit 0; }
 umask 077
-for d in bin etc lib lib/SASD var var/status var/status/latest var/history var/metrics var/reports share share/mrtg log; do
+for d in bin etc lib lib/SASD var var/status var/status/latest var/history var/metrics var/reports var/operations share share/mrtg log; do
     [ ! -L "$prefix/$d" ] || die "installation directory is a symlink: $prefix/$d"
 done
-mkdir -p "$prefix/bin" "$prefix/etc" "$prefix/lib/SASD" "$prefix/var/status/latest" "$prefix/var/history" "$prefix/var/metrics" "$prefix/var/reports" "$prefix/var/enrollment/requests" "$prefix/var/enrollment/records" "$prefix/var/enrollment/replay" "$prefix/var/enrollment/keys" "$prefix/share/mrtg" "$prefix/log"
+mkdir -p "$prefix/bin" "$prefix/etc" "$prefix/lib/SASD" "$prefix/var/status/latest" "$prefix/var/history" "$prefix/var/metrics" "$prefix/var/reports" "$prefix/var/operations" "$prefix/var/enrollment/requests" "$prefix/var/enrollment/records" "$prefix/var/enrollment/replay" "$prefix/var/enrollment/keys" "$prefix/share/mrtg" "$prefix/log"
 copy_once(){ src=$1; dst=$2; mode=$3; [ -f "$src" ] && [ ! -L "$src" ] || die "invalid approved source: $src"; if [ -e "$dst" ] || [ -L "$dst" ]; then [ ! -L "$dst" ] || die "destination is a symlink: $dst"; echo "preserve=$dst"; return; fi; cp "$src" "$dst"; chmod "$mode" "$dst"; echo "install=$dst"; }
-for x in sasd-monitor-config sasd-monitor-hosts sasd-monitor-import sasd-monitor-auth-import sasd-monitor-receive sasd-monitor-cycle sasd-monitor-report sasd-monitor-mrtg sasd-enrollment sasd-node-status sasd-mrtg-counter sasd-status-store sasd-status-board sasd-site-inventory sasd-site-classes sasd-site-audit; do copy_once "$ROOT/bin/$x" "$prefix/bin/$x" 0755; done
+for x in sasd-monitor-config sasd-monitor-hosts sasd-monitor-import sasd-monitor-auth-import sasd-monitor-receive sasd-monitor-cycle sasd-monitor-report sasd-monitor-mrtg sasd-monitor-control sasd-monitor-backup sasd-monitor-restore sasd-enrollment sasd-node-status sasd-mrtg-counter sasd-status-store sasd-status-board sasd-site-inventory sasd-site-classes sasd-site-audit; do copy_once "$ROOT/bin/$x" "$prefix/bin/$x" 0755; done
 copy_once "$ROOT/lib/SASD/Monitor.pm" "$prefix/lib/SASD/Monitor.pm" 0644
 copy_once "$config" "$prefix/etc/sasd-monitor.conf" 0640
 for x in hosts.tsv roles.tsv checks.tsv; do copy_once "$ROOT/site/$x" "$prefix/etc/$x" 0640; done

@@ -36,3 +36,7 @@ Import, Frischebewertung und Bericht:
 Der M1-Import ist lokal und nur durch den vom Administrator gewählten Eingabepfad begrenzt. Er ist kein Netzwerkprotokoll und kein Enrollment.
 
 `examples/monitoring-lab.sh` führt die vollständige Wegwerf-Demonstration aus. M2-Registrierung, Client-Bootstrap und signierter Offline-Import sind unter [enrollment.de.md](enrollment.de.md) dokumentiert. `examples/m2-enrollment-lab.sh` zeigt den positiven Ablauf; `tests/m2-enrollment.sh` prüft zwei Clients und Negativfälle.
+
+Betriebssteuerung und Wiederherstellung verwenden `sasd-monitor-control`, `sasd-monitor-backup` und `sasd-monitor-restore`. `tests/m4-operations.sh` und `tests/m4-backup.sh` prüfen sie in Wegwerfpräfixen. Native MRTG-/RRDtool-Evidenz läuft mit `tests/m3-native.sh --require`, wenn die exakten Werkzeuge bereitgestellt sind.
+
+Die Verfahren stehen in [operations.de.md](operations.de.md).

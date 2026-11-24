@@ -11,10 +11,10 @@ our @EXPORT_OK = qw(read_config read_inventory read_checks applicable_checks
     validate_status atomic_write read_state read_latest html_escape ensure_dir
     valid_identifier valid_host valid_color valid_path_value valid_epoch
     valid_fingerprint valid_public_key valid_os_value read_enrollment_record
-    enrollment_record_line append_event now_seconds);
+    enrollment_record_line append_event read_operations now_seconds);
 
 my %CONFIG_KEYS = map { $_ => 1 } qw(inventory roles checks status_dir history_file
-    state_file report_file mrtg_file rrd_dir enrollment_dir profile freshness
+    state_file report_file mrtg_file rrd_dir enrollment_dir operations_dir profile freshness
     history_retention mrtg_command);
 
 sub _real_file {
@@ -103,7 +103,7 @@ sub read_config {
     }
     close $fh;
     my @required = qw(inventory roles checks status_dir history_file state_file
-        report_file mrtg_file rrd_dir enrollment_dir profile freshness
+        report_file mrtg_file rrd_dir enrollment_dir operations_dir profile freshness
         history_retention mrtg_command);
     for (@required) { exists $raw{$_} or die "missing configuration key: $_\n"; }
     valid_path_value($raw{profile}) or die "invalid monitoring profile\n";
@@ -112,7 +112,7 @@ sub read_config {
     my %cfg = %raw;
     $cfg{config_file} = File::Spec->rel2abs($path);
     $cfg{config_dir} = $base;
-    for my $key (qw(inventory roles checks status_dir history_file state_file report_file mrtg_file rrd_dir enrollment_dir mrtg_command)) {
+    for my $key (qw(inventory roles checks status_dir history_file state_file report_file mrtg_file rrd_dir enrollment_dir operations_dir mrtg_command)) {
         $cfg{$key . '_path'} = _resolve($base, $raw{$key});
     }
     return \%cfg;
@@ -273,6 +273,27 @@ sub append_event {
     open(my $fh, '>>', $path) or die "cannot append enrollment event: $!\n";
     print $fh $line, "\n" or die "cannot write enrollment event: $!\n";
     close($fh) or die "cannot close enrollment event: $!\n";
+}
+
+sub read_operations {
+    my ($dir) = @_;
+    my (%maintenance, %acknowledgement);
+    for my $kind (['maintenance.tsv', \%maintenance], ['acknowledgements.tsv', \%acknowledgement]) {
+        my ($name, $out) = @$kind;
+        my $path = File::Spec->catfile($dir, $name);
+        next unless -f $path && !-l $path;
+        open(my $fh, '<', $path) or die "cannot read operation file: $!\n";
+        while (<$fh>) {
+            chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
+            my @v = split /\t/, $_, -1;
+            @v == 5 && valid_host($v[0]) && valid_identifier($v[1]) && valid_epoch($v[2]) &&
+                valid_identifier($v[3]) && length($v[4]) <= 240 && $v[4] !~ /[\x00-\x1f\x7f]/
+                or die "invalid monitoring operation\n";
+            $out->{$v[0]."\t".$v[1]} = { host=>$v[0], check=>$v[1], until=>$v[2], operator=>$v[3], reason=>$v[4] };
+        }
+        close $fh;
+    }
+    return (\%maintenance, \%acknowledgement);
 }
 
 sub html_escape {

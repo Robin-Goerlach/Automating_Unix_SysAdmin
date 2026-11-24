@@ -14,6 +14,8 @@ Rules:
 
 The M2 lifecycle is `pending-approval`, `approved`, `active`, `rejected`, and `disabled`. M1 still derives health state separately; a disabled enrollment is rendered purple and cannot import signed status. The file exchange does not trust a hostname without the approved SSH public key.
 
+Maintenance and acknowledgement are operator annotations stored below `operations_dir`. They never replace the canonical health state. An unexpired annotation is added to the operator message; expired entries are ignored by the cycle.
+
 ## Records
 
 Latest files contain six tab-separated fields:

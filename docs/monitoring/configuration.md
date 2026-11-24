@@ -16,6 +16,7 @@ Required keys:
 | `mrtg_file` | Candidate generated MRTG configuration destination |
 | `rrd_dir` | Metric sample/RRD area; no database is created automatically |
 | `enrollment_dir` | Private M2 request, approval, replay and audit area |
+| `operations_dir` | Expiring maintenance and acknowledgement records |
 | `profile` | Historical profile label, currently `1999` |
 | `freshness` | Maximum report age in seconds before derived state becomes purple |
 | `history_retention` | Maximum retained history records |

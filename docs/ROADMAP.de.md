@@ -48,6 +48,10 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 
 **Abnahme:** Zwei-Client-Offline-Labor mit einem genehmigten und einem abgelehnten Client, signiertem Import, Manipulations-/Replay-/Sperrtests, statischem Bericht, keinem Listener und ohne privilegierte Operation. Dies ist keine Abnahme eines Netzwerktransports.
 
+## V1.0-Kernumfang
+
+Der begrenzte V1.0-Kern ist in [RELEASE-1.0.de.md](RELEASE-1.0.de.md) eingefroren: M2.1-Transport, ausgewählte MRTG-/RRDtool-Integration, sichere Installer, ablaufende Maintenance-/Acknowledgement-Annotationen, Backup/Restore und zweisprachige Betriebsdokumentation. Offen sind nur noch Evidenzgates statt neuer Roadmap-Erweiterungen: ein echter eingeschränkter `sshd`-Transfer mit Ablehnung, finale Extraktions-/Checksum-Prüfung und Release-Publikation.
+
 ## R0 — Eigenständige Grundlage
 
 - [x] POSIX-Shell-Systeminformationen und `df`-Auswertung.

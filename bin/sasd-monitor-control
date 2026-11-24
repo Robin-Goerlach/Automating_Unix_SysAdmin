@@ -1,0 +1,62 @@
+#!/usr/bin/env perl
+use strict;
+use FindBin;
+use File::Spec;
+use Fcntl qw(LOCK_EX O_WRONLY O_CREAT);
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_config read_inventory read_checks valid_host valid_identifier valid_epoch ensure_dir atomic_write read_operations);
+
+my ($config, $action, $host, $check, $until, $operator, $reason) = ('','','','','','','');
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--config') { $config = shift @ARGV; }
+    elsif ($a eq '--action') { $action = shift @ARGV; }
+    elsif ($a eq '--host') { $host = shift @ARGV; }
+    elsif ($a eq '--check') { $check = shift @ARGV; }
+    elsif ($a eq '--until') { $until = shift @ARGV; }
+    elsif ($a eq '--operator') { $operator = shift @ARGV; }
+    elsif ($a eq '--reason') { $reason = shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-monitor-control --config FILE --action ACTION [--host HOST --check CHECK --until EPOCH --operator ID --reason TEXT]\n", "actions: maintenance-add maintenance-clear acknowledge acknowledgement-clear list\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+$config && -f $config && !-l $config or die "invalid configuration file\n";
+$action =~ /\A(?:maintenance-add|maintenance-clear|acknowledge|acknowledgement-clear|list)\z/ or die "invalid action\n";
+my $cfg = read_config($config);
+my ($hosts, $roles) = read_inventory($cfg->{inventory_path}, $cfg->{roles_path});
+my $checks = read_checks($cfg->{checks_path});
+my $dir = $cfg->{operations_dir_path}; ensure_dir($dir, 0750);
+sub target {
+    valid_host($host) && exists $hosts->{$host} or die "unknown host\n";
+    valid_identifier($check) && exists $checks->{$check} or die "unknown check\n";
+    my $role = $checks->{$check}->{role};
+    ($role eq '*' || $role eq 'baseline' || $role eq $hosts->{$host}->{role}) or die "check is not assigned to host\n";
+}
+sub write_ops {
+    my ($name, $records) = @_;
+    my $path = File::Spec->catfile($dir, $name);
+    my $lockpath = File::Spec->catfile($dir, '.operations.lock');
+    sysopen(my $lock, $lockpath, O_WRONLY|O_CREAT, 0600) or die "cannot open operation lock: $!\n";
+    flock($lock, LOCK_EX) or die "cannot lock operations: $!\n";
+    my @lines;
+    for my $k (sort keys %$records) { my $r = $records->{$k}; push @lines, join("\t", @$r{qw(host check until operator reason)}); }
+    atomic_write($path, (@lines ? join("\n", @lines) . "\n" : ''), 0640);
+}
+if ($action eq 'list') {
+    my ($m, $a) = read_operations($dir);
+    for my $r (values %$m) { print join("\t", 'maintenance', @$r{qw(host check until operator reason)}), "\n"; }
+    for my $r (values %$a) { print join("\t", 'acknowledgement', @$r{qw(host check until operator reason)}), "\n"; }
+    exit 0;
+}
+target();
+valid_identifier($operator) or die "invalid operator\n";
+$reason ne '' && length($reason) <= 240 && $reason !~ /[\x00-\t\x0b-\x1f\x7f]/ or die "invalid reason\n";
+my ($m, $a) = read_operations($dir);
+if ($action eq 'maintenance-add' || $action eq 'acknowledge') {
+    valid_epoch($until) && $until > time() or die "until must be a future epoch\n";
+    my $r = { host=>$host, check=>$check, until=>$until, operator=>$operator, reason=>$reason };
+    if ($action eq 'maintenance-add') { $m->{$host."\t".$check} = $r; write_ops('maintenance.tsv', $m); print "maintenance=OK host=$host check=$check until=$until\n"; }
+    else { $a->{$host."\t".$check} = $r; write_ops('acknowledgements.tsv', $a); print "acknowledgement=OK host=$host check=$check until=$until\n"; }
+    exit 0;
+}
+if ($action eq 'maintenance-clear') { delete $m->{$host."\t".$check}; write_ops('maintenance.tsv', $m); print "maintenance=cleared host=$host check=$check\n"; exit 0; }
+delete $a->{$host."\t".$check}; write_ops('acknowledgements.tsv', $a); print "acknowledgement=cleared host=$host check=$check\n";

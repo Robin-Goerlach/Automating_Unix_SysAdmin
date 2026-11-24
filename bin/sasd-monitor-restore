@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+usage(){ echo "usage: sasd-monitor-restore --archive ARCHIVE --dest PREFIX" >&2; exit 2; }
+archive= dest=
+die(){ echo "sasd-monitor-restore: $*" >&2; exit 2; }
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --archive) [ "$#" -ge 2 ] || usage; archive=$2; shift 2 ;;
+        --dest) [ "$#" -ge 2 ] || usage; dest=$2; shift 2 ;;
+        --help) usage ;;
+        *) die "unknown argument: $1" ;;
+    esac
+done
+[ -f "$archive" ] && [ ! -L "$archive" ] || die "invalid archive"
+case "$dest" in /*) ;; *) die "destination must be absolute" ;; esac
+case "$dest" in */../*|*/..|*/./*|*/.) die "unsafe destination path" ;; esac
+[ ! -e "$dest" ] || die "destination exists; refusing overwrite"
+parent=$(dirname "$dest"); [ -d "$parent" ] || die "destination parent does not exist"
+check_ancestors(){ p=$1; while [ "$p" != "/" ] && [ -n "$p" ]; do [ ! -L "$p" ] || die "symlink path component: $p"; n=$(dirname "$p"); [ "$n" != "$p" ] || break; p=$n; done; }
+check_ancestors "$parent"
+tmp=$(mktemp -d "$parent/.sasd-restore.XXXXXX")
+cleanup(){ rm -rf "$tmp"; }
+trap cleanup EXIT HUP INT TERM
+mkdir "$tmp/root"
+tar -tf "$archive" > "$tmp/list" || die "cannot read archive"
+while IFS= read -r entry; do
+    case "$entry" in
+        etc/sasd-monitor.conf|etc/hosts.tsv|etc/roles.tsv|etc/checks.tsv|var/status|var/status/*|var/history|var/history/*|var/metrics|var/metrics/*|var/reports|var/reports/*|var/operations|var/operations/*|var/enrollment|var/enrollment/requests|var/enrollment/requests/*|var/enrollment/records|var/enrollment/records/*|var/enrollment/events.tsv|share/mrtg|share/mrtg/*) ;;
+        *) die "unsafe or unexpected archive entry: $entry" ;;
+    esac
+done < "$tmp/list"
+tar -xf "$archive" -C "$tmp/root" 2>/dev/null || die "cannot extract archive"
+find "$tmp/root" -type l -print -quit | grep . >/dev/null 2>&1 && die "archive contains symlink"
+mv "$tmp/root" "$dest"
+trap - EXIT HUP INT TERM
+echo "restore=OK destination=$dest"

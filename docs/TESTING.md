@@ -10,7 +10,9 @@ make syntax runs perl -c on the Perl scripts and sh -n on the POSIX shell script
 
 No network activity or root permissions are needed. `tests/r2-site.sh` validates the four-host role inventory, including malformed inventory rejection, clean and changed role manifests, and the green/yellow status transition. `tests/m1-monitoring.sh` validates configuration, dry-run/apply/repeat installation, preservation, symlink/system-prefix rejection, imports, deterministic stale state, HTML escaping, MRTG template generation, and CRLF configuration input. `tests/m2-enrollment.sh` creates two disposable clients, approves one, rejects the other, verifies SSH signatures, replay and tamper rejection, and checks disable behavior. `examples/monitoring-lab.sh` and `examples/m2-enrollment-lab.sh` are the end-to-end disposable demonstrations.
 
-CI workflow: .github/workflows/test.yml. The workflow runs on a current Ubuntu GitHub Actions image. This only establishes the current source's contemporary smoke-test behavior.
+`tests/m3-native.sh --require` runs the supplied MRTG and RRDtool binaries and checks HTML/PNG/RRD artifacts; without them it reports `SKIPPED`. `tests/m2-ssh-integration.sh --require` runs an actual OpenSSH client/server test when an unprivileged testable `sshd` is available. `tests/m4-backup.sh` and `tests/m4-operations.sh` exercise restore integrity and expiring operator controls.
+
+CI workflow: .github/workflows/test.yml. The workflow runs on a current Ubuntu GitHub Actions image. Optional native tool and SSH gates require their explicit harness commands.
 
 ## Exit and state contract
 

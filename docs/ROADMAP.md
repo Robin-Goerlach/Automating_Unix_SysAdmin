@@ -79,6 +79,10 @@ The repository must never mislabel a fixture-based test as live network or histo
 
 **Acceptance:** two-client offline lab with one approved and one rejected client, signed status import, tamper/replay/disable negatives, static report, no listener and no privileged operation. This is not native network-transport acceptance.
 
+## V1.0 core boundary
+
+The bounded V1.0 core is now frozen in [RELEASE-1.0.md](RELEASE-1.0.md): M2.1 transport, selected MRTG/RRDtool integration, installer safety, expiring maintenance/acknowledgement annotations, backup/restore and bilingual operator documentation. The remaining release blockers are evidence gates, not new roadmap expansion: an actual restricted `sshd` transfer/rejection test, final extraction/checksum verification and release publication.
+
 ## R3 — MRTG, SNMP, RRDtool (P2/P3)
 
 - [x] External MRTG four-line data adapter from a local counter fixture.

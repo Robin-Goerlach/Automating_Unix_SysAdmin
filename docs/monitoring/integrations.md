@@ -4,11 +4,11 @@ Deutsch: [Deutsche Fassung](integrations.de.md)
 
 ## MRTG
 
-`bin/sasd-monitor-mrtg` generates a reviewable candidate configuration with one target per approved R2 host and metric. It maps each target to a local `sasd-mrtg-counter` input path and embeds no SNMP address, community, or credential. Existing `sasd-mrtg-counter` remains the four-line external-target adapter. Native MRTG parsing and graph generation are not claimed; run an optional version-specific test only when MRTG is explicitly installed.
+`bin/sasd-monitor-mrtg` generates a reviewable candidate configuration with one target per approved R2 host and metric. It maps each target to a local `sasd-mrtg-counter` input path and embeds no SNMP address, community, or credential. Existing `sasd-mrtg-counter` remains the four-line external-target adapter. `tests/m3-native.sh --require` executes a supplied MRTG binary and checks generated HTML/PNG artifacts; the recorded run used MRTG 2.17.10 from an isolated Debian package.
 
 ## RRDtool
 
-The configured `rrd_dir` reserves a metric area. Existing `sasd-rrd-cycle` remains the explicit RRDtool wrapper. M1 does not create, update, overwrite, or delete RRD databases automatically. A real RRDtool lifecycle requires separate version evidence.
+The configured `rrd_dir` reserves a metric area. Existing `sasd-rrd-cycle` remains the explicit RRDtool wrapper. M1 does not create, update, overwrite, or delete RRD databases automatically. `tests/m3-native.sh --require` exercises create/update/fetch/graph with RRDtool 1.7.2; this is contemporary evidence, not historical compatibility.
 
 ## NetSaint, Nagios, and Ganglia
 

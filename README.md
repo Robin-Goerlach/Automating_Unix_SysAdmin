@@ -31,12 +31,14 @@ An independently developed SASD collection of Unix system-administration scripts
 | bin/sasd-monitor-cycle | Derive freshness-aware state and bounded history | Explicit local runtime write |
 | bin/sasd-monitor-report | Render the central state as static HTML | Optional output write |
 | bin/sasd-monitor-mrtg | Generate a candidate MRTG configuration | Optional output write |
+| bin/sasd-monitor-control | Record expiring maintenance and acknowledgement annotations | Explicit local runtime write |
+| bin/sasd-monitor-backup / restore | Backup and restore approved monitoring data | Explicit archive/restore write |
 | bin/sasd-enrollment | Review, approve, reject and disable enrollment records | Explicit local runtime write |
 | bin/sasd-node-status | Create an SSH-signed status payload from existing records | Read-only input; explicit payload write |
 | bin/sasd-monitor-auth-import | Verify approved SSH identity and import signed status | Explicit local runtime write |
 | install/install-sasd-client.sh | Prepare a disposable client and enrollment request | Explicit local prefix write |
 
-The SASD status protocol is deliberately **not Big Brother's wire protocol**. There is no daemon, listening socket, remote command execution, or root-required installer in this milestone. Optional tools require their original external programs and must be separately validated.
+The SASD status protocol is deliberately **not Big Brother's wire protocol**. There is no daemon, listening socket, remote command execution, or root-required installer. The optional M2.1 adapter uses an administrator-configured OpenSSH forced command; MRTG/RRDtool require their original external programs and explicit validation.
 
 ## Run the offline examples
 
@@ -67,7 +69,7 @@ See [bigbrother/README.md](bigbrother/README.md) for the period-style host inven
 
 The R2 site inventory is documented in [site/README.md](site/README.md). It uses reserved `192.0.2.0/24` documentation records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native acceptance.
 
-The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. The bounded M2 enrollment and M2.1 fixed-command SSH transport are documented under [docs/monitoring/enrollment.md](docs/monitoring/enrollment.md) and [docs/monitoring/transport.md](docs/monitoring/transport.md); no listening service is added by SASD.
+The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. The bounded M2 enrollment and M2.1 fixed-command SSH transport are documented under [docs/monitoring/enrollment.md](docs/monitoring/enrollment.md) and [docs/monitoring/transport.md](docs/monitoring/transport.md); no listening service is added by SASD. The exact V1.0 scope is in [docs/RELEASE-1.0.md](docs/RELEASE-1.0.md).
 
 ## Product direction
 

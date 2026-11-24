@@ -38,3 +38,7 @@ The M1 import step is local and authenticated only by the operator-selected inpu
 Run `examples/monitoring-lab.sh` for the complete disposable demonstration.
 
 M2 enrollment, client bootstrap and signed offline status import are documented in [enrollment.md](enrollment.md). Run `examples/m2-enrollment-lab.sh` for the positive flow and `tests/m2-enrollment.sh` for the two-client negative regression.
+
+Operational controls and recovery use `sasd-monitor-control`, `sasd-monitor-backup` and `sasd-monitor-restore`. Run `tests/m4-operations.sh` and `tests/m4-backup.sh` for their disposable acceptance tests. Native MRTG/RRDtool evidence is available through `tests/m3-native.sh --require` when the exact tools are supplied.
+
+See [operations.md](operations.md) for routine maintenance, acknowledgement, backup and restore procedures.
