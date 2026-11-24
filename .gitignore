@@ -13,6 +13,8 @@ site/*
 !site/README.md
 !site/hosts.tsv
 !site/roles.tsv
+!site/checks.tsv
+!site/monitoring.conf
 !fixtures/site/
 !fixtures/site/**
 .DS_Store
