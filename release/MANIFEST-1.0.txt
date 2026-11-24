@@ -1,0 +1,11 @@
+SASD 1.0 source distribution manifest
+
+The generated release archive contains the tracked source distribution only:
+
+- POSIX shell, Perl and shared parser sources under bin/, lib/ and install/.
+- Source-controlled configuration, fixtures, tests and examples.
+- English and German operator documentation, including docs/RELEASE-1.0.md.
+- MRTG, RRDtool, CFEngine candidate and site configuration examples.
+
+It excludes Git history, ../logs session archives, runtime prefixes, private keys,
+enrollment secrets, local credentials and generated temporary artifacts.
