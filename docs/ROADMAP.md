@@ -141,3 +141,26 @@ Candidate guests in isolation: FreeBSD 3/4, OpenBSD 2/3, Debian 2.x, Red Hat Lin
 The priority is R0 hardening, R1 core tools, then R2–R4 in parallel only where their interfaces are independent; R5–R7 follow acceptance. Map topics to the twelve chapters without reproducing the book in docs/BOOK-MAP.md. Add source provenance entries whenever implementation scope is widened.
 
 Open policy decisions: per-module packaging, real legacy OS installation media rights, centrally hosted monitoring threat model, transport security, Big Brother compatibility/legal feasibility, and whether period-specific subtrees should be individually releasable.
+
+## V1.1 provisioning milestones
+
+### M5 — Golden client and file-system imaging
+
+- [x] Read-only reference-tree audit with explicit unchecked platform-specific fields.
+- [x] TAR capture with explicit source/repository, dry-run/apply, exclusions, manifest and SHA256 record.
+- [x] File-based image catalog and checksum verification.
+- [x] Safe restore into a new disposable directory with archive path/link/special-file checks.
+- [x] Offline positive and negative acceptance without root, network or block devices.
+- [ ] Bootability, raw-disk restore, hardware compatibility and historical platform acceptance.
+
+### M6 — Network installation
+
+- [ ] Controlled BOOTP/DHCP/PXE configuration generation and TFTP staging.
+- [ ] Explicit installation profiles and separate JumpStart/Kickstart/FAI adapters.
+- [ ] Isolated native network-boot acceptance.
+
+### M7 — Postinstallation and monitoring enrollment
+
+- [ ] Host personalization with newly generated identities.
+- [ ] Reuse of the existing M2 enrollment and M2.1 transport without automatic approval.
+- [ ] Reinstallation, duplicate-identity and rejection acceptance.

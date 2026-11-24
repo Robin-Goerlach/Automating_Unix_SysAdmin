@@ -1,0 +1,73 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use POSIX qw(strftime);
+
+my ($root, $out, $profile) = ('', '-', 'unspecified');
+sub usage { die "usage: sasd-golden-audit --root DIR [--out FILE] [--profile NAME]\n"; }
+while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq '--root') { $root = shift @ARGV // usage(); }
+    elsif ($arg eq '--out') { $out = shift @ARGV // usage(); }
+    elsif ($arg eq '--profile') { $profile = shift @ARGV // usage(); }
+    elsif ($arg eq '--help') { print "usage: sasd-golden-audit --root DIR [--out FILE] [--profile NAME]\n"; exit 0; }
+    else { die "unknown argument: $arg\n"; }
+}
+$root && $root =~ m!^/! && -d $root && !-l $root or die "invalid root directory\n";
+$root =~ m!(?:^|/)\.\.(?:/|$)! and die "unsafe root path\n";
+$profile ne '' && $profile !~ /[\t\r\n]/ && $profile =~ /\A[A-Za-z0-9_.-]+\z/ or die "unsafe profile\n";
+$out eq '-' or ($out =~ m!^/! && $out !~ m!(?:^|/)\.\.(?:/|$)! && $out !~ /[\t\r\n]/) or die "unsafe output path\n";
+
+sub value_file {
+    my ($path) = @_;
+    return ('not-checked', 'not present') unless -f $path && !-l $path;
+    open my $fh, '<', $path or return ('error', "cannot read: $!");
+    my $value = <$fh> // '';
+    close $fh;
+    chomp $value; $value =~ s/\r\z//; $value =~ s/[\t\r\n]/ /g;
+    return ('checked', length($value) ? $value : 'empty');
+}
+sub exists_kind {
+    my ($path, $kind) = @_;
+    return ('checked', $kind) if -e $path && !-l $path;
+    return ('not-checked', 'not present');
+}
+sub emit {
+    my ($fh, $name, $status, $value) = @_;
+    $value =~ s/[\t\r\n]/ /g;
+    print {$fh} join("\t", $name, $status, $value), "\n";
+}
+
+my $fh;
+if ($out eq '-') { $fh = *STDOUT; }
+else { open $fh, '>', $out or die "cannot write $out: $!\n"; }
+print {$fh} "SASD-GOLDEN-AUDIT\t1\n";
+emit($fh, 'audit_utc', 'checked', strftime('%Y-%m-%dT%H:%M:%SZ', gmtime));
+emit($fh, 'root', 'checked', $root);
+emit($fh, 'profile', 'checked', $profile);
+my ($s, $v) = value_file("$root/etc/hostname"); emit($fh, 'hostname', $s, $v);
+($s, $v) = value_file("$root/etc/os-release"); emit($fh, 'os_release', $s, $v);
+my $arch = `uname -m`; $arch =~ s/[\r\n]+\z//; emit($fh, 'architecture', 'checked', $arch);
+($s, $v) = exists_kind("$root/etc", 'directory'); emit($fh, 'filesystem_structure', $s, $v);
+($s, $v) = exists_kind("$root/etc/fstab", 'file'); emit($fh, 'filesystem_configuration', $s, $v);
+($s, $v) = exists_kind("$root/var/lib/dpkg/status", 'package database');
+($s, $v) = exists_kind("$root/var/lib/rpm", 'package database') if $s ne 'checked';
+emit($fh, 'installed_components', $s, $v);
+($s, $v) = exists_kind("$root/etc/network", 'directory');
+($s, $v) = exists_kind("$root/etc/hostname", 'hostname file') if $s ne 'checked';
+emit($fh, 'network_configuration', $s, $v);
+($s, $v) = exists_kind("$root/etc/boot", 'directory');
+($s, $v) = exists_kind("$root/boot", 'directory') if $s ne 'checked';
+emit($fh, 'boot_configuration', $s, $v);
+emit($fh, 'partition_information', 'not-checked', 'requires platform-specific read-only inspection');
+emit($fh, 'hardware_dependencies', 'not-checked', 'requires platform-specific inventory');
+($s, $v) = exists_kind("$root/etc/machine-id", 'file');
+($s, $v) = exists_kind("$root/etc/hostid", 'file') if $s ne 'checked';
+emit($fh, 'machine_identity', $s, $v);
+($s, $v) = exists_kind("$root/etc/ssh", 'directory'); emit($fh, 'ssh_host_keys', $s, $s eq 'checked' ? 'directory present; capture excludes host keys' : $v);
+($s, $v) = exists_kind("$root/root/.ssh", 'directory'); emit($fh, 'local_keys', $s, $s eq 'checked' ? 'directory present; capture excludes private keys' : $v);
+($s, $v) = exists_kind("$root/tmp", 'directory'); emit($fh, 'temporary_files', $s, $s eq 'checked' ? 'directory present; capture excludes temporary data' : $v);
+($s, $v) = exists_kind("$root/etc/sasd", 'directory'); emit($fh, 'monitoring_configuration', $s, $v);
+emit($fh, 'snapshot_capability', 'not-checked', 'requires an operator-selected snapshot or quiesced source');
+close $fh or die "cannot close output: $!\n" unless $out eq '-';
+print STDERR "audit=OK root=$root\n";

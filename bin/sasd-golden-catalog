@@ -1,0 +1,58 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+my ($repository, $action, $image) = ('', 'list', '');
+sub usage { die "usage: sasd-golden-catalog --repository DIR [--list|--verify] [--image-id ID]\n"; }
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--repository') { $repository = shift @ARGV // usage(); }
+    elsif ($a eq '--list') { $action = 'list'; }
+    elsif ($a eq '--verify') { $action = 'verify'; }
+    elsif ($a eq '--image-id') { $image = shift @ARGV // usage(); }
+    elsif ($a eq '--help') { usage(); }
+    else { die "unknown argument: $a\n"; }
+}
+$repository =~ m!^/! && -d $repository && !-l $repository or die "invalid repository\n";
+$repository !~ m!(?:^|/)\.\.(?:/|$)! or die "unsafe repository\n";
+$image eq '' || $image =~ /\A[A-Za-z0-9._-]+\z/ or die "unsafe image id\n";
+my $manifest_dir = "$repository/manifests";
+opendir my $dh, $manifest_dir or die "cannot read manifests: $!\n";
+my @files = sort grep { /\.tsv\z/ && -f "$manifest_dir/$_" && !-l "$manifest_dir/$_" } readdir $dh;
+closedir $dh;
+@files = grep { $_ eq "$image.tsv" } @files if $image ne '';
+print "image_id\timage_version\tos_profile\tarchitecture\tcreated_utc\tarchive_format\tsha256\tboot_capability\ttarget_profiles\n" if $action eq 'list';
+for my $file (@files) {
+    my %m;
+    open my $fh, '<', "$manifest_dir/$file" or die "cannot read manifest $file: $!\n";
+    while (<$fh>) {
+        chomp; s/\r\z//; next if /^SASD-GOLDEN-MANIFEST\t/;
+        my ($k, $v) = split /\t/, $_, 2;
+        defined $v && $k =~ /\A[A-Za-z0-9_]+\z/ && $v !~ /[\r\n]/ or die "invalid manifest $file\n";
+        $m{$k} = $v;
+    }
+    close $fh;
+    my ($id) = $file =~ /\A(.+)\.tsv\z/;
+    $m{image_id} eq $id or die "manifest identity mismatch: $file\n";
+    for my $key (qw(image_id image_version os_profile architecture created_utc archive_format sha256 boot_capability target_profiles)) {
+        defined $m{$key} or die "missing $key in $file\n";
+    }
+    if ($action eq 'verify') {
+        defined $m{archive_file} && $m{archive_file} !~ m!^/! && $m{archive_file} !~ m!(?:^|/)\.\.(?:/|$)! or die "unsafe archive path for $id\n";
+        my $archive = "$repository/$m{archive_file}";
+        -f $archive && !-l $archive or die "missing archive for $id\n";
+        my $checksum_file = "$repository/checksums/$id.sha256";
+        open my $cfh, '<', $checksum_file or die "missing checksum for $id\n";
+        my $checksum_line = <$cfh> // ''; close $cfh; chomp $checksum_line;
+        $checksum_line =~ /^([0-9a-f]{64})\s+\Q$m{archive_file}\E\z/ && $1 eq $m{sha256} or die "checksum record mismatch for $id\n";
+        my $actual = `sha256sum "$archive"`;
+        $actual =~ /^([0-9a-f]{64})\s/ or die "cannot checksum $id\n";
+        $1 eq $m{sha256} or die "checksum mismatch for $id\n";
+        system('tar', '-tf', $archive) == 0 or die "cannot list archive for $id\n";
+        print "verified=$id\n";
+    }
+    else {
+        print join("\t", map { $m{$_} } qw(image_id image_version os_profile architecture created_utc archive_format sha256 boot_capability target_profiles)), "\n";
+    }
+}
+print "catalog=OK action=$action images=" . scalar(@files) . "\n" if $action eq 'verify';

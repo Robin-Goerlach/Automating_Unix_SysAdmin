@@ -109,3 +109,26 @@ Mögliche isolierte Gäste sind FreeBSD 3/4, OpenBSD 2/3, Debian 2.x, Red Hat Li
 ## Umfang und Priorität
 
 Priorität haben R0-Härtung und R1-Werkzeuge; R2–R4 können bei unabhängigen Schnittstellen parallel gepflegt werden, R5–R7 folgen der Abnahme. Offene Entscheidungen betreffen Paketierung, Rechte an Installationsmedien, Bedrohungsmodell des zentralen Monitorings, Transportsicherheit und die rechtliche Machbarkeit von Big-Brother-Kompatibilität.
+
+## V1.1-Provisionierungsmeilensteine
+
+### M5 — Golden Client und Dateisystem-Imaging
+
+- [x] Lesendes Audit des Referenzbaums mit ausdrücklich nicht geprüften plattformspezifischen Feldern.
+- [x] TAR-Capture mit Quelle/Repository, Dry-Run/Apply, Ausschlüssen, Manifest und SHA256-Datensatz.
+- [x] Dateibasierter Image-Katalog und Prüfsummenprüfung.
+- [x] Sicherer Restore in ein neues Wegwerfverzeichnis mit Prüfungen von Archivpfaden, Links und Spezialdateien.
+- [x] Offline-Positiv- und Negativabnahme ohne Root, Netzwerk oder Blockgeräte.
+- [ ] Bootfähigkeit, Raw-Datenträger-Restore, Hardwarekompatibilität und historische Plattformabnahme.
+
+### M6 — Netzwerkinstallation
+
+- [ ] Kontrollierte Erzeugung von BOOTP-/DHCP-/PXE-Konfiguration und TFTP-Staging.
+- [ ] Explizite Installationsprofile und getrennte JumpStart-/Kickstart-/FAI-Adapter.
+- [ ] Isolierte native Netzwerkboot-Abnahme.
+
+### M7 — Postinstallation und Monitoring-Enrollment
+
+- [ ] Host-Personalisierung mit neu erzeugten Identitäten.
+- [ ] Wiederverwendung des bestehenden M2-Enrollment und M2.1-Transports ohne automatische Freigabe.
+- [ ] Abnahme von Reinstallation, doppelter Identität und Ablehnung.

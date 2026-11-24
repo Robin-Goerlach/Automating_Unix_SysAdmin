@@ -43,6 +43,8 @@ M2 additionally requires the local `ssh-keygen` implementation for RSA key gener
 
 M1 optional dependency checks intentionally report `SKIPPED` when MRTG or RRDtool is unavailable. This is not a successful native integration result.
 
+`tests/m5-golden.sh` and `examples/m5-golden-lab.sh` exercise the unprivileged golden-client archive lifecycle, including audit, dry-run/apply boundaries, manifest and checksum verification, excluded identity/runtime data, safe restore, repeated-capture protection and archive/metadata negative cases. The test uses only temporary directories and regular files.
+
 R2 categories are separate: offline `make test` is required; an optional integration run may use an explicitly selected `cfagent` in a disposable directory; historical acceptance remains open until CFEngine 1 is exercised on a documented period OS with provenance, checksum, command, output and cleanup evidence.
 
 ## Git checkout line endings

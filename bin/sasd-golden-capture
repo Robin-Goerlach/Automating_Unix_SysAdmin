@@ -1,0 +1,73 @@
+#!/bin/sh
+set -eu
+usage(){ echo "usage: sasd-golden-capture --source DIR --repository DIR --image-id ID --version VERSION --profile PROFILE [--dry-run|--apply] [--force]" >&2; exit 2; }
+source= repository= image= version= profile= mode= force=0
+die(){ echo "sasd-golden-capture: $*" >&2; exit 2; }
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source) [ "$#" -ge 2 ] || usage; source=$2; shift 2 ;;
+        --repository) [ "$#" -ge 2 ] || usage; repository=$2; shift 2 ;;
+        --image-id) [ "$#" -ge 2 ] || usage; image=$2; shift 2 ;;
+        --version) [ "$#" -ge 2 ] || usage; version=$2; shift 2 ;;
+        --profile) [ "$#" -ge 2 ] || usage; profile=$2; shift 2 ;;
+        --dry-run) mode=dry-run; shift ;;
+        --apply) mode=apply; shift ;;
+        --force) force=1; shift ;;
+        --help) usage ;;
+        *) die "unknown argument: $1" ;;
+    esac
+done
+[ -n "$source" ] && [ -n "$repository" ] && [ -n "$image" ] && [ -n "$version" ] && [ -n "$profile" ] || usage
+[ "$mode" = dry-run ] || [ "$mode" = apply ] || die "select --dry-run or --apply"
+case "$source" in /*) ;; *) die "source must be absolute" ;; esac
+case "$repository" in /*) ;; *) die "repository must be absolute" ;; esac
+case "$source" in */../*|*/..|*/./*|*/.) die "unsafe source path" ;; esac
+case "$repository" in */../*|*/..|*/./*|*/.) die "unsafe repository path" ;; esac
+case "$image" in ''|*[!A-Za-z0-9._-]*) die "unsafe image id" ;; esac
+case "$version" in *[!A-Za-z0-9._-]*|'') die "unsafe version" ;; esac
+case "$profile" in *[!A-Za-z0-9._-]*|'') die "unsafe profile" ;; esac
+[ -d "$source" ] && [ ! -L "$source" ] || die "invalid source directory"
+case "$repository" in "$source"/*) die "repository must not be inside source" ;; esac
+check_ancestors(){ p=$1; while [ "$p" != "/" ] && [ -n "$p" ]; do [ ! -L "$p" ] || die "symlink path component: $p"; n=$(dirname "$p"); [ "$n" != "$p" ] || break; p=$n; done; }
+check_ancestors "$source"
+[ -e "$repository" ] || { [ "$mode" = dry-run ] && echo "capture=dry-run repository=$repository image=$image" && exit 0; mkdir -p "$repository"; }
+[ ! -L "$repository" ] && [ -d "$repository" ] || die "invalid repository directory"
+check_ancestors "$repository"
+for d in archives manifests checksums; do [ "$mode" = dry-run ] || mkdir -p "$repository/$d"; done
+archive="$repository/archives/$image.tar"; manifest="$repository/manifests/$image.tsv"; checksum="$repository/checksums/$image.sha256"
+if [ "$force" -ne 1 ]; then [ ! -e "$archive" ] && [ ! -e "$manifest" ] && [ ! -e "$checksum" ] || die "image already exists; use --force explicitly"; fi
+[ "$mode" = apply ] || { echo "capture=dry-run source=$source archive=$archive"; exit 0; }
+tmp="$repository/.capture.$$.tmp"; trap 'rm -f "$tmp" "$tmp.manifest" "$tmp.checksum"' EXIT HUP INT TERM
+rm -f "$tmp" "$tmp.manifest" "$tmp.checksum"
+tar --exclude=./tmp --exclude=./var/tmp --exclude=./run --exclude=./proc --exclude=./sys --exclude=./dev \
+    --exclude=./etc/ssh/ssh_host_* --exclude=./root/.ssh --exclude=./home/*/.ssh \
+    --exclude=./etc/sasd/identity --exclude=./etc/sasd/identity.pub --exclude=./etc/sasd/*.key \
+    -cf "$tmp" -C "$source" . || die "archive creation failed"
+tar -tf "$tmp" >/dev/null || die "archive verification failed"
+sha=$(sha256sum "$tmp" | awk '{print $1}')
+created=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+source_bytes=$(du -sk "$source" | awk '{print $1 * 1024}')
+archive_bytes=$(wc -c < "$tmp" | awk '{print $1}')
+{
+    printf 'SASD-GOLDEN-MANIFEST\t1\n'
+    printf 'image_id\t%s\n' "$image"
+    printf 'image_version\t%s\n' "$version"
+    printf 'created_utc\t%s\n' "$created"
+    printf 'source_root\t%s\n' "$source"
+    printf 'archive_format\ttar\n'
+    printf 'archive_file\tarchives/%s.tar\n' "$image"
+    printf 'sha256\t%s\n' "$sha"
+    printf 'source_bytes\t%s\n' "$source_bytes"
+    printf 'archive_bytes\t%s\n' "$archive_bytes"
+    printf 'os_profile\t%s\n' "$profile"
+    printf 'architecture\t%s\n' "$(uname -m)"
+    printf 'boot_capability\tfilesystem-archive-only\n'
+    printf 'target_profiles\toperator-selected;not-bootable-by-itself\n'
+    printf 'required_postinstall\thostname-network-identity-ssh-monitoring\n'
+    printf 'excluded\ttmp,var/tmp,run,proc,sys,dev,ssh-host-keys,private-ssh-and-sasd-identities\n'
+} > "$tmp.manifest"
+printf '%s  %s\n' "$sha" "archives/$image.tar" > "$tmp.checksum"
+mv "$tmp" "$archive"; mv "$tmp.manifest" "$manifest"; mv "$tmp.checksum" "$checksum"
+chmod 0644 "$archive" "$manifest" "$checksum"
+trap - EXIT HUP INT TERM
+echo "capture=OK image=$image archive=$archive manifest=$manifest"

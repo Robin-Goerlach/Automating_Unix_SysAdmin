@@ -38,3 +38,5 @@ M1 state/history writes use private runtime directories and bounded retention. M
 CFEngine 1 and old MRTG/RRDtool combinations may have known vulnerabilities. Preserve them only inside isolated guests. Licenses and redistribution rights of old software must be checked independently of this project's MIT license.
 
 Report discovered vulnerabilities as private issues or through appropriate security contact mechanisms rather than adding exploitable test infrastructure to a public network.
+
+M5 archives are file-system archives, not bootable images. A live source may be inconsistent; operators must quiesce it or select a consistent snapshot. Host personalization and identity generation are deliberately separate from archive restore. Capture and restore never operate on block devices.
