@@ -1,0 +1,101 @@
+# SASD Automating Unix SysAdmin — Roadmap
+
+English: [English version](ROADMAP.md)
+
+**Stand:** 24.11.2026. **Kompatibilitätsumgebung:** Unix-Stand um 1999. Das Buch von 2009 dient nur als Themenreferenz für spätere Profile.
+
+## Abnahmestufen
+
+- **Implementiert:** Quelltext ist vorhanden und lokales Verhalten ist getestet.
+- **CI-geprüft:** Aktueller automatisierter Test ist erfolgreich; dies beweist kein historisches Betriebssystem.
+- **Integration geprüft:** Ein versioniertes externes Programm wurde tatsächlich ausgeführt.
+- **Historisch geprüft:** Ein dokumentierter Lauf auf der genannten Originalkombination war erfolgreich.
+- **Geplant:** Kein Code und keine Abnahmebehauptung.
+
+Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität bezeichnet werden.
+
+## R2 — Rollenverwaltung und CFEngine 1
+
+- [x] Dateibasiertes Rechner- und Rolleninventar.
+- [x] Deterministische Klassen- und Rollenauflösung sowie lesendes Drift-Audit.
+- [ ] CFEngine-1.4-Syntax mit Originalprogramm und Wegwerf-VM prüfen.
+- [x] Eigenständige Konfigurationsprüfung ohne CFEngine.
+- [ ] Staging, Backup und ausdrückliches Apply mit Rollback.
+
+## M1 — Zentraler SASD-Monitoring-Server
+
+- [x] Begrenzte Konfiguration und Installer mit Dry-run/Apply-Schranke.
+- [x] Wiederverwendung von R2-Inventar und Check-Zuordnung.
+- [x] Streng validierter lokaler Statusimport.
+- [x] Frische, Zustandswechsel, begrenzte Historie und statischer HTML-Bericht.
+- [x] MRTG-Kandidat ohne SNMP-Zugangsdaten oder Polling.
+- [x] RRDtool-Pfad und optionale Abhängigkeit dokumentiert.
+- [x] Grenzen für NetSaint, spätere Nagios/Ganglia, MRTG/RRD und CFEngine dokumentiert.
+- [x] Enrollment-Lifecycle ohne remote akzeptierte Meldungen definiert.
+
+**Abnahme:** Offline-Installer, Zustandswechsel, Stale-Erkennung, HTML-Escaping, begrenzte Historie, kein Listener und keine privilegierte Operation. Native externe Integrationen bleiben getrennt.
+
+## M2 — Unix-Node-Bootstrap und sichere Registrierung
+
+- Rechneridentität und Betreiberfreigabe.
+- Kurzlebige Enrollment-Zugangsdaten und authentifizierter Transport.
+- Begrenzte Clientinstallation, Konfigurationszuordnung, Widerruf und Schlüsselwechsel.
+- Keine Remote-Shell und keine beliebige Befehlsausführung.
+
+## R0 — Eigenständige Grundlage
+
+- [x] POSIX-Shell-Systeminformationen und `df`-Auswertung.
+- [x] Eigenes vierfeldriges Statusprotokoll, Statusboard und Golden-File-Vergleich.
+- [x] MRTG-Zähleradapter, optionaler RRDtool-Wrapper und synthetische Negativtests.
+- [x] Offline-Prüfungen für passwd, Syslog, NTP und Benutzer-Crontabs.
+- [ ] Härtung gegen Spool-Symlinks, Kürzung und konkurrierende Schreiber.
+- [ ] Perl-5.004-Kompatibilität beweisen oder enger abgrenzen.
+
+## R1 — Unix-Werkzeuge vor 1993
+
+- Passwort-/Gruppenprüfung ohne untrusted NSS-Annahmen.
+- Cron- und Startdienstinventar, Syslogfamilien und Dateirechteprüfung.
+- Tar-/Dump-/Restore-Inventar und Wiederherstellungsnachweis.
+- Getrennte Bourne-Shell-, awk- und sed-Programme statt eines Gesamtframeworks.
+
+## R3 — MRTG, SNMP und RRDtool
+
+- [x] Vierzeilige externe MRTG-Zählerausgabe und opt-in-RRDtool-Wrapper.
+- [ ] Echtes MRTG 2 in isolierter Umgebung mit Diagramm prüfen.
+- [ ] Zählerüberlauf, 32-/64-Bit-Grenzen und 5-Minuten-Abfrage dokumentieren.
+- [ ] SNMP v1/v2c nur in isolierter Umgebung ohne eingebettete Communities.
+- [ ] RRDtool create/update/fetch/graph mit festen Zeitstempeln prüfen.
+- [ ] Nagios-/Ganglia-Adapter erst in späteren Profilen.
+
+## R4 — Unabhängige zentrale Überwachung
+
+- [x] Lokaler Statusspeicher, Statusboard, Stale-Nachweis und M1-Zustand.
+- [ ] Quittierung, Wartungszustand, Drosselung und Eskalation.
+- [ ] Lesendes TUI oder CGI für Betreiber.
+- [ ] Eingangsdaemon erst nach Authentifizierung, begrenztem Protokoll und Isolation.
+- [ ] Separate Lizenz- und Protokollprüfung zu Big Brother/Xymon.
+
+## R5 — Automatisierte Bereitstellung
+
+- SSH-Schlüsselprüfung, Bootstrapping-Manifeste und Staging.
+- FAI-, Kickstart- und Solaris-JumpStart-Adapter.
+- Baselines für NTP, DNS, Konten, NFS und Mail.
+- Apache-/rsync-Verteilung mit ausdrücklichem Rollback.
+- CFEngine-2-Beispiele getrennt von CFEngine 1.
+
+## R6 — Logs, Backups und Sicherheit
+
+- Zentrale Syslogaufbewahrung mit Integritätsnachweis.
+- Reproduzierbare Restore-Übungen.
+- SUID-, Rechte-, SSH-, sudo-, TCP-Wrapper- und Firewall-Audits.
+- Sicherheitsupdateprüfung ohne pauschales Auto-Patching.
+
+## R7 — Prüfung historischer Plattformen
+
+Mögliche isolierte Gäste sind FreeBSD 3/4, OpenBSD 2/3, Debian 2.x, Red Hat Linux 6.x und Solaris 7/8, soweit rechtmäßig verfügbar. Namen allein bedeuten keine Unterstützung.
+
+**Abnahmekriterium:** Wiederholbarer Lauf mit genau benanntem System, Programmversion, Kommandoausgabe und Toolchain. Modernes Linux ist Entwicklungsplattform, kein Ersatz für ein historisches System.
+
+## Umfang und Priorität
+
+Priorität haben R0-Härtung und R1-Werkzeuge; R2–R4 können bei unabhängigen Schnittstellen parallel gepflegt werden, R5–R7 folgen der Abnahme. Offene Entscheidungen betreffen Paketierung, Rechte an Installationsmedien, Bedrohungsmodell des zentralen Monitorings, Transportsicherheit und die rechtliche Machbarkeit von Big-Brother-Kompatibilität.
