@@ -32,7 +32,7 @@ sent=$(date +%s)
 "$client/bin/sasd-node-status" --host enrolled.lab.invalid --key "$client/etc/identity" --sequence 1 --sent-at "$sent" --input "$tmp/status.tsv" --out "$tmp/payload" >/dev/null
 "$client/bin/sasd-node-send" --server 127.0.0.1 --user "$(id -un)" --port "$port" --identity "$client/etc/identity" --known-hosts "$tmp/known_hosts" --payload "$tmp/payload" --signature "$tmp/payload.sig" --send > "$tmp/send.log"
 grep -q 'transport-send=OK' "$tmp/send.log"
-grep -q 'web.lab.invalid.disk' "$server/var/status/latest"/*
+grep -q 'enrolled.lab.invalid.disk' "$server/var/status/latest"/*
 : > "$tmp/empty_known_hosts"
 if "$client/bin/sasd-node-send" --server 127.0.0.1 --user "$(id -un)" --port "$port" --identity "$client/etc/identity" --known-hosts "$tmp/empty_known_hosts" --payload "$tmp/payload" --signature "$tmp/payload.sig" --send >/dev/null 2>&1; then
     echo "unknown server key accepted" >&2
