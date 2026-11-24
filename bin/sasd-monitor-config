@@ -1,0 +1,31 @@
+#!/usr/bin/env perl
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_config read_inventory read_checks);
+
+my ($file,$check) = ('','');
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if($a eq '--config'){$file=shift @ARGV;} elsif($a eq '--check'){$check=1;}
+    elsif($a eq '--help'){print "usage: sasd-monitor-config --config FILE [--check]\n";exit 0;}
+    else{die "unknown argument: $a\n";}
+}
+$file && -f $file && !-l $file or die "invalid configuration file\n";
+my $cfg=read_config($file);
+read_inventory($cfg->{inventory_path},$cfg->{roles_path});
+read_checks($cfg->{checks_path});
+print "config=OK\n";
+print "profile=$cfg->{profile}\nfreshness=$cfg->{freshness}\nhistory_retention=$cfg->{history_retention}\n";
+if ($check) {
+    my $mrtg_helper = -x $cfg->{mrtg_command_path};
+    my ($mrtg, $rrd) = (0, 0);
+    for my $dir (split /:/, ($ENV{PATH} || '')) {
+        $mrtg ||= -x "$dir/mrtg";
+        $rrd ||= -x "$dir/rrdtool";
+    }
+    print "mrtg-helper=",($mrtg_helper ? 'available' : 'SKIPPED optional helper missing'),"\n";
+    print "mrtg=",($mrtg ? 'available' : 'SKIPPED optional binary missing'),"\n";
+    print "rrdtool=",($rrd ? 'available' : 'SKIPPED optional binary missing'),"\n";
+}
+exit 0;
