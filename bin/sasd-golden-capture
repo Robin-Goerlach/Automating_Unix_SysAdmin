@@ -37,13 +37,16 @@ for d in archives manifests checksums; do [ "$mode" = dry-run ] || mkdir -p "$re
 archive="$repository/archives/$image.tar"; manifest="$repository/manifests/$image.tsv"; checksum="$repository/checksums/$image.sha256"
 if [ "$force" -ne 1 ]; then [ ! -e "$archive" ] && [ ! -e "$manifest" ] && [ ! -e "$checksum" ] || die "image already exists; use --force explicitly"; fi
 [ "$mode" = apply ] || { echo "capture=dry-run source=$source archive=$archive"; exit 0; }
-tmp="$repository/.capture.$$.tmp"; trap 'rm -f "$tmp" "$tmp.manifest" "$tmp.checksum"' EXIT HUP INT TERM
-rm -f "$tmp" "$tmp.manifest" "$tmp.checksum"
+tmpdir=$(mktemp -d "$repository/.capture.XXXXXX") || die "cannot create private capture directory"
+chmod 0700 "$tmpdir"
+tmp="$tmpdir/archive.tar"; trap 'rm -rf "$tmpdir"' EXIT HUP INT TERM
 tar --exclude=./tmp --exclude=./var/tmp --exclude=./run --exclude=./proc --exclude=./sys --exclude=./dev \
     --exclude=./etc/ssh/ssh_host_* --exclude=./root/.ssh --exclude=./home/*/.ssh \
     --exclude=./etc/sasd/identity --exclude=./etc/sasd/identity.pub --exclude=./etc/sasd/*.key \
     -cf "$tmp" -C "$source" . || die "archive creation failed"
 tar -tf "$tmp" >/dev/null || die "archive verification failed"
+tar -tvf "$tmp" | awk 'substr($0,1,1) ~ /[bchplsH]/ || $0 ~ / -> / { bad=1 } END { exit bad ? 1 : 0 }' || die "archive contains links or special files"
+if tar -tf "$tmp" | sort | uniq -d | grep . >/dev/null 2>&1; then die "archive contains duplicate paths"; fi
 sha=$(sha256sum "$tmp" | awk '{print $1}')
 created=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 source_bytes=$(du -sk "$source" | awk '{print $1 * 1024}')
@@ -68,6 +71,6 @@ archive_bytes=$(wc -c < "$tmp" | awk '{print $1}')
 } > "$tmp.manifest"
 printf '%s  %s\n' "$sha" "archives/$image.tar" > "$tmp.checksum"
 mv "$tmp" "$archive"; mv "$tmp.manifest" "$manifest"; mv "$tmp.checksum" "$checksum"
-chmod 0644 "$archive" "$manifest" "$checksum"
+chmod 0600 "$archive" "$manifest" "$checksum"
 trap - EXIT HUP INT TERM
 echo "capture=OK image=$image archive=$archive manifest=$manifest"

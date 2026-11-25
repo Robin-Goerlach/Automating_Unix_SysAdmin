@@ -29,4 +29,6 @@ Signierte M2-Dateien verwenden `ssh-keygen -Y sign/verify`. Vor dem Schreiben pr
 
 M5-Archive sind Dateisystemarchive und keine bootfähigen Images. Eine Live-Quelle kann inkonsistent sein; der Betreiber muss sie anhalten oder einen konsistenten Snapshot auswählen. Host-Personalisierung und Identitätserzeugung bleiben absichtlich von der Archivwiederherstellung getrennt. Capture und Restore arbeiten niemals auf Blockgeräten.
 
+Golden-Client-Capture erzeugt Archiv, Manifest und Prüfsummendatei mit Modus `0600`, weist Symlinks, Hardlinks und Spezialdateien im erzeugten Archiv zurück und verwendet ein privates temporäres Verzeichnis. Das schützt Artefakte vor gewöhnlichem Lesen durch Gruppe und andere; Eigentümer, Verschlüsselung und sichere Löschung bleiben Betreiberverantwortung.
+
 M7-Postinstallation verlangt ein ausdrückliches Präfix und einen Imagekatalog, erzeugt über den bestehenden Client-Installer eine neue Identität und erstellt nur einen offenen Antrag. Eine Monitoring-Freigabe wird nie erteilt. Aktive oder gesperrte Server-Registrierungen blockieren eine stille Reinstallation; Schlüsselwechsel und Recovery kompromittierter Schlüssel werden in diesem Meilenstein nicht automatisiert.

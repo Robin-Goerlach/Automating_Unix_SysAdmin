@@ -41,4 +41,6 @@ Report discovered vulnerabilities as private issues or through appropriate secur
 
 M5 archives are file-system archives, not bootable images. A live source may be inconsistent; operators must quiesce it or select a consistent snapshot. Host personalization and identity generation are deliberately separate from archive restore. Capture and restore never operate on block devices.
 
+Golden-client capture creates the archive, manifest and checksum record with mode `0600`, rejects source symlinks, hardlinks and special files in the generated archive, and uses a private temporary directory. This protects the artifact from ordinary group/other reads; operators remain responsible for repository ownership, encryption and secure disposal.
+
 M7 postinstall requires an explicit prefix and image catalog, generates a new identity through the existing client installer, and creates only a pending request. It never grants monitoring approval. Active or disabled server enrollments block silent reinstallation; key rotation and compromised-key recovery are not automated by this milestone.

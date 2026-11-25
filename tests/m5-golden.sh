@@ -24,6 +24,9 @@ if bin/sasd-golden-capture --source "$source" --repository "$repo" --image-id la
 fi
 bin/sasd-golden-catalog --repository "$repo" --verify > "$tmp/catalog"
 grep -q 'verified=lab-1' "$tmp/catalog"
+test "$(ls -l "$repo/archives/lab-1.tar" | awk '{print $1}')" = -rw-------
+test "$(ls -l "$repo/manifests/lab-1.tsv" | awk '{print $1}')" = -rw-------
+test "$(ls -l "$repo/checksums/lab-1.sha256" | awk '{print $1}')" = -rw-------
 
 bin/sasd-golden-restore --repository "$repo" --image-id lab-1 --dest "$restored" --dry-run > "$tmp/restore-dry"
 grep -q 'restore=dry-run' "$tmp/restore-dry"
@@ -47,9 +50,13 @@ fi
 mkdir -p "$tmp/symlink-source/etc"
 printf 'safe\n' > "$tmp/symlink-source/etc/file"
 ln -s /tmp "$tmp/symlink-source/etc/unsafe-link"
-bin/sasd-golden-capture --source "$tmp/symlink-source" --repository "$repo" --image-id symlink-1 --version 1 --profile lab --apply
-if bin/sasd-golden-restore --repository "$repo" --image-id symlink-1 --dest "$tmp/symlink-dest" --apply >/dev/null 2>&1; then
+if bin/sasd-golden-capture --source "$tmp/symlink-source" --repository "$repo" --image-id symlink-1 --version 1 --profile lab --apply >/dev/null 2>&1; then
     echo "symlink archive accepted" >&2; exit 1
+fi
+
+ln "$source/etc/hostname" "$source/etc/hardlink"
+if bin/sasd-golden-capture --source "$source" --repository "$repo" --image-id hardlink-1 --version 1 --profile lab --apply >/dev/null 2>&1; then
+    echo "hardlink archive accepted" >&2; exit 1
 fi
 
 cp "$repo/manifests/lab-1.tsv" "$tmp/manifest.good"
