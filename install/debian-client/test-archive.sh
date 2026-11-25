@@ -23,7 +23,7 @@ tar --same-permissions -xzf "$tmp/release/sasd-debian-client.tar.gz" -C "$tmp/un
 archive=$tmp/unpack/debian-client
 # Independent expected file inventory. No local inventory, tests, reports or credentials.
 {
-    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py prepare-native.sh collect-native.sh verify-dns.pl dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
+    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
     awk -F '\t' 'NR>1 {print "tasks/" $1 "_" $3}' "$here/checklist.tsv"
 } | sort > "$tmp/expected"
 (cd "$archive" && find . -type f -printf '%P\n' | sort) > "$tmp/actual"
@@ -88,6 +88,20 @@ case "$acceptance" in /tmp/sasd-native-acceptance.*) ;; *) acceptance=; exit 1 ;
 [ "$(cat "$acceptance/status")" = COLLECTED_NOT_AUTHORIZED ]
 grep -q '^G5[[:space:]]NOT_RUN' "$acceptance/gates.tsv"
 [ "$(cat "$acceptance/rehearsal/status")" = PREPARED_NOT_AUTHORIZED ]
+# Run identity comparison from the extracted archive on synthetic local data.
+if [ -x /usr/bin/python3 ]; then
+    iid=12345678-1234-4234-8234-123456789abc
+    printf '%s\n' "$iid" > "$fixture/var/lib/sasd/provisioning/installation-id"
+    printf '0123456789abcdef0123456789abcdef\n' > "$fixture/etc/machine-id"
+    rc=0; "$archive/native-identity.py" --root="$fixture" --hostname=node.lab.invalid --expected-installation="$iid" > "$tmp/identity" || rc=$?
+    [ "$rc" -eq 3 ]; grep -q 'binding.*UNBOUND' "$tmp/identity"
+    digest=$(awk -F '\t' '$1=="fingerprint" {print $3}' "$tmp/identity")
+    "$archive/native-identity.py" --root="$fixture" --hostname=node.lab.invalid --expected-installation="$iid" --expected-fingerprint="$digest" > "$tmp/identity"
+    grep -q 'binding.*MATCH' "$tmp/identity"
+    grep -q 'native-apply.*NOT_AUTHORIZED' "$tmp/identity"
+else
+    echo 'Packaged native identity test SKIPPED: python3 unavailable'
+fi
 # Use the unchanged parser test harness against the unpacked executable.
 # Copy only into a separate test directory, not the delivered archive.
 mkdir "$tmp/dns-test"
