@@ -42,4 +42,5 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 (cd "$tmp/release" && sha256sum -c sasd-debian-client.tar.gz.sha256)
 tar -tzf "$tmp/release/sasd-debian-client.tar.gz" | grep -q 'debian-client/install-client.sh'
+sh "$here/test-verify.sh"
 echo 'Offline Debian candidate tests passed'
