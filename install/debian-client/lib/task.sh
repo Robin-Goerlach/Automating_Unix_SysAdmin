@@ -1,8 +1,6 @@
 #!/bin/sh
 # Modern Debian candidate generation only. Never source site data.
-valid_hostname() {
-    printf '%s\n' "$host" | awk 'NR != 1 {bad=1} {if(length($0)>253 || NF!=1) bad=1; n=split($0,a,"."); if(n<2) bad=1; for(i=1;i<=n;i++) if(length(a[i])>63 || a[i]!~/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/) bad=1} END{exit(bad || NR!=1)}'
-}
+. "$here/lib/policy.sh"
 task_main() {
     kind=$1; handler=$2; shift 2
     mode=dry; host=; site=
@@ -28,14 +26,7 @@ task_main() {
     esac
     if [ "$handler" = resolver ]; then
         [ -n "$site" ] && [ -f "$site" ] && [ ! -L "$site" ] || { echo 'Site DNS file required'; return 20; }
-        resolver_output=$(awk -F= '
-            /^#/ || /^$/ {next}
-            NF!=2 || $1 !~ /^(dns1|dns2|search)$/ || seen[$1]++ {bad=1; next}
-            {values[$1]=$2}
-            $1=="search" {n=split($2,a,"."); if(n<1 || length($2)>253) bad=1; for(i=1;i<=n;i++) if(length(a[i])>63 || a[i]!~/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/) bad=1}
-            $1~/^dns/ {n=split($2,a,"."); if(n!=4) bad=1; for(i=1;i<=n;i++) if(a[i]!~/^(0|[1-9][0-9]*)$/ || a[i]>255) bad=1}
-            END{if(bad || !seen["dns1"] || !seen["search"]) exit 1; print "nameserver " values["dns1"]; if(seen["dns2"]) print "nameserver " values["dns2"]; print "search " values["search"]}
-        ' < "$site") || { echo 'Invalid site DNS data' >&2; return 2; }
+        resolver_output=$(render_resolver) || { echo 'Invalid site DNS data' >&2; return 2; }
     fi
     [ "$mode" = render ] || { echo 'Candidate can be rendered; no host changes'; return 10; }
     case "$handler" in

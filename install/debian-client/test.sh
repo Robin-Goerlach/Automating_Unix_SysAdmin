@@ -2,7 +2,7 @@
 set -eu
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT HUP INT TERM
-for f in "$here"/tasks/* "$here"/lib/task.sh "$here"/*.sh; do sh -n "$f"; done
+for f in "$here"/tasks/* "$here"/lib/*.sh "$here"/*.sh; do sh -n "$f"; done
 count=$(awk 'END {print NR-1}' "$here/checklist.tsv")
 [ "$("$here/install-client.sh" --list | wc -l)" -eq "$count" ]
 rc=0
@@ -43,4 +43,5 @@ fi
 (cd "$tmp/release" && sha256sum -c sasd-debian-client.tar.gz.sha256)
 tar -tzf "$tmp/release/sasd-debian-client.tar.gz" | grep -q 'debian-client/install-client.sh'
 sh "$here/test-verify.sh"
+sh "$here/test-apply.sh"
 echo 'Offline Debian candidate tests passed'
