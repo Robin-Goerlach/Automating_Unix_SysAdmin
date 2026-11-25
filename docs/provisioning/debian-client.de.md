@@ -1,0 +1,43 @@
+# Debian-Client-Konfiguration — Erweiterungsvorschlag zu M7
+
+English: [English version](debian-client.md)
+
+Dieses moderne Referenzprofil für Debian 12 ist vom historischen Laufzeitpfad getrennt. Grundlage ist die private Installationscheckliste des Betreibers aus dem Jahr 2026; sie wird nicht veröffentlicht. Jeder ihrer 116 markierten Punkte erhält einen nummerierten Task und eine Quellzeile im Zuordnungskatalog. Der erste Stand erzeugt Kandidaten, installiert aber noch kein laufendes System. Keine native Abnahme oder Release-Aussage.
+
+## Architektur und Task-Vertrag
+
+M6 installiert das Grundsystem per PXE/DHCP/TFTP. HTTPS verteilt ein versioniertes Postinstallationspaket. Der Task-Runner konfiguriert den Rechner später im abgenommenen Apply-Modus. M7 erzeugt eine neue Identität und einen offenen Monitoring-Antrag über die vorhandene Betreiberfreigabe. Keine zweite Enrollment-Datenbank oder automatische Freigabe.
+
+Das R2-Inventar bleibt führend: Hostname, Adresse, Rolle, Gruppen und Profil werden einmal eingetragen. Künftige Standortprofile und Hostdaten ergänzen dies durch validierte Textdateien mit Hostname als Schlüssel. Zentrale Adapter erzeugen DNS, NIS hosts/netgroups/ethers, Automounter, Monitoring, Mail, Backup und Rechner-Aliasse. Der Client bearbeitet zentrale Server nicht als root. Getrennte Prüfung, Apply und Rücknahme sind erforderlich. Keine SQL-Abhängigkeit.
+
+Der Dispatcher entdeckt vierstellige Task-Namen lexikalisch (0010, 0020, ...); vier Stellen lassen bei über 100 Tasks Reserven. Jeder Task kann unabhängig mit --dryrun (auch --dry-run), --hostname=FQDN, --site=DATEI und --render aufgerufen werden. Nummern steuern die Reihenfolge, nicht Abhängigkeiten; vor einem künftigen echten Apply müssen Voraussetzungen ausdrücklich geprüft werden. Die aktuelle Reihenfolge ist ein prüfbarer Vorschlag, kein fertiger Abhängigkeitsgraph. Vorinstallations- und zentrale Punkte erscheinen als manuelle/zentrale Protokollzeilen. Gemeinsame kleine Bibliothek, kein eval und kein Einlesen der Standortdatei als Shellcode.
+
+Dryrun schreibt nichts. Stage erzeugt private flache Kandidatendateien in einem neuen /tmp-Verzeichnis, niemals in /etc; root wird beim Staging abgelehnt. Task-Exit 0 = Kandidat, 10 = geplant, 20 = offen, 21 = manuell, 22 = zentral, 23 = Review; andere Codes stoppen den Runner, der folgende Tasks als NOT RUN kennzeichnet. Runner-Exit 0 = keine offenen ausgewählten Punkte, 1 = Fehler, 2 = Aufruf/Preflight, 3 = unvollständige Checkliste. Kandidaten sind weder installiert noch automatisch vertrauenswürdig. Der Gesamtlauf bleibt bewusst unvollständig. Neun Renderer decken Resolver, Hostname, hosts, zwei konservative Paketlisten, Login-Banner, Shell-Policy, sysstat und logwatch ab; Paketverfügbarkeit ist ungeprüft. Die übrigen Dateien sind ausdrücklich nicht ausführende Platzhalter, keine fertigen Installationsbefehle.
+
+## Bedienung
+
+```sh
+cd install/debian-client
+./install-client.sh --list
+./install-client.sh --hostname=node.lab.invalid --site=site.example.conf --dryrun
+./install-client.sh --hostname=node.lab.invalid --site=site.example.conf --stage
+./tasks/0010_DNS_Client_Set_Name_Server --hostname=node.lab.invalid --site=site.example.conf --render
+./test.sh
+./package.sh /tmp/new-sasd-debian-release
+```
+
+Stdout bei Bedarf in ein privates Protokoll umleiten; der Runner behauptet keine erfolgreiche Installation. Ein Gesamtlauf liefert 3, solange Aufgaben offen sind. Der Paketbau erzeugt ein neues Verzeichnis, schließt Laufzeitkonfiguration aus und erstellt SHA-256. Exakt geprüfte Version per authentifiziertem HTTPS veröffentlichen. Hash über einen unabhängigen vertrauenswürdigen Kanal vorgeben (oder Signatur mit vorinstalliertem vertrauenswürdigem Schlüssel prüfen); eine Prüfsumme vom gleichen unvertrauenswürdigen Server reicht nicht. Mit curl und HTTPS-Prüfung in ein privates Verzeichnis laden, vor dem Entpacken prüfen, Archivnamen kontrollieren, unprivilegiert entpacken und Dryrun starten. Kein curl | sh. Keine automatische TFTP-Ausführung, ungeprüften Archive, Passwörter oder privaten Schlüssel. M6-Installer-Hook noch offen.
+
+## Implementierungsreihenfolge und Abnahme
+
+1. Basis: tatsächliche Debian-Version, OS-Identität, Hardware/VM, Inventar und Installer-Nachweise prüfen. DHCP/statischen Netzwerk-Backend und Resolver-Verantwortlichen auswählen (NetworkManager, ifupdown, resolved), Erreichbarkeit erhalten. Atomare verwaltete Dateien, Originalbackup, Diff, Validierung und Wiederholung implementieren. Kein Netzneustart über SSH ohne Rettungskonsole. IPv6- und fremde hosts-Zeilen erhalten.
+2. Pakete: Bookworm-Paketnamen und signierte APT-Quellen prüfen, gewählte Profile mit nichtinteraktivem debconf und sicherem Dienststart installieren; dpkg/apt-Ergebnis und Rebootbedarf protokollieren. Keine Downgrades oder blinde Quellenänderung. Basis/Desktop/Laptop/Server/Security/Legacy trennen. Keine pauschale automatische Kernel-Ausnahme. Jede Paketgruppe prüfen.
+3. Kerndienste: jeweils einen Logging-Backend (rsyslog oder syslog-ng), Firewall-Manager und rollenbezogenen Identitätsprovider wählen. SSH mit sshd -t validieren und Zugang erhalten; systemweite Hostschlüssel gehören nach ssh_known_hosts, nicht ssh_config. Firewall: Loopback, established/related, IPv6-Policy, explizite Eingangsfreigaben, atomare Persistenz mit zeitgesteuerter Rücknahme. Postfix-Nullclient über Debian main.cf/postconf; Aliases mit newaliases. Cron-Dateien verwalten und Distributionstimer nicht duplizieren.
+4. Storage, NFS, Identität: Disk/GRUB/USB nie standardmäßig schreiben. fstab vor Mount validieren, UUID und vorhandene Mounts erhalten, nach Möglichkeit passende harte NFS-Mounts; /home noexec gegen Anwendungsbedarf abwägen. NIS/NSS/PAM, LDAP/AD, SELinux, USBGuard und Bootloader als gesonderte isolierte Opt-in-Gates; keine NIS-Wildcard-Übernahme von passwd/shadow, blinden PAM-Änderungen oder gemeinsamen Zugangsdaten. Keine privaten SSH-Schlüssel kopieren. Geprüfte Hostschlüssel, rollenbezogene Autorisierung, Geheimnisse außerhalb Repo/Logs.
+5. Monitoring, Security und Zeitpläne: gerätebezogenes SMART/NVMe, Sensorprüfung, ein ClamAV-Updater, validierte Auditregeln, AIDE erst nach Installation, keine unkontrollierten doppelten Zeitpläne. Puppet, Monit, Big Sister und SNMP sind getrennte optionale Adapter, kein Ersatz für M7-Enrollment. ReaR-Backup/Restore nur auf verifizierten Wegwerfzielen. Historische Software, Version und Lizenz gesondert prüfen.
+6. Zentrale Registrierung und Inventar: Konfiguration aus R2 ableiten, zentrale Änderungen vor privilegiertem Apply anzeigen, doppelte Identitäten ablehnen, Entfernen/Deaktivieren und Wiederholung ermöglichen, Freigaben und Abgleich protokollieren. Inventar erfasst Hardware/MAC/Seriennummer/Disks/RAM/Owner/Inventarnummer/Installer-Nachweis geschützt, niemals Rootpasswort oder Disk-Passphrase. Garantie, Peripherie, Nutzerdaten-Restore und Arbeitsplatzprüfung bleiben soweit nötig manuell.
+7. Native KVM-Abnahme: isolierten Debian-12-Gast über M6 installieren, Archivhash prüfen, Dryrun und Kandidaten erzeugen; tatsächliches --apply erst mit explizitem Labor-Gate, root-/OS-Prüfungen, Task-Backups, Validierung, Rücknahme, Sperre und Wiederaufnahme nach kontrolliertem Reboot implementieren. Erstlauf, idempotenten Zweitlauf, fehlende Voraussetzung, Paketfehler, SSH/Firewall-Recovery, manipuliertes Paket, falschen Host, Abbruch/Reboot, zentrale Ablehnung und M7-Freigabe testen. Erst danach produktive Freigabe. Redigierte Nachweise außerhalb öffentlichem Git ablegen. Dieser Vorschlag behauptet keine Tests oder nativen Ergebnisse.
+
+## Korrekturen zur Vorlage
+
+Die Vorlage enthält ein auskommentiertes Proxy-Beispiel mit Zugangsdatencharakter; niemals veröffentlichen, bei Echtheit wechseln. Aufeinanderfolgende Resolver-Schreibbefehle überschreiben statt anzuhängen; einen Kandidaten erzeugen und Resolver-Verantwortlichen beachten. Doppelte Root-/Druck-/Resolver-Aufgaben bleiben nachvollziehbar, sollen aber auf einen Verantwortlichen und explizite Stufenprüfungen zusammengeführt werden. Historische Kompatibilitätslinks und Ersatz paketverwalteter Dateien erfordern Review. Desktop-/IDS-Pakete, veraltete Dateisysteme, rng/haveged und konkurrierende Firewall-/Security-Agenten benötigen Rollen-/Versionsentscheidungen. Unbestimmter Backupclient, GRUB-Hash, WLAN-Zugangsdaten, NFS-Exportmap, tatsächliches Relay und Standortdateien fehlen; keine Werte erfinden. Inventar und Vor-/Nachadministration dürfen durch den Client nicht als erledigt ausgegeben werden.

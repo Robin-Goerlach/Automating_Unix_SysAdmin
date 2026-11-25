@@ -16,6 +16,7 @@ test: syntax
 	sh tests/m5-golden.sh
 	sh tests/m6-netboot.sh
 	sh tests/m7-postinstall.sh
+	sh install/debian-client/test.sh
 syntax:
 	@perl tests/check-eol.pl bin/* tests/*.sh tests/*.pl examples/*.sh install/*.sh lib/SASD/*.pm site/*.tsv Makefile
 	@perl -c tests/docs-pairs.pl

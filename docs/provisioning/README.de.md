@@ -25,3 +25,6 @@ Die M7-Postinstallation und Monitoring-Übergabe ist in [postinstall.de.md](post
 Das native Debian/KVM-Abnahmerezept und der lesende Voraussetzungencheck stehen in [kvm-lab.de.md](kvm-lab.de.md). Es benötigt einen ausdrücklich freigegebenen isolierten Host und behauptet erst bei vorhandenen Paket-, Gast-, Installations- und Bereinigungsnachweisen ein natives Ergebnis.
 
 Die kombinierte Offline-Demonstration ist `examples/sasd-provisioning-lab.sh`. Ihre Ausgabe trennt simulierte Provisionierung ausdrücklich von echtem Netzwerkboot, nativer OS-Installation und historischer Unix-Abnahme.
+
+
+Die moderne Debian-Checklistenerweiterung steht in [debian-client.de.md](debian-client.de.md). Dispatcher und Kandidatenrenderer sind vom M7-Enrollment getrennt; Live-Apply ist noch nicht implementiert.
