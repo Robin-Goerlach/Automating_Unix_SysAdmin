@@ -40,3 +40,5 @@ CFEngine 1 and old MRTG/RRDtool combinations may have known vulnerabilities. Pre
 Report discovered vulnerabilities as private issues or through appropriate security contact mechanisms rather than adding exploitable test infrastructure to a public network.
 
 M5 archives are file-system archives, not bootable images. A live source may be inconsistent; operators must quiesce it or select a consistent snapshot. Host personalization and identity generation are deliberately separate from archive restore. Capture and restore never operate on block devices.
+
+M7 postinstall requires an explicit prefix and image catalog, generates a new identity through the existing client installer, and creates only a pending request. It never grants monitoring approval. Active or disabled server enrollments block silent reinstallation; key rotation and compromised-key recovery are not automated by this milestone.

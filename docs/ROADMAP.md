@@ -161,6 +161,7 @@ Open policy decisions: per-module packaging, real legacy OS installation media r
 
 ### M7 — Postinstallation and monitoring enrollment
 
-- [ ] Host personalization with newly generated identities.
-- [ ] Reuse of the existing M2 enrollment and M2.1 transport without automatic approval.
-- [ ] Reinstallation, duplicate-identity and rejection acceptance.
+- [x] Host personalization in an explicit prefix with newly generated identities.
+- [x] Reuse of the existing M2 enrollment and M2.1 authenticated import without automatic approval (offline acceptance).
+- [x] Reinstallation, duplicate-identity, stale-image and rejection acceptance (offline acceptance).
+- [ ] Native postinstall after a real network installation and automated key-rotation/recovery.

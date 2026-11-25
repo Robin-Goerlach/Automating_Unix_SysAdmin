@@ -19,3 +19,5 @@ Capture excludes temporary/runtime trees and private SSH/SASD identity material.
 See [golden-images.md](golden-images.md), [security.md](security.md) and [testing.md](testing.md). The repeatable offline acceptance is `tests/m5-golden.sh`; the operator walkthrough is `examples/m5-golden-lab.sh`.
 
 M6 offline network-installation preparation is documented in [netboot.md](netboot.md) and [installation-profiles.md](installation-profiles.md). It generates reviewed configuration text and stages explicit boot files, but does not start DHCP/TFTP or claim a native boot.
+
+M7 postinstallation and monitoring handoff is documented in [postinstall.md](postinstall.md). It creates a new client identity and enrollment request in an explicit prefix, then reuses the existing operator approval and authenticated import path.

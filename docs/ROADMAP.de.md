@@ -129,6 +129,7 @@ Priorität haben R0-Härtung und R1-Werkzeuge; R2–R4 können bei unabhängigen
 
 ### M7 — Postinstallation und Monitoring-Enrollment
 
-- [ ] Host-Personalisierung mit neu erzeugten Identitäten.
-- [ ] Wiederverwendung des bestehenden M2-Enrollment und M2.1-Transports ohne automatische Freigabe.
-- [ ] Abnahme von Reinstallation, doppelter Identität und Ablehnung.
+- [x] Host-Personalisierung in einem ausdrücklichen Präfix mit neu erzeugten Identitäten.
+- [x] Wiederverwendung des bestehenden M2-Enrollment und authentifizierten M2.1-Imports ohne automatische Freigabe (Offline-Abnahme).
+- [x] Abnahme von Reinstallation, doppelter Identität, veraltetem Image und Ablehnung (Offline-Abnahme).
+- [ ] Native Postinstallation nach echter Netzwerkinstallation sowie automatisierter Schlüsselwechsel/-Recovery.

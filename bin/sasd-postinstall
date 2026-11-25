@@ -1,0 +1,60 @@
+#!/bin/sh
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+usage(){ echo "usage: sasd-postinstall --root PREFIX --profile-file FILE --images FILE --profile NAME --host HOST --expires-at EPOCH [--image-version VERSION] [--dry-run|--apply]" >&2; exit 2; }
+root= profile_file= images_file= expected_version= profile= host= expires= mode=dry
+die(){ echo "sasd-postinstall: $*" >&2; exit 2; }
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --root) [ "$#" -ge 2 ] || usage; root=$2; shift 2 ;;
+        --profile-file) [ "$#" -ge 2 ] || usage; profile_file=$2; shift 2 ;;
+        --images) [ "$#" -ge 2 ] || usage; images_file=$2; shift 2 ;;
+        --image-version) [ "$#" -ge 2 ] || usage; expected_version=$2; shift 2 ;;
+        --profile) [ "$#" -ge 2 ] || usage; profile=$2; shift 2 ;;
+        --host) [ "$#" -ge 2 ] || usage; host=$2; shift 2 ;;
+        --expires-at) [ "$#" -ge 2 ] || usage; expires=$2; shift 2 ;;
+        --dry-run) mode=dry; shift ;;
+        --apply) mode=apply; shift ;;
+        --help) usage ;;
+        *) die "unknown argument: $1" ;;
+    esac
+done
+[ -n "$root" ] && [ -n "$profile_file" ] && [ -n "$images_file" ] && [ -n "$profile" ] && [ -n "$host" ] && [ -n "$expires" ] || usage
+case "$root" in /*) ;; *) die "root must be absolute" ;; esac
+case "$root" in /|/bin|/sbin|/usr|/usr/*|/etc|/etc/*|/var|/var/*|/home|/home/*|/root|/root/*|*/../*|*/..|*/./*|*/.) die "refusing unsafe/system root" ;; esac
+[ -f "$profile_file" ] && [ ! -L "$profile_file" ] || die "invalid profile file"
+[ -f "$images_file" ] && [ ! -L "$images_file" ] || die "invalid image catalog"
+printf '%s\n' "$profile" | grep '^[A-Za-z][A-Za-z0-9_.-]*$' >/dev/null || die "invalid profile name"
+printf '%s\n' "$host" | grep '^[A-Za-z0-9]\([A-Za-z0-9_.-]*[A-Za-z0-9]\)\{0,1\}$' >/dev/null || die "invalid host"
+printf '%s\n' "$expires" | grep '^[0-9][0-9]*$' >/dev/null || die "invalid expiry"
+check_ancestors(){ p=$1; while [ "$p" != "/" ] && [ -n "$p" ]; do [ ! -L "$p" ] || die "symlink path component: $p"; n=$(dirname "$p"); [ "$n" != "$p" ] || break; p=$n; done; }
+check_ancestors "$root"
+record=$(awk -F '\t' -v wanted="$profile" '$1 !~ /^#/ && NF { if ($1 == wanted) { if (found++) exit 3; line=$0 } } END { if (!found) exit 4; print line }' "$profile_file") || die "profile missing or duplicated"
+TAB=$(printf '\t'); old_ifs=$IFS; IFS="$TAB"; set -- $record; IFS=$old_ifs
+[ "$#" -eq 10 ] || die "profile must have ten fields"
+profile_id=$1; os=$2; architecture=$3; method=$4; source=$5; image=$6; role=$7; partition=$8; postinstall=$9; monitoring=${10}
+image_record=$(awk -F '\t' -v wanted="$image" '$1 !~ /^#/ && $1 == wanted { if (found++) exit 3; line=$0 } END { if (!found) exit 4; print line }' "$images_file") || die "image missing or duplicated"
+image_ifs=$IFS; IFS="$TAB"; set -- $image_record; IFS=$image_ifs
+[ "$#" -eq 4 ] || die "image catalog record must have four fields"
+image_id=$1; image_version=$2; image_sha=$3; image_source=$4
+[ "$image_id" = "$image" ] && [ -n "$image_version" ] && [ -n "$image_source" ] || die "invalid image record"
+printf '%s\n' "$image_sha" | grep '^[0-9A-Fa-f]\{64\}$' >/dev/null || die "invalid image checksum"
+[ -z "$expected_version" ] || [ "$image_version" = "$expected_version" ] || die "stale or unexpected image version"
+printf '%s\n' "$os $architecture $method $source $image $role $partition $postinstall $monitoring" | grep -Eiq 'password|secret|private key|BEGIN .* KEY' && die "secret-like profile value"
+printf '%s\n' "$role" | grep '^[A-Za-z][A-Za-z0-9_-]*$' >/dev/null || die "invalid role in profile"
+printf '%s\n' "$monitoring" | grep '^[A-Za-z][A-Za-z0-9_.-]*$' >/dev/null || die "invalid monitoring profile"
+printf '%s\n' "$architecture" | grep '^[A-Za-z0-9_.-]*$' >/dev/null || die "invalid architecture"
+local_arch=$(uname -m 2>/dev/null || true); [ "$architecture" = "$local_arch" ] || die "profile architecture $architecture does not match target $local_arch"
+hostname_file="$root/etc/hostname"; config_file="$root/etc/sasd-postinstall.conf"
+if [ -e "$hostname_file" ] && { [ -L "$hostname_file" ] || [ "$(sed -n '1p' "$hostname_file")" != "$host" ]; }; then die "existing hostname conflicts with requested host"; fi
+[ ! -e "$config_file" ] || die "postinstall configuration already exists; refusing reinstallation"
+echo "postinstall=planned host=$host role=$role monitoring_profile=$monitoring image=$image method=$method"
+echo "identity=generate-new enrollment=request-only operator-approval-required"
+[ "$mode" = apply ] || { "$ROOT/install/install-sasd-client.sh" --prefix "$root" --host "$host" --role "$role" --profile "$monitoring" --expires-at "$expires" --dry-run; exit 0; }
+"$ROOT/install/install-sasd-client.sh" --prefix "$root" --host "$host" --role "$role" --profile "$monitoring" --expires-at "$expires" --apply
+mkdir -p "$root/etc"
+tmp="$config_file.tmp.$$"; trap 'rm -f "$tmp"' EXIT HUP INT TERM
+printf 'SASD-POSTINSTALL-1\thost=%s\trole=%s\tmonitoring_profile=%s\tos=%s\tarchitecture=%s\tmethod=%s\timage=%s\n' "$host" "$role" "$monitoring" "$os" "$architecture" "$method" "$image" > "$tmp"
+mv "$tmp" "$config_file"; printf '%s\n' "$host" > "$hostname_file"; chmod 0600 "$config_file" "$hostname_file"
+trap - EXIT HUP INT TERM
+echo "postinstall=OK host=$host enrollment=request-pending"

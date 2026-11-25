@@ -45,6 +45,8 @@ M1 optional dependency checks intentionally report `SKIPPED` when MRTG or RRDtoo
 
 `tests/m5-golden.sh` and `examples/m5-golden-lab.sh` exercise the unprivileged golden-client archive lifecycle, including audit, dry-run/apply boundaries, manifest and checksum verification, excluded identity/runtime data, safe restore, repeated-capture protection and archive/metadata negative cases. The test uses only temporary directories and regular files.
 
+`tests/m6-netboot.sh` checks the three offline configuration dialects, profile/image relationships, duplicate MAC/IP rejection, secret filtering, TFTP checksum staging, repeated staging and symlink/path failures. `tests/m7-postinstall.sh` checks fresh identities, image-version selection, clone/reinstallation rejection, operator approval/rejection and authenticated status handoff. Neither test starts a network service or claims a native boot.
+
 R2 categories are separate: offline `make test` is required; an optional integration run may use an explicitly selected `cfagent` in a disposable directory; historical acceptance remains open until CFEngine 1 is exercised on a documented period OS with provenance, checksum, command, output and cleanup evidence.
 
 ## Git checkout line endings

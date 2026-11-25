@@ -19,3 +19,5 @@ Capture schließt temporäre Laufzeitbäume sowie private SSH-/SASD-Identitätsd
 Siehe [golden-images.md](golden-images.md), [security.md](security.md) und [testing.md](testing.md). Die reproduzierbare Offline-Abnahme ist `tests/m5-golden.sh`; der Bedienablauf steht in `examples/m5-golden-lab.sh`.
 
 Die Offline-Vorbereitung der M6-Netzwerkinstallation ist in [netboot.de.md](netboot.de.md) und [installation-profiles.de.md](installation-profiles.de.md) beschrieben. Sie erzeugt geprüften Konfigurationstext und staged ausdrücklich ausgewählte Bootdateien, startet aber kein DHCP/TFTP und behauptet keinen nativen Boot.
+
+Die M7-Postinstallation und Monitoring-Übergabe ist in [postinstall.de.md](postinstall.de.md) beschrieben. Sie erzeugt eine neue Client-Identität und einen Enrollment-Antrag in einem ausdrücklich angegebenen Präfix und verwendet danach den bestehenden Weg der Betreiberfreigabe und des authentifizierten Imports.
