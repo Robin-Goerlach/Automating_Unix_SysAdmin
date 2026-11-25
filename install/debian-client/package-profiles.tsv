@@ -1,0 +1,10 @@
+stage	profiles	packages
+1	baseline,workstation,laptop,server	vim rsync openssh-client bc screen tmux
+1	workstation,laptop,server	rsyslog smartmontools nfs-common
+1	workstation,laptop	lm-sensors alsa-utils cups a2ps
+1	server	openssh-server openssh-sftp-server
+1	review	postfix mailutils iptables fail2ban
+2	baseline,workstation,laptop,server	wget unix2dos
+2	workstation,laptop,server	vim-doc vim-scripts sysstat
+2	server	acct logwatch
+2	review	apt-listchanges needrestart monit rkhunter chkrootkit lynis auditd snmp

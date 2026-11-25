@@ -18,7 +18,7 @@ RUNTIME = ('install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-clien
            'native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh '
            'collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py dependencies.tsv verify-baseline.sh '
            'apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh '
-           'checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv').split()
+           'checklist.tsv site.example.conf package-policy.tsv package-profiles.tsv inventory-fields.tsv').split()
 
 
 def digest(data):
