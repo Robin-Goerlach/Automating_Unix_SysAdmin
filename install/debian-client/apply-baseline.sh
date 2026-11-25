@@ -5,6 +5,7 @@ LC_ALL=C; export LC_ALL
 umask 077
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 . "$here/lib/policy.sh"
+. "$here/lib/transaction.sh"
 root=; host=; site=; mode=dry
 fail(){ echo "baseline: $*" >&2; exit 2; }
 for arg do
@@ -17,34 +18,27 @@ for arg do
         *) fail 'unknown argument' ;;
     esac
 done
-uid=$(id -u); [ "$uid" -ne 0 ] || fail 'root execution refused'
-# Only an explicitly marked, private, direct child of /tmp is supported.
-case "$root" in /tmp/sasd-debian-lab.*) ;; *) fail 'not a fixture path' ;; esac
-suffix=${root#/tmp/sasd-debian-lab.}
-printf '%s\n' "$suffix" | grep -Eq '^[A-Za-z0-9]+$' || fail 'invalid fixture name'
-private_dir(){ [ -d "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%u:%a' -- "$1")" = "$uid:700" ]; }
-private_dir "$root" && private_dir "$root/etc" || fail 'fixture directories must be owned and mode 0700'
-regular(){ [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%u:%h' -- "$1")" = "$uid:1" ] && [ -r "$1" ]; }
-regular "$root/.sasd-fixture" && [ "$(cat "$root/.sasd-fixture")" = SASD-DEBIAN-FIXTURE-1 ] || fail 'fixture marker missing'
+fixture_check || fail 'invalid fixture or root execution'
 valid_hostname || fail 'invalid hostname'
 expected=$(render_resolver) || fail 'invalid DNS policy'
-# Serialize apply runs before reading any target state. Dry-run never writes.
-lock=; work=; committed=0; changed=
+# The kernel releases this lock on process exit; no PID guessing is required.
+exec 9< "$root"
+flock -n -x 9 || fail 'fixture busy'
+[ ! -e "$root/.baseline-lock" ] && [ ! -L "$root/.baseline-lock" ] || fail 'legacy lock requires review'
+pending=$(pending_transaction) || fail 'ambiguous or invalid journal'
+[ -z "$pending" ] || fail "recovery required: $pending"
+work=
 cleanup(){
     rc=$?; trap - EXIT; trap '' HUP INT TERM
-    if [ "$committed" -eq 0 ] && [ -n "$changed" ]; then
-        for name in $changed; do
-            if ! cp -p -- "$work/original/$name" "$work/restore-$name" || ! mv -fT -- "$work/restore-$name" "$root/etc/$name"; then
-                echo "ROLLBACK FAILED: $name; backup=$work/original" >&2; rc=1
-            else echo "ROLLED BACK: $name" >&2; fi
-        done
+    if [ -n "$work" ]; then
+        state=$(state_get "$work" || true)
+        case "$state" in
+            APPLYING|ROLLING_BACK) restore_transaction || { echo "ROLLBACK INCOMPLETE: $work" >&2; rc=1; } ;;
+        esac
     fi
-    [ -z "$lock" ] || rmdir -- "$lock" || rc=1
     exit "$rc"
 }
 if [ "$mode" = apply ]; then
-    mkdir -- "$root/.baseline-lock" || fail 'fixture busy'
-    lock=$root/.baseline-lock
     trap cleanup EXIT; trap 'exit 1' HUP INT TERM
 fi
 for name in hostname hosts resolv.conf; do regular "$root/etc/$name" || fail "unsafe or missing $name"; done
@@ -58,7 +52,6 @@ hosts=$(awk -v old="$old" -v fqdn="$host" -v short="$short" '
      for(i=2;i<=NF;i++) if($i==fqdn || $i==short) bad=1; print original}
     END{if(!local_ok || bad) exit 1; if(!count) print "127.0.1.1 " fqdn " " short}
 ' "$root/etc/hosts") || fail 'ambiguous hosts mapping or missing localhost'
-# Preserve non-policy resolver lines; replace only nameserver/search/domain.
 resolver=$(awk '$1!~/^(nameserver|search|domain)$/ {print}' "$root/etc/resolv.conf") || fail 'resolver read failed'
 if [ -n "$resolver" ]; then resolver=$(printf '%s\n%s' "$resolver" "$expected"); else resolver=$expected; fi
 if [ "$mode" = dry ]; then
@@ -66,27 +59,30 @@ if [ "$mode" = dry ]; then
     exit 0
 fi
 work=$(mktemp -d "$root/baseline.XXXXXXXX")
-mkdir "$work/original" "$work/candidate"
+state_set PREPARING
+mkdir "$work/original" "$work/check" "$work/check/etc"
 for name in hostname hosts resolv.conf; do
     cp -p -- "$root/etc/$name" "$work/original/$name"
-    cp -p -- "$root/etc/$name" "$work/candidate/$name"
+    cp -p -- "$root/etc/$name" "$work/check/etc/$name"
 done
-printf '%s\n' "$short" > "$work/candidate/hostname"
-printf '%s\n' "$hosts" > "$work/candidate/hosts"
-printf '%s\n' "$resolver" > "$work/candidate/resolv.conf"
-# Verify the entire candidate before replacing even one file.
-mkdir "$work/check"; mv -- "$work/candidate" "$work/check/etc"
+printf '%s\n' "$short" > "$work/check/etc/hostname"
+printf '%s\n' "$hosts" > "$work/check/etc/hosts"
+printf '%s\n' "$resolver" > "$work/check/etc/resolv.conf"
 "$here/verify-baseline.sh" --root="$work/check" --hostname="$host" --site="$site"
+manifest "$work/original" > "$work/original.tsv"
+manifest "$work/check/etc" > "$work/desired.tsv"
+# All recovery evidence precedes the first mutation; snapshots remain in place.
+state_set APPLYING
 for name in hostname hosts resolv.conf; do
-    if cmp -s -- "$work/check/etc/$name" "$root/etc/$name"; then
+    if same_file "$work/check/etc/$name" "$root/etc/$name"; then
         printf 'UNCHANGED %s\n' "$name"
     else
-        # Record before rename so signal-driven cleanup can restore it.
-        changed="$changed $name"
-        mv -fT -- "$work/check/etc/$name" "$root/etc/$name"
+        replace_file "$work/check/etc/$name" "$root/etc/$name"
         printf 'CHANGED %s\n' "$name"
     fi
 done
 "$here/verify-baseline.sh" --root="$root" --hostname="$host" --site="$site"
-committed=1
+actual=$(manifest "$root/etc")
+[ "$actual" = "$(cat "$work/desired.tsv")" ] || fail 'installed manifest mismatch'
+state_set COMMITTED
 printf 'FIXTURE ONLY; backup=%s/original\n' "$work"

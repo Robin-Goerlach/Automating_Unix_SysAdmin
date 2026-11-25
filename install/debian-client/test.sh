@@ -44,4 +44,6 @@ fi
 tar -tzf "$tmp/release/sasd-debian-client.tar.gz" | grep -q 'debian-client/install-client.sh'
 sh "$here/test-verify.sh"
 sh "$here/test-apply.sh"
+sh "$here/test-recovery.sh"
+sh "$here/test-interruption.sh"
 echo 'Offline Debian candidate tests passed'
