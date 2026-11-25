@@ -4,6 +4,8 @@ Deutsch: [Deutsche Fassung](RELEASE-1.1.de.md)
 
 Status: development checkpoint completed through M7 offline acceptance. No `v1.1.0` tag is authorized yet.
 
+Acceptance check on 2026-11-25: the available host is WSL2 (`5.15.167.4-microsoft-standard-WSL2`). `virsh`, QEMU, `qemu-img`, `tcpdump`, `sshd`, and a TFTP daemon are unavailable; no libvirt network or disposable VM is present. The read-only preflight therefore reports `SKIPPED`. No native network boot, installation, or postinstall claim is made.
+
 ## Included and verified on `main`
 
 - M5 golden-client audit, TAR capture, manifest/checksum catalog and safe file-system restore.
@@ -13,6 +15,7 @@ Status: development checkpoint completed through M7 offline acceptance. No `v1.1
 - Reuse of existing operator approval, signed status and M1 authenticated import without a second registration service.
 - Rejection of duplicate identities, stale image versions, rejected hosts, unsafe profile values and silent reinstallation of active enrollments.
 - Offline end-to-end laboratory `examples/sasd-provisioning-lab.sh`.
+- Read-only native-lab preflight `tests/m6-kvm-preflight.sh` and the reproducible Debian/KVM procedure in [provisioning/kvm-lab.md](provisioning/kvm-lab.md).
 
 ## Included with limitations
 

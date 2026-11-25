@@ -14,3 +14,5 @@ examples/m5-golden-lab.sh
 ```
 
 The exact `tar`, `sha256sum`, OS and architecture used for a deployment acceptance must be recorded separately. A future QEMU/KVM boot test may use only a test-generated image and must remain isolated from production networks and disks.
+
+Use `tests/m6-kvm-preflight.sh` before a native attempt. It is read-only and reports `SKIPPED` on WSL or another incomplete host; use `--require` as the gate on an authorized KVM/libvirt host. The complete evidence procedure is [kvm-lab.md](kvm-lab.md).

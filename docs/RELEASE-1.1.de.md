@@ -4,6 +4,8 @@ English: [English version](RELEASE-1.1.md)
 
 Status: Entwicklungscheckpoint bis zur Offline-Abnahme von M7 abgeschlossen. Ein `v1.1.0`-Tag ist noch nicht zulässig.
 
+Abnahmekontrolle am 25.11.2026: Der verfügbare Host ist WSL2 (`5.15.167.4-microsoft-standard-WSL2`). `virsh`, QEMU, `qemu-img`, `tcpdump`, `sshd` und ein TFTP-Dienst fehlen; es gibt kein libvirt-Netz und keine Wegwerf-VM. Der lesende Preflight meldet daher `SKIPPED`. Es wird kein nativer Netzwerkboot, keine Installation und keine native Postinstallation behauptet.
+
 ## Auf `main` enthalten und verifiziert
 
 - M5-Golden-Client-Audit, TAR-Capture, Manifest-/Checksum-Katalog und sicherer Dateisystem-Restore.
@@ -13,6 +15,7 @@ Status: Entwicklungscheckpoint bis zur Offline-Abnahme von M7 abgeschlossen. Ein
 - Wiederverwendung der bestehenden Betreiberfreigabe, signierten Statusdatei und des authentifizierten M1-Imports ohne zweiten Registrierungsdienst.
 - Ablehnung doppelter Identitäten, veralteter Image-Versionen, abgelehnter Hosts, unsicherer Profilwerte und stiller Reinstallation aktiver Enrollment-Datensätze.
 - Offline-End-to-End-Labor `examples/sasd-provisioning-lab.sh`.
+- Lesender nativer Labor-Preflight `tests/m6-kvm-preflight.sh` und reproduzierbares Debian/KVM-Verfahren in [provisioning/kvm-lab.de.md](provisioning/kvm-lab.de.md).
 
 ## Enthalten mit Einschränkungen
 

@@ -22,4 +22,6 @@ Die Offline-Vorbereitung der M6-Netzwerkinstallation ist in [netboot.de.md](netb
 
 Die M7-Postinstallation und Monitoring-Übergabe ist in [postinstall.de.md](postinstall.de.md) beschrieben. Sie erzeugt eine neue Client-Identität und einen Enrollment-Antrag in einem ausdrücklich angegebenen Präfix und verwendet danach den bestehenden Weg der Betreiberfreigabe und des authentifizierten Imports.
 
+Das native Debian/KVM-Abnahmerezept und der lesende Voraussetzungencheck stehen in [kvm-lab.de.md](kvm-lab.de.md). Es benötigt einen ausdrücklich freigegebenen isolierten Host und behauptet erst bei vorhandenen Paket-, Gast-, Installations- und Bereinigungsnachweisen ein natives Ergebnis.
+
 Die kombinierte Offline-Demonstration ist `examples/sasd-provisioning-lab.sh`. Ihre Ausgabe trennt simulierte Provisionierung ausdrücklich von echtem Netzwerkboot, nativer OS-Installation und historischer Unix-Abnahme.

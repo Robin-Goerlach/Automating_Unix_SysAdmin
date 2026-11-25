@@ -22,4 +22,6 @@ M6 offline network-installation preparation is documented in [netboot.md](netboo
 
 M7 postinstallation and monitoring handoff is documented in [postinstall.md](postinstall.md). It creates a new client identity and enrollment request in an explicit prefix, then reuses the existing operator approval and authenticated import path.
 
+The native Debian/KVM acceptance recipe and read-only prerequisite check are documented in [kvm-lab.md](kvm-lab.md). It requires an authorized isolated host and does not claim a native result until packet, guest, installation and cleanup evidence exists.
+
 The combined offline demonstration is `examples/sasd-provisioning-lab.sh`. Its output explicitly separates simulated provisioning from real network boot, native OS installation and historical Unix acceptance.

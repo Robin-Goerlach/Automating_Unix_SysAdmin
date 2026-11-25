@@ -14,3 +14,5 @@ examples/m5-golden-lab.sh
 ```
 
 Für eine konkrete Installationsabnahme müssen die verwendeten Versionen von `tar`, `sha256sum`, OS und Architektur separat aufgezeichnet werden. Ein späterer QEMU-/KVM-Boottest darf nur ein eigens erzeugtes Testimage verwenden und muss von Produktivnetzen und -datenträgern getrennt bleiben.
+
+Vor einem nativen Versuch `tests/m6-kvm-preflight.sh` ausführen. Das Skript ist lesend und meldet unter WSL oder auf einem unvollständigen Host `SKIPPED`; auf einem freigegebenen KVM/libvirt-Host ist `--require` das Gate. Das vollständige Nachweisverfahren steht in [kvm-lab.de.md](kvm-lab.de.md).
