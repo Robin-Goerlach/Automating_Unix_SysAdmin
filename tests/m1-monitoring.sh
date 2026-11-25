@@ -11,6 +11,12 @@ grep -q 'rrdtool=SKIPPED' "$tmp/config"
 grep -q '^web.lab.invalid' "$tmp/host"
 ./bin/sasd-monitor-mrtg --config site/monitoring.conf --out "$tmp/mrtg.cfg"
 grep -q 'Target\[web_lab_invalid_interface\]' "$tmp/mrtg.cfg"
+printf 'web.lab.invalid\tdisabled\toperator\n' > "$tmp/host-state.tsv"
+./bin/sasd-monitor-mrtg --config site/monitoring.conf --host-state "$tmp/host-state.tsv" --out "$tmp/mrtg-disabled.cfg"
+if grep -q 'Target\[web_lab_invalid_interface\]' "$tmp/mrtg-disabled.cfg"; then
+    echo "disabled host was emitted to MRTG" >&2; exit 1
+fi
+grep -q 'Target\[cfg_lab_invalid_interface\]' "$tmp/mrtg-disabled.cfg"
 if ./bin/sasd-monitor-mrtg --config site/monitoring.conf --out "$tmp/mrtg.cfg" > "$tmp/mrtg-error" 2>&1; then
     echo "MRTG output overwrite was not rejected" >&2; exit 1
 fi

@@ -80,6 +80,37 @@ grep -q 'unknown service check' "$tmp/bad-services-error"
 cp site/hosts.tsv "$tmp/admin-hosts.tsv"
 ./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv --operation validate > "$tmp/admin-validate"
 grep -q 'hosts=4 states=0 status=OK' "$tmp/admin-validate"
+
+cp site/hosts.tsv "$tmp/lifecycle-hosts.tsv"
+./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation disable --host web.lab.invalid --apply > "$tmp/lifecycle-disable"
+./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation update --host web.lab.invalid --record 'web.lab.invalid	192.0.2.21	unix	web	lab	web' --apply > "$tmp/lifecycle-update"
+./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation show --host web.lab.invalid > "$tmp/lifecycle-show"
+grep -q '192.0.2.21.*disabled' "$tmp/lifecycle-show"
+if ./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation disable --host web.lab.invalid --apply > "$tmp/lifecycle-repeat" 2>&1; then
+    echo "repeated disable accepted" >&2
+    exit 1
+fi
+grep -q 'invalid state transition' "$tmp/lifecycle-repeat"
+./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation enable --host web.lab.invalid --apply > "$tmp/lifecycle-enable"
+./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation remove --host web.lab.invalid --apply > "$tmp/lifecycle-remove"
+if ./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation enable --host web.lab.invalid --apply > "$tmp/lifecycle-removed" 2>&1; then
+    echo "removed host enabled without re-add" >&2
+    exit 1
+fi
+grep -q 'host does not exist' "$tmp/lifecycle-removed"
+./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation add --host web.lab.invalid --record 'web.lab.invalid	192.0.2.22	unix	web	lab	web' --apply > "$tmp/lifecycle-add"
+./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --operation validate > "$tmp/lifecycle-validate"
+grep -q 'hosts=4 states=1 status=OK history=5' "$tmp/lifecycle-validate"
+test "$(wc -l < "$tmp/lifecycle-hosts.tsv.history.tsv")" -eq 5
+grep -q '^[0-9][0-9]*	web.lab.invalid	remove	enabled	removed	operator$' "$tmp/lifecycle-hosts.tsv.history.tsv"
+
+ln -s "$tmp/lifecycle-hosts.tsv.history.tsv" "$tmp/history-link.tsv"
+if ./bin/sasd-host-admin --input "$tmp/lifecycle-hosts.tsv" --roles site/roles.tsv --history "$tmp/history-link.tsv" --operation validate > "$tmp/history-link-error" 2>&1; then
+    echo "symlinked history accepted" >&2
+    exit 1
+fi
+grep -q 'history file is a symlink' "$tmp/history-link-error"
+
 if ./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv --operation disable --host web.lab.invalid > "$tmp/admin-no-apply" 2>&1; then
     echo "host disable without apply accepted" >&2
     exit 1

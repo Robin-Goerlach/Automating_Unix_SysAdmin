@@ -20,8 +20,9 @@ Checkpoint B is being built incrementally:
 - `bin/sasd-site-inventory`, `bin/sasd-site-services`, `bin/sasd-site-classes` and `bin/sasd-site-audit` validate and select existing work.
 - `bin/sasd-host-admin` provides explicit, local inventory CRUD with `--apply` as the write gate.
 - `bin/sasd-site-config` produces a deterministic staged host/service selection and a consistency report; it does not claim to generate native CFEngine, MRTG, Nagios, DHCP or TFTP syntax.
+- `bin/sasd-monitor-mrtg` is the first existing product adapter to consume the same host lifecycle projection and omit disabled or removed hosts from its candidate output.
 
-The next B increments are product-specific generators, a controlled deploy/apply boundary, historical event retention and a fuller offline end-to-end lab. A disabled or removed host must not cause historical monitoring data to be deleted. Current host state is represented separately from the active inventory; event-history persistence is still a follow-up item.
+The next B increments are additional product-specific generators, a controlled deploy/apply boundary and a fuller offline end-to-end lab. Host lifecycle event retention is now implemented by `sasd-host-admin`. A disabled or removed host must not cause historical monitoring data to be deleted. Current host state is represented separately from the active inventory.
 
 ## Security and operational boundaries
 

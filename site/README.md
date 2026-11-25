@@ -21,11 +21,15 @@ The manifest is relative to the selected golden root and is consumed by the read
 
 This emits only applicable service selections. It does not probe, start, stop or configure a service. Generators and audits consume explicit files and retain their own safety boundaries.
 
-`bin/sasd-host-admin` is the bounded B-stage inventory editor. `validate`, `list`, `show` and `reconcile` are read-only; `add`, `update`, `enable`, `disable` and `remove` require `--apply`. A sibling state file records enabled/disabled/removed status without deleting monitoring history.
+`bin/sasd-host-admin` is the bounded B-stage inventory editor. `validate`, `list`, `show` and `reconcile` are read-only; `add`, `update`, `enable`, `disable` and `remove` require `--apply`. A sibling state file records the current enabled/disabled/removed projection, while a sibling `*.history.tsv` file retains lifecycle events. `update` preserves a disabled state; `enable` accepts only disabled hosts, `disable` only enabled hosts, and a removed host must be explicitly re-added before it can become active again.
+
+The history fields are `epoch`, `hostname`, `operation`, `from-state`, `to-state` and `reason`. It is operator-owned, mode `0600`, validated before each write and protected by the same lock as the inventory. Inventory, state and history are installed as separate temporary-file replacements; this is not a crash-atomic multi-file transaction.
 
 `bin/sasd-site-config` reads the four inventory layers and emits deterministic `host-services.tsv` and `manifest.tsv` files into a new staging directory. It ignores disabled or removed hosts from the sibling state file. `--check` is read-only; `--apply` only creates the selected staging directory and does not deploy native product configuration.
 
 `bin/sasd-site-consistency` is a read-only cross-check of the active host/service selection and `site/monitoring.conf`. It verifies that the monitoring model names the same inventory layers, that every active host receives at least one applicable service, and that service profiles match the monitoring profile. It prints the selected host, service, check and profile records followed by a summary; it does not contact hosts or parse a native product configuration.
+
+The existing `bin/sasd-monitor-mrtg` is the first product adapter consuming the lifecycle projection. Pass `--host-state site/hosts.tsv.state` (the default when omitted) to exclude disabled and removed hosts from its reviewable MRTG candidate. The output remains an unverified candidate until the corresponding MRTG version is run.
 
 Run `bin/sasd-site-inventory --check` before using the data. `bin/sasd-site-classes` emits `host`, comma-separated independent SASD classes, role, profile, class and manifest. These class names are selection labels, not a replacement for CFEngine's native class engine.
 

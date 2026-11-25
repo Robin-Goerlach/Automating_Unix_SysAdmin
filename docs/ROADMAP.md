@@ -48,7 +48,8 @@ The repository must never mislabel a fixture-based test as live network or histo
 - [x] Add a versioned service-selection file with host applicability validation; selection remains read-only and independent of service control.
 - [x] Add explicit host inventory operations with `sasd-host-admin`, an `--apply` gate and separate enabled/disabled/removed state.
 - [x] Add deterministic shared host/service staging with `sasd-site-config`, including exclusion of disabled hosts and output-directory protection.
-- [ ] Add product-specific generators, controlled deploy/apply, migration/versioning and retained host event history.
+- [x] Retain validated host lifecycle events across add/update/enable/disable/remove transitions.
+- [ ] Add more product-specific generators, controlled deploy/apply and migration/versioning.
 - Evaluate CFEngine 1.4 historical syntax using a disposable VM and actual binary.
 - CFEngine helper: policy inspection, syntax checking, role classification, status reporting; scripts may cooperate with a real cfagent but cannot claim its behavior by emulation.
 - Provide read-only, independent SASD config audit for systems without CFEngine.

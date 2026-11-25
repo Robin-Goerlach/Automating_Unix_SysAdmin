@@ -20,8 +20,9 @@ Checkpoint B wird schrittweise umgesetzt:
 - `bin/sasd-site-inventory`, `bin/sasd-site-services`, `bin/sasd-site-classes` und `bin/sasd-site-audit` prüfen und selektieren vorhandene Arbeiten.
 - `bin/sasd-host-admin` bietet lokale CRUD-Verwaltung mit `--apply` als Schreibschranke.
 - `bin/sasd-site-config` erzeugt eine deterministische Host-/Service-Auswahl im Staging und einen Konsistenzbericht; es behauptet nicht, native CFEngine-, MRTG-, Nagios-, DHCP- oder TFTP-Syntax zu erzeugen.
+- `bin/sasd-monitor-mrtg` ist der erste vorhandene Produktadapter, der dieselbe Host-Lebenszyklusprojektion nutzt und deaktivierte oder entfernte Rechner aus seiner Kandidatenausgabe auslässt.
 
-Weitere B-Schritte sind produktspezifische Generatoren, eine kontrollierte Deploy-/Apply-Grenze, historische Ereignisaufbewahrung und ein vollständigeres Offline-Ende-zu-Ende-Labor. Deaktivierung oder Entfernung eines Hosts darf historische Monitoringdaten nicht löschen. Der aktuelle Hostzustand wird getrennt vom aktiven Inventar geführt; persistente Ereignishistorie ist noch offen.
+Weitere B-Schritte sind zusätzliche produktspezifische Generatoren, eine kontrollierte Deploy-/Apply-Grenze und ein vollständigeres Offline-Ende-zu-Ende-Labor. Die Aufbewahrung der Host-Lebenszyklusereignisse ist nun in `sasd-host-admin` umgesetzt. Deaktivierung oder Entfernung eines Hosts darf historische Monitoringdaten nicht löschen. Der aktuelle Hostzustand wird getrennt vom aktiven Inventar geführt.
 
 ## Sicherheits- und Betriebsgrenzen
 

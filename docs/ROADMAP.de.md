@@ -21,7 +21,8 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 - [x] Eine versionierte Service-Auswahldatei mit Host-Zuordnungsprüfung; die Auswahl bleibt schreibgeschützt und unabhängig von der Dienststeuerung.
 - [x] Ausdrückliche Hostoperationen mit `sasd-host-admin`, `--apply`-Schranke und getrenntem enabled/disabled/removed-Zustand.
 - [x] Deterministisches gemeinsames Host-/Service-Staging mit `sasd-site-config`, einschließlich Ausschluss deaktivierter Hosts und Schutz vor vorhandenen Ausgabeordnern.
-- [ ] Produktspezifische Generatoren, kontrolliertes Deploy/Apply, Migration/Versionierung und dauerhafte Host-Ereignishistorie.
+- [x] Geprüfte Host-Lebenszyklusereignisse über add/update/enable/disable/remove hinweg aufbewahren.
+- [ ] Weitere produktspezifische Generatoren, kontrolliertes Deploy/Apply und Migration/Versionierung.
 - [ ] CFEngine-1.4-Syntax mit Originalprogramm und Wegwerf-VM prüfen.
 - [x] Eigenständige Konfigurationsprüfung ohne CFEngine.
 - [ ] Staging, Backup und ausdrückliches Apply mit Rollback.
