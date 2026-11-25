@@ -21,6 +21,10 @@ The manifest is relative to the selected golden root and is consumed by the read
 
 This emits only applicable service selections. It does not probe, start, stop or configure a service. Generators and audits consume explicit files and retain their own safety boundaries.
 
+`bin/sasd-host-admin` is the bounded B-stage inventory editor. `validate`, `list`, `show` and `reconcile` are read-only; `add`, `update`, `enable`, `disable` and `remove` require `--apply`. A sibling state file records enabled/disabled/removed status without deleting monitoring history.
+
+`bin/sasd-site-config` reads the four inventory layers and emits deterministic `host-services.tsv` and `manifest.tsv` files into a new staging directory. It ignores disabled or removed hosts from the sibling state file. `--check` is read-only; `--apply` only creates the selected staging directory and does not deploy native product configuration.
+
 Run `bin/sasd-site-inventory --check` before using the data. `bin/sasd-site-classes` emits `host`, comma-separated independent SASD classes, role, profile, class and manifest. These class names are selection labels, not a replacement for CFEngine's native class engine.
 
 The audit command delegates file comparison to the existing `bin/sasd-config-drift` program:

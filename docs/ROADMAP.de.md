@@ -19,6 +19,9 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 - [x] Dateibasiertes Rechner- und Rolleninventar.
 - [x] Deterministische Klassen- und Rollenauflösung sowie lesendes Drift-Audit.
 - [x] Eine versionierte Service-Auswahldatei mit Host-Zuordnungsprüfung; die Auswahl bleibt schreibgeschützt und unabhängig von der Dienststeuerung.
+- [x] Ausdrückliche Hostoperationen mit `sasd-host-admin`, `--apply`-Schranke und getrenntem enabled/disabled/removed-Zustand.
+- [x] Deterministisches gemeinsames Host-/Service-Staging mit `sasd-site-config`, einschließlich Ausschluss deaktivierter Hosts und Schutz vor vorhandenen Ausgabeordnern.
+- [ ] Produktspezifische Generatoren, kontrolliertes Deploy/Apply, Migration/Versionierung und dauerhafte Host-Ereignishistorie.
 - [ ] CFEngine-1.4-Syntax mit Originalprogramm und Wegwerf-VM prüfen.
 - [x] Eigenständige Konfigurationsprüfung ohne CFEngine.
 - [ ] Staging, Backup und ausdrückliches Apply mit Rollback.

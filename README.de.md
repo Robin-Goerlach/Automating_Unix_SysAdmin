@@ -1,6 +1,6 @@
 # SASD Automating Unix SysAdmin
 
-[English](README.md) | **Deutsch** | [Roadmap](docs/ROADMAP.de.md) | [Architektur](docs/ARCHITECTURE.de.md) | [Sicherheit](docs/SECURITY.de.md) | [Tests](docs/TESTING.de.md)
+[English](README.md) | **Deutsch** | [Roadmap](docs/ROADMAP.de.md) | [Architektur](docs/ARCHITECTURE.de.md) | [Integrierter Umfang](docs/INTEGRATED-SCOPE.de.md) | [Sicherheit](docs/SECURITY.de.md) | [Tests](docs/TESTING.de.md)
 
 Eine eigenständig entwickelte SASD-Sammlung für Unix-Systemadministration. Ausgangspunkt ist ein Kompatibilitätsprofil für einen Unix-Stand um **1999**, ergänzt durch getrennte Profile für frühere Bourne-Shell-Umgebungen und spätere Automatisierungstechniken von 2002–2009.
 
@@ -35,6 +35,10 @@ Eine eigenständig entwickelte SASD-Sammlung für Unix-Systemadministration. Aus
 - bin/sasd-node-status – bestehende Statusdatensätze mit SSH signieren.
 - bin/sasd-monitor-auth-import – genehmigte Identität prüfen und signierte Statusdaten importieren.
 - install/install-sasd-client.sh – einen Wegwerf-Client und Registrierungsantrag vorbereiten.
+- bin/sasd-host-admin – das zentrale Hostinventar mit explizitem Apply verwalten.
+- bin/sasd-site-config – Host-/Service-Auswahl reproduzierbar in ein Staging-Verzeichnis schreiben.
+
+Die integrierte Infrastruktur, ihre Grenzen und der Status der Checkpoints sind in [docs/INTEGRATED-SCOPE.de.md](docs/INTEGRATED-SCOPE.de.md) beschrieben. Die neuen B-Werkzeuge starten keine Dienste, installieren keine Pakete und genehmigen kein Enrollment.
 
 ## Schnellstart
 

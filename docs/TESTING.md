@@ -49,6 +49,8 @@ M1 optional dependency checks intentionally report `SKIPPED` when MRTG or RRDtoo
 
 `tests/m6-netboot.sh` checks the three offline configuration dialects, profile/image relationships, duplicate MAC/IP rejection, secret filtering, TFTP checksum staging, repeated staging and symlink/path failures. `tests/m7-postinstall.sh` checks fresh identities, image-version selection, clone/reinstallation rejection, operator approval/rejection and authenticated status handoff. Neither test starts a network service or claims a native boot.
 
+Checkpoint B's `site-test` target exercises inventory and service selection. The R2 fixture path also covers host-admin and site-config: CRUD writes require `--apply`, disabled hosts are excluded from staged selections, and an existing staging directory is rejected. This remains offline configuration validation, not native product parsing or deployment.
+
 R2 categories are separate: offline `make test` is required; an optional integration run may use an explicitly selected `cfagent` in a disposable directory; historical acceptance remains open until CFEngine 1 is exercised on a documented period OS with provenance, checksum, command, output and cleanup evidence.
 
 ## Compatibility matrix

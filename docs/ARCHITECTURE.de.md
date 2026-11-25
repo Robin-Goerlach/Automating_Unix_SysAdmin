@@ -47,6 +47,8 @@ M2 ergänzt einen Offline-Pfad für Registrierung und authentifiziertes Staging:
 
 Das Inventar ist ein vom Administrator gepflegter TSV-Vertrag, kein DNS, keine CMDB und kein CFEngine-Parser. Rollenmanifeste wählen Referenzpfade; der bestehende Bytevergleich behält seine Semantik.
 
+Checkpoint B ergänzt eine ausdrückliche Inventar-Schreibgrenze: `sasd-host-admin` ändert die aktive TSV nur mit `--apply` und hält deaktivierten/entfernten Zustand in einer benachbarten Zustandsdatei fest. `sasd-site-config` verarbeitet dasselbe Modell und erzeugt eine deterministische Auswahl im Staging, wobei nicht aktivierte Hosts ausgelassen werden. Dies sind gemeinsame Auswahlarten, noch kein nativer Produktgenerator und kein Deployment.
+
 ## Schnittstellen und Zustände
 
 Prüferausgabe:

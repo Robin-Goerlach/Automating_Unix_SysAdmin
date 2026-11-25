@@ -46,6 +46,7 @@ Englische Markdown-Dateien sind kanonisch; deutsche Fassungen tragen den Suffix 
 ## Sitzungsabschluss und Kontextübergabe
 
 - Zu Beginn jeder Entwicklungssitzung `../logs/LAST-SESSION.md` und bei Bedarf das darin referenzierte vollständige Archiv lesen.
+- Zu Beginn jeder Entwicklungssitzung zusätzlich den vollständigen `../logs/MASTER-ASSIGNMENT.md` lesen. Dieser enthält den dauerhaften strategischen und technischen Auftrag; er darf nicht durch eine verkürzte Sitzungszusammenfassung ersetzt oder eigenständig verändert werden.
 - Am Ende jedes Entwicklungsauftrags ein vollständiges UTC-datiertes Sitzungsarchiv in `../logs` erstellen, auch bei teilweise erledigter Arbeit oder fehlgeschlagenem Push, CI-Lauf, Netzwerkzugriff oder technischen Gates.
 - `../logs/LAST-SESSION.md` erst aktualisieren, wenn das vollständige Archiv existiert und lesbar ist. Die Übergabe muss den tatsächlichen Repository-, Test-, Commit-, Remote- und CI-Zustand, Blocker und den nächsten sicheren Schritt nennen.
 - Vor einer Empfehlung zu `/new` Archiv und Übergabe vervollständigen und verifizieren. Nach einer Unterbrechung zuerst prüfen, ob der vorherige Entwicklungsstand dokumentiert wurde, und fehlende Dokumentation bei nächster Gelegenheit nachholen.

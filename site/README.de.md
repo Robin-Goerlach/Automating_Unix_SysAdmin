@@ -21,6 +21,10 @@ Das Manifest ist relativ zum ausgewählten Golden-Root und wird von der lesenden
 
 Die Ausgabe enthält nur für den Host passende Serviceauswahlen. Das Kommando prüft, startet, stoppt und konfiguriert keinen Dienst. Generatoren und Audits arbeiten mit ausdrücklich angegebenen Dateien und behalten ihre eigenen Sicherheitsgrenzen.
 
+`bin/sasd-host-admin` ist der begrenzte Inventar-Editor von B. `validate`, `list`, `show` und `reconcile` sind lesend; `add`, `update`, `enable`, `disable` und `remove` benötigen `--apply`. Eine benachbarte Zustandsdatei hält enabled/disabled/removed fest, ohne Monitoringhistorie zu löschen.
+
+`bin/sasd-site-config` liest die vier Inventarschichten und erzeugt deterministische `host-services.tsv`- und `manifest.tsv`-Dateien in einem neuen Staging-Verzeichnis. Deaktivierte oder entfernte Hosts aus der benachbarten Zustandsdatei werden ausgelassen. `--check` ist lesend; `--apply` erzeugt nur das ausgewählte Staging-Verzeichnis und verteilt keine native Produktkonfiguration.
+
 Vor der Verwendung `bin/sasd-site-inventory --check` ausführen. `bin/sasd-site-classes` gibt Rechner, unabhängige SASD-Klassen, Rolle, Profil, Klasse und Manifest aus. Die Klassen dienen nur der Auswahl und ersetzen nicht die native CFEngine-Klassenlogik.
 
 Die Prüfung delegiert den Bytevergleich an `bin/sasd-config-drift`:

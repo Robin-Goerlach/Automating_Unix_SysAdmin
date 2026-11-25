@@ -1,6 +1,6 @@
 # SASD Automating Unix SysAdmin
 
-**English (default)** | [Deutsch](README.de.md) | [Roadmap](docs/ROADMAP.md) | [Architecture](docs/ARCHITECTURE.md) | [Historical scope](docs/TIMELINE.md)
+**English (default)** | [Deutsch](README.de.md) | [Roadmap](docs/ROADMAP.md) | [Architecture](docs/ARCHITECTURE.md) | [Integrated scope](docs/INTEGRATED-SCOPE.md) | [Historical scope](docs/TIMELINE.md)
 
 An independently developed SASD collection of Unix system-administration scripts and integrations. The initial compatibility profile covers a **late-1990s Unix site (reference year: 1999)**, with separate pathways for earlier Bourne-shell environments and later 2002–2009 infrastructure automation.
 
@@ -25,6 +25,8 @@ An independently developed SASD collection of Unix system-administration scripts
 | bin/sasd-site-inventory | Validate and query a fictional TSV host inventory | Read-only |
 | bin/sasd-site-classes | Resolve roles to independent SASD selection classes | Read-only |
 | bin/sasd-site-audit | Select a role manifest and delegate a read-only drift audit | Read-only |
+| bin/sasd-host-admin | Validate or explicitly mutate the local host inventory | Read-only unless `--apply` |
+| bin/sasd-site-config | Stage deterministic host/service selections | Read-only check or explicit staging write |
 | bin/sasd-monitor-config | Validate bounded central-monitor configuration | Read-only |
 | bin/sasd-monitor-hosts | List and inspect monitored R2 hosts | Read-only |
 | bin/sasd-monitor-import | Validate and store local status observations | Explicit local runtime write |
@@ -68,6 +70,8 @@ Get the external MRTG data lines:
 See [bigbrother/README.md](bigbrother/README.md) for the period-style host inventory and [mrtg/README.md](mrtg/README.md) for optional MRTG integration and [rrd/README.md](rrd/README.md) for RRDtool. For an end-to-end walkthrough, use examples/demo.sh.
 
 The R2 site inventory is documented in [site/README.md](site/README.md). It uses reserved `192.0.2.0/24` documentation records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native acceptance.
+
+The integrated infrastructure direction, boundaries and checkpoint status are documented in [docs/INTEGRATED-SCOPE.md](docs/INTEGRATED-SCOPE.md). The current B-stage tools are `sasd-host-admin` for explicit inventory changes and `sasd-site-config` for deterministic host/service selection into a disposable staging directory; they do not start services, install packages or approve enrollment.
 
 The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. The bounded M2 enrollment and M2.1 fixed-command SSH transport are documented under [docs/monitoring/enrollment.md](docs/monitoring/enrollment.md) and [docs/monitoring/transport.md](docs/monitoring/transport.md); no listening service is added by SASD. The exact V1.0 scope is in [docs/RELEASE-1.0.md](docs/RELEASE-1.0.md). M5–M7 provisioning work is documented under [docs/provisioning/README.md](docs/provisioning/README.md); its current offline tools never write block devices or automatically approve monitoring.
 

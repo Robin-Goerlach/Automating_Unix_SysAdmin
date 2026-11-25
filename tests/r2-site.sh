@@ -76,4 +76,29 @@ if ./bin/sasd-site-services --hosts site/hosts.tsv --roles site/roles.tsv --chec
     exit 1
 fi
 grep -q 'unknown service check' "$tmp/bad-services-error"
+
+cp site/hosts.tsv "$tmp/admin-hosts.tsv"
+./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv --operation validate > "$tmp/admin-validate"
+grep -q 'hosts=4 states=0 status=OK' "$tmp/admin-validate"
+if ./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv --operation disable --host web.lab.invalid > "$tmp/admin-no-apply" 2>&1; then
+    echo "host disable without apply accepted" >&2
+    exit 1
+fi
+grep -q 'requires --apply' "$tmp/admin-no-apply"
+./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv --operation disable --host web.lab.invalid --apply > "$tmp/admin-disable"
+grep -q 'status=APPLIED' "$tmp/admin-disable"
+./bin/sasd-site-config --hosts "$tmp/admin-hosts.tsv" --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --check > "$tmp/site-config-check"
+grep -q 'hosts=3 selections=8 status=OK' "$tmp/site-config-check"
+./bin/sasd-site-config --hosts "$tmp/admin-hosts.tsv" --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --out "$tmp/staged" --apply > "$tmp/site-config-stage"
+grep -q 'status=APPLIED' "$tmp/site-config-stage"
+grep -q '^cfg.lab.invalid' "$tmp/staged/host-services.tsv"
+if grep -q '^web.lab.invalid' "$tmp/staged/host-services.tsv"; then
+    echo "disabled host was staged" >&2
+    exit 1
+fi
+if ./bin/sasd-site-config --hosts "$tmp/admin-hosts.tsv" --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --out "$tmp/staged" --apply > "$tmp/site-config-existing" 2>&1; then
+    echo "existing staging directory accepted" >&2
+    exit 1
+fi
+grep -q 'output exists' "$tmp/site-config-existing"
 echo "R2 site inventory and audit: PASS"
