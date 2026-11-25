@@ -30,3 +30,7 @@ The exact age of a period-specific program and its availability on every targete
 **Period-inspired** means selecting an interface and software family that existed in the period. **Period-validated** requires a successful test on a period OS and a documented binary/version combination. CI provides contemporary regression evidence only.
 
 For original Unix variants, prioritize isolated KVM/QEMU guest systems with a host-only network and no connection to production services. Never weaken SSH or expose old services on a normal network simply to gain authenticity.
+
+## Provisioning extension boundary
+
+The M5 archive tools and M6/M7 offline preparation were authored in 2026 as later SASD extensions. A file-system TAR archive is not evidence of a period boot image. DHCP/dnsmasq, TFTP staging, Solaris JumpStart, Red Hat Kickstart and Debian FAI remain version-specific later-profile adapters; their candidate templates are not claims that the initial 1999 environment provided them. Native platform acceptance requires an exact binary, OS, isolated lab and recorded run.

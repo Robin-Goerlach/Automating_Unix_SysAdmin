@@ -35,3 +35,5 @@ Für jede Funktion sind Zweck, Profil, unabhängige Implementierung, Erstellungs
 ## R2-Grenze der CFEngine-1-Forschung
 
 Der Kandidat verwendet die dokumentierte Form von `cfagent.conf` und `actionsequence`, weil öffentliche Referenzen diese Schnittstellen beschreiben und der Archivindex ein datiertes 1.4.0-Archiv enthält. Das Archiv wurde nicht importiert und kein originales Programm ausgeführt. Daher wird nur ein Kandidat, keine native CFEngine-1-Kompatibilität dokumentiert.
+
+Die M5-/M6-/M7-Provisionierungswerkzeuge, Vorlagen, Fixtures und Dokumentation dieser Entwicklungslinie sind 2026 eigenständig für SASD erstellt worden. Sie verwenden etablierte Unix-Formate und nennen externe Produkte nur beschreibend; Quelltexte fremder Installer, Bootmedien oder historische Archive werden nicht weitergegeben. Native Kompatibilität wird nur bei einem aufgezeichneten Test mit genau benanntem externem Programm und genauer Umgebung behauptet.

@@ -37,3 +37,5 @@ Record the feature's practical purpose, operating-system/period profile, indepen
 ## R2 CFEngine 1 research boundary
 
 The R2 candidate uses the historically documented `cfagent.conf` and `actionsequence` shape because public reference material describes those interfaces and the archive index provides a dated 1.4.0 source archive. The archive was not imported into SASD, and no original binary was executed. The repository therefore records a candidate policy, not native CFEngine 1 compatibility. Modern CFEngine 3 and later CFEngine 2 syntax are not used as substitutes.
+
+The M5/M6/M7 provisioning tools, templates, fixtures and documentation in this development line are original SASD-authored work created in 2026. They use established Unix formats and named external products descriptively; no third-party installer source, boot media or historical archive is redistributed. Native compatibility is claimed only where a recorded test names the exact external program and environment.

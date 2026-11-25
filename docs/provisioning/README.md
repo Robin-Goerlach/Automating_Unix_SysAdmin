@@ -21,3 +21,5 @@ See [golden-images.md](golden-images.md), [security.md](security.md) and [testin
 M6 offline network-installation preparation is documented in [netboot.md](netboot.md) and [installation-profiles.md](installation-profiles.md). It generates reviewed configuration text and stages explicit boot files, but does not start DHCP/TFTP or claim a native boot.
 
 M7 postinstallation and monitoring handoff is documented in [postinstall.md](postinstall.md). It creates a new client identity and enrollment request in an explicit prefix, then reuses the existing operator approval and authenticated import path.
+
+The combined offline demonstration is `examples/sasd-provisioning-lab.sh`. Its output explicitly separates simulated provisioning from real network boot, native OS installation and historical Unix acceptance.

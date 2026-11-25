@@ -20,3 +20,7 @@ Die englische Fassung verzeichnet die Quellen zu CFEngine, MRTG, Big Brother, RR
 **Profilbezogen** bedeutet, dass eine zeitlich passende Schnittstelle ausgewählt wurde. **Historisch geprüft** bedeutet einen erfolgreichen Test auf einem genau benannten Originalsystem mit dokumentiertem Programm und Ergebnis. CI ist nur zeitgenössische Entwicklungsevidenz.
 
 Für ältere Unix-Varianten sind isolierte KVM-/QEMU-Gäste mit Host-only-Netz zu verwenden. Alte Dienste nicht an ein normales Netz anschließen.
+
+## Grenze der Provisionierungserweiterung
+
+Die M5-Archivwerkzeuge sowie die Offline-Vorbereitung von M6/M7 wurden 2026 als spätere SASD-Erweiterungen erstellt. Ein Dateisystem-TAR ist kein Nachweis eines zeitgenössischen Boot-Images. DHCP/dnsmasq, TFTP-Staging, Solaris JumpStart, Red Hat Kickstart und Debian FAI bleiben versionsabhängige Adapter späterer Profile; ihre Kandidatenvorlagen behaupten nicht, dass die ursprüngliche Umgebung von 1999 sie bereitstellte. Eine native Plattformabnahme benötigt genaues Binary, OS, isoliertes Labor und einen aufgezeichneten Lauf.
