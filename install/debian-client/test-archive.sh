@@ -22,7 +22,7 @@ tar --same-permissions -xzf "$tmp/release/sasd-debian-client.tar.gz" -C "$tmp/un
 archive=$tmp/unpack/debian-client
 # Independent expected file inventory. No local inventory, tests, reports or credentials.
 {
-    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl prepare-native.sh verify-dns.pl dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
+    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py prepare-native.sh verify-dns.pl dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
     awk -F '\t' 'NR>1 {print "tasks/" $1 "_" $3}' "$here/checklist.tsv"
 } | sort > "$tmp/expected"
 (cd "$archive" && find . -type f -printf '%P\n' | sort) > "$tmp/actual"
@@ -71,6 +71,12 @@ review=$(sed -n 's/^Native review: //p' "$tmp/review")
 case "$review" in /tmp/sasd-native-review.*) ;; *) review=; exit 1 ;; esac
 [ "$(cat "$review/status")" = PREPARED_NOT_AUTHORIZED ]
 [ "$(grep -c UNCHANGED "$review/changes.tsv")" -eq 3 ]
+if [ -x /usr/bin/python3 ]; then
+    rc=0; /usr/bin/python3 "$archive/native-capabilities.py" --root="$fixture" > "$tmp/capabilities" || rc=$?
+    [ "$rc" -eq 3 ]; grep -q 'native-apply.*NOT_AUTHORIZED' "$tmp/capabilities"
+else
+    echo 'Packaged native capabilities test SKIPPED: python3 unavailable'
+fi
 # Use the unchanged parser test harness against the unpacked executable.
 # Copy only into a separate test directory, not the delivered archive.
 mkdir "$tmp/dns-test"
