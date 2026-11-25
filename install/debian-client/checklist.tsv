@@ -28,7 +28,7 @@ id	original_line	task	state	handler
 0270	290	APT_Repositories	deferred	-
 0280	307	APT_Update_System	deferred	-
 0290	312	Reboot_Checkpoint	manual	-
-0300	314	Services_Disable_Unneeded	deferred	-
+0300	314	Services_Disable_Unneeded	render	serviceoff
 0310	318	Hardware_Blacklist	review	-
 0320	324	Fstab_Format	review	-
 0330	327	Fstab_Secure_Mountpoints	review	-
@@ -39,8 +39,8 @@ id	original_line	task	state	handler
 0380	352	Printing_Configure	deferred	-
 0390	357	Root_Profile_Stage_2	deferred	-
 0400	385	Firewall_Stage_2	review	-
-0410	389	Syslog_Configure	deferred	-
-0420	393	Logrotate_Configure	deferred	-
+0410	389	Syslog_Configure	render	syslog
+0420	393	Logrotate_Configure	render	logrotate
 0430	397	SSH_Import_Known_Hosts	deferred	-
 0440	400	SSH_Configure_Server_Client	review	-
 0450	406	SSH_X11_Configure	review	-
@@ -49,7 +49,7 @@ id	original_line	task	state	handler
 0480	419	Mail_Aliases	deferred	-
 0490	424	Postfix_Null_Client	deferred	-
 0500	428	SMTP_Banner	deferred	-
-0510	432	Cron_Daemon	deferred	-
+0510	432	Cron_Daemon	render	cronpolicy
 0520	438	Cron_Access	review	-
 0530	446	SMART_Monitor	deferred	-
 0540	450	Sensors_Configure	review	-
@@ -69,7 +69,7 @@ id	original_line	task	state	handler
 0680	519	Compatibility_Man_Pages	review	-
 0690	522	NVIDIA_Driver	manual	-
 0700	525	Display_Profile	manual	-
-0710	528	Services_Activate_Required	deferred	-
+0710	528	Services_Activate_Required	render	serviceon
 0720	531	NIS_Client	review	-
 0730	536	Packages_Stage_2	render	packages2
 0740	612	RNG_Tools	review	-
@@ -94,7 +94,7 @@ id	original_line	task	state	handler
 0930	704	Cron_Rkhunter	deferred	-
 0940	708	Cron_Chkrootkit	deferred	-
 0950	712	Cron_Audit_Report	deferred	-
-0960	716	Cron_Logwatch	deferred	-
+0960	716	Cron_Logwatch	render	logwatchschedule
 0970	720	NFS_Automounter	review	-
 0980	726	NIS_User_Security	review	-
 0990	731	NSS_Configure	review	-

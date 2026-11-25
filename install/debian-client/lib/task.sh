@@ -37,6 +37,37 @@ task_main() {
         packages2) printf '%s\n' vim-doc vim-scripts apt-listchanges needrestart monit rkhunter chkrootkit lynis auditd acct sysstat wget unix2dos snmp logwatch ;;
         banner) printf '%s\n' 'Unauthorized access is prohibited.' ;;
         shell) printf '%s\n' 'umask 027' 'TMOUT=600' 'readonly TMOUT' 'export TMOUT' ;;
+        serviceoff) printf '%s\n' 'profile	package	unit	policy' 'baseline,workstation,server	modemmanager	ModemManager.service	REVIEW_DISABLE' 'laptop	modemmanager	ModemManager.service	KEEP_UNCHANGED' ;;
+        syslog) cat <<'SYSLOG'
+# Candidate: /etc/rsyslog.d/60-sasd-client.conf
+# Dedicated local5 facility; existing distribution routes remain in effect.
+if ($syslogfacility-text == "local5") then {
+    action(type="omfile" file="/var/log/sasd/client.log"
+           fileCreateMode="0640" fileOwner="root" fileGroup="adm" createDirs="off")
+}
+SYSLOG
+            ;;
+        logrotate) cat <<'ROTATE'
+# Candidate: /etc/logrotate.d/sasd-client
+/var/log/sasd/client.log {
+    weekly
+    rotate 4
+    missingok
+    notifempty
+    compress
+    delaycompress
+    su root adm
+    create 0640 root adm
+    sharedscripts
+    postrotate
+        /usr/lib/rsyslog/rsyslog-rotate
+    endscript
+}
+ROTATE
+            ;;
+        cronpolicy) printf '%s\n' 'path	policy' '/etc/crontab	KEEP_DISTRIBUTION' '/etc/cron.d	AUDIT_OWNER_MODE' '/etc/cron.daily	AUDIT_OWNER_MODE' '/etc/cron.hourly	AUDIT_OWNER_MODE' '/etc/cron.weekly	AUDIT_OWNER_MODE' '/etc/cron.monthly	AUDIT_OWNER_MODE' '/etc/cron.allow	KEEP_UNCHANGED' '/etc/cron.deny	KEEP_UNCHANGED' ;;
+        serviceon) printf '%s\n' 'profile	package	unit	policy' 'baseline,workstation,laptop,server	cron	cron.service	REVIEW_ENABLE' 'workstation,laptop,server	rsyslog	rsyslog.service	REVIEW_ENABLE' 'workstation,laptop,server	sysstat	sysstat.service	REVIEW_ENABLE' 'workstation,laptop	cups	cups.service	REVIEW_ENABLE' 'server	openssh-server	ssh.service	REVIEW_ENABLE' ;;
+        logwatchschedule) printf '%s\n' 'profile	package	policy' 'server	logwatch	REUSE_DISTRIBUTION_SCHEDULE' 'baseline,workstation,laptop	logwatch	NOT_SELECTED' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;
