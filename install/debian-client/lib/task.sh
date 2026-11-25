@@ -36,7 +36,53 @@ task_main() {
         packages1) printf '%s\n' vim rsyslog postfix mailutils iptables lm-sensors smartmontools alsa-utils rsync nfs-common cups a2ps fail2ban openssh-server openssh-client openssh-sftp-server bc screen tmux ;;
         packages2) printf '%s\n' vim-doc vim-scripts apt-listchanges needrestart monit rkhunter chkrootkit lynis auditd acct sysstat wget unix2dos snmp logwatch ;;
         banner) printf '%s\n' 'Unauthorized access is prohibited.' ;;
-        shell) printf '%s\n' 'umask 027' 'TMOUT=600' 'readonly TMOUT' 'export TMOUT' ;;
+        rootprofile1) cat <<'PROFILE'
+# Optional root interactive profile fragment; preserve existing startup files.
+case $- in
+    *i*) umask 077; alias ll='ls -l'; alias la='ls -A' ;;
+esac
+PROFILE
+            ;;
+        rootprofile2) printf '%s\n' 'path	policy' '/root	REVIEW_PRIVATE_DIRECTORY' '/root/bin	REVIEW_PRIVATE_DIRECTORY' '/root/Documents	REVIEW_PRIVATE_DIRECTORY' '/root/tmp	REVIEW_PRIVATE_DIRECTORY' '/root/mnt	REVIEW_PRIVATE_DIRECTORY' '/root/.profile	KEEP_AND_REVIEW' '/root/.bashrc	KEEP_AND_REVIEW' '/root/.cshrc	KEEP_AND_REVIEW' '/root/.login	KEEP_AND_REVIEW' '/root/.exrc	KEEP_AND_REVIEW' '/root/.vimrc	KEEP_AND_REVIEW' '/root/.curlrc	KEEP_AND_REVIEW' '/root/.ssh/authorized_keys	KEEP_UNCHANGED' 'root-cron	KEEP_AND_REVIEW' ;;
+        shell) cat <<'SHELL'
+# Optional interactive POSIX-shell fragment; timeout only for Bash.
+case $- in
+    *i*)
+        umask 027
+        if [ -n "${BASH_VERSION-}" ] && [ "${TMOUT+x}" != x ]; then
+            TMOUT=600
+            readonly TMOUT
+            export TMOUT
+        fi
+        ;;
+esac
+SHELL
+            ;;
+        cshprofile) cat <<'CSH'
+# Optional C-shell fragment; do not replace distribution startup files.
+if ( $?prompt ) then
+    umask 027
+    alias ll 'ls -l'
+endif
+CSH
+            ;;
+        compatbsd) printf '%s\n' '# Optional interactive convenience alias, not BSD emulation.' 'case $- in' "    *i*) alias bsdps='ps aux' ;;" 'esac' ;;
+        compatlinux) printf '%s\n' 'path	policy' '/srv	KEEP_AND_REVIEW' '/var/log/messages	REVIEW_LOG_ROUTE_NO_HARDLINK' '/etc/sysconfig	NO_GLOBAL_ALIAS' '/etc/HOSTNAME	NO_HARDLINK' ;;
+        compatirix) printf '%s\n' 'path	policy' '/etc/openssh	KEEP_EXISTING_NO_NEW_ALIAS' '/etc/ssh	USE_NATIVE_PATH' ;;
+        compatsolaris) printf '%s\n' 'path	policy' '/var/home	KEEP_EXISTING_NO_NEW_ALIAS' '/home	USE_NATIVE_PATH' ;;
+        compatpager) cat <<'PAGER'
+# Optional interactive preference; never replace the more executable.
+case $- in
+    *i*)
+        if [ -z "${PAGER-}" ] && command -v less >/dev/null 2>&1; then
+            PAGER=less
+            export PAGER
+        fi
+        ;;
+esac
+PAGER
+            ;;
+        compatman) printf '%s\n' 'path	policy' '/usr/man	KEEP_EXISTING_NO_NEW_ALIAS' '/usr/share/man	USE_NATIVE_MANPATH' 'MANPATH	KEEP_DISTRIBUTION_DEFAULT' ;;
         serviceoff) printf '%s\n' 'profile	package	unit	policy' 'baseline,workstation,server	modemmanager	ModemManager.service	REVIEW_DISABLE' 'laptop	modemmanager	ModemManager.service	KEEP_UNCHANGED' ;;
         syslog) cat <<'SYSLOG'
 # Candidate: /etc/rsyslog.d/60-sasd-client.conf

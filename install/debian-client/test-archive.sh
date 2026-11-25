@@ -24,7 +24,7 @@ tar --same-permissions -xzf "$tmp/release/sasd-debian-client.tar.gz" -C "$tmp/un
 archive=$tmp/unpack/debian-client
 # Independent expected file inventory. No local inventory, tests, reports or credentials.
 {
-    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py plan-services.py plan-communications.py plan-storage.py dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv package-profiles.tsv inventory-fields.tsv
+    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py plan-services.py plan-communications.py plan-storage.py plan-shell.py dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv package-profiles.tsv inventory-fields.tsv
     awk -F '\t' 'NR>1 {print "tasks/" $1 "_" $3}' "$here/checklist.tsv"
 } | sort > "$tmp/expected"
 (cd "$archive" && find . -type f -printf '%P\n' | sort) > "$tmp/actual"
@@ -45,7 +45,7 @@ rc=0; run --stage > "$tmp/stage.out" || rc=$?
 stage=$(sed -n 's/^Candidate directory: //p' "$tmp/stage.out")
 case "$stage" in /tmp/sasd-debian-stage.*) ;; *) stage=; exit 1 ;; esac
 [ "$(awk 'END{print NR-1}' "$stage/results.tsv")" -eq 116 ]
-[ "$(grep -c 'STAGED' "$stage/results.tsv")" -eq 17 ]
+[ "$(grep -c 'STAGED' "$stage/results.tsv")" -eq 25 ]
 grep -q 'WAIT_VERIFIED.*0790_' "$tmp/stage.out"
 while IFS="$(printf '\t')" read -r id name status digest; do
     [ "$status" = STAGED ] || continue
@@ -121,6 +121,9 @@ if [ -x /usr/bin/python3 ]; then
     cp "$here/test-storage.sh" "$archive/test-storage.sh"
     sh "$archive/test-storage.sh"
     rm "$archive/test-storage.sh"
+    cp "$here/test-shell.sh" "$archive/test-shell.sh"
+    sh "$archive/test-shell.sh"
+    rm "$archive/test-shell.sh"
     # Exercise native transaction primitives from packaged code, never the live path.
     cp "$here/test-native-install.sh" "$archive/test-native-install.sh"
     sh "$archive/test-native-install.sh"
@@ -135,4 +138,4 @@ cp "$here/test-verify-dns.sh" "$tmp/dns-test/"
 cp "$archive/verify-dns.pl" "$tmp/dns-test/"
 sh "$tmp/dns-test/test-verify-dns.sh"
 rc=0; run --apply > "$tmp/rejected" 2>&1 || rc=$?; [ "$rc" -eq 2 ]
-printf 'Archive integration passed: %s exact files, 116 task rows, 17 staged, 3 static fixture checks\n' "$(wc -l < "$tmp/expected")"
+printf 'Archive integration passed: %s exact files, 116 task rows, 25 staged, 3 static fixture checks\n' "$(wc -l < "$tmp/expected")"
