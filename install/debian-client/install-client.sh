@@ -34,6 +34,9 @@ if [ "$list" = yes ]; then
     for f in "$here"/tasks/*; do name=${f##*/}; [ -z "$only" ] || [ "$only" = "${name%%_*}" ] || continue; printf '%s\n' "$name"; done
     exit 0
 fi
+[ -f "$here/lib/task.sh" ] && [ ! -L "$here/lib/task.sh" ] || usage
+. "$here/lib/task.sh"
+valid_hostname || { echo "Invalid hostname" >&2; exit 2; }
 if [ "$mode" = --render ]; then
     [ "$(id -u)" -ne 0 ] || { echo 'Stage must run unprivileged' >&2; exit 2; }
     stage=$(mktemp -d /tmp/sasd-debian-stage.XXXXXXXX)
@@ -53,11 +56,11 @@ for f in "$here"/tasks/*; do
         0) if [ "$mode" != --render ] || ! (set -C; printf '%s\n' "$output" > "$stage/$name.candidate"); then
                printf '[!] FAILED    %s\n' "$name"; failed=1
            else printf '[~] STAGED    %s\n' "$name"; rendered=$((rendered+1)); fi ;;
-        10) printf '[ ] PLANNED   %s\n' "$name"; planned=$((planned+1)) ;;
-        20) printf '[ ] DEFERRED  %s\n' "$name"; pending=$((pending+1)) ;;
-        21) printf '[ ] MANUAL    %s\n' "$name"; pending=$((pending+1)) ;;
-        22) printf '[ ] CENTRAL   %s\n' "$name"; pending=$((pending+1)) ;;
-        23) printf '[ ] REVIEW    %s\n' "$name"; pending=$((pending+1)) ;;
+        10) printf '[ ] PLANNED   %s -- %s\n' "$name" "$output"; planned=$((planned+1)) ;;
+        20) printf '[ ] DEFERRED  %s -- %s\n' "$name" "$output"; pending=$((pending+1)) ;;
+        21) printf '[ ] MANUAL    %s -- %s\n' "$name" "$output"; pending=$((pending+1)) ;;
+        22) printf '[ ] CENTRAL   %s -- %s\n' "$name" "$output"; pending=$((pending+1)) ;;
+        23) printf '[ ] REVIEW    %s -- %s\n' "$name" "$output"; pending=$((pending+1)) ;;
         *) printf '[!] FAILED    %s (exit %s)\n' "$name" "$rc"; failed=1 ;;
     esac
 done

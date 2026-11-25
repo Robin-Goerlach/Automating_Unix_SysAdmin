@@ -10,14 +10,36 @@ rc=0
 [ "$rc" -eq 3 ]; grep -q 'PLANNED.*DNS_Client_Set_Name_Server' "$tmp/report"; grep -q 'CENTRAL.*Central_Register_DNS' "$tmp/report"
 rc=0
 "$here/install-client.sh" --hostname='bad;host' --dryrun > "$tmp/bad" 2>&1 || rc=$?
-[ "$rc" -eq 1 ]; grep -q 'NOT RUN' "$tmp/bad"
+[ "$rc" -eq 2 ]; grep -q 'Invalid hostname' "$tmp/bad"
 printf 'dns1=999.0.0.1\nsearch=lab.invalid\n' > "$tmp/bad.conf"
 rc=0
-"$here/install-client.sh" --hostname=node.lab.invalid --site="$tmp/bad.conf" --only=0010 > "$tmp/bad-dns" 2>&1 || rc=$?
-[ "$rc" -eq 1 ]
+"$here/install-client.sh" --hostname=node.lab.invalid --site="$tmp/bad.conf" > "$tmp/bad-dns" 2>&1 || rc=$?
+[ "$rc" -eq 1 ]; grep -q 'NOT RUN' "$tmp/bad-dns"
 sh "$here/tasks/0010_DNS_Client_Set_Name_Server" --hostname=node.lab.invalid --site="$here/site.example.conf" --render > "$tmp/resolver"
 grep -qx 'nameserver 192.0.2.53' "$tmp/resolver"
-"$here/package.sh" "$tmp/release"
+# Duplicate prefix must fail before any task executes.
+cp -R "$here" "$tmp/duplicate"
+cp "$tmp/duplicate/tasks/0010_DNS_Client_Set_Name_Server" "$tmp/duplicate/tasks/0010_Duplicate"
+rc=0
+"$tmp/duplicate/install-client.sh" --list > "$tmp/dup-report" 2>&1 || rc=$?
+[ "$rc" -eq 2 ]
+# Untracked files are never bundled.
+cp -R "$here" "$tmp/package-source"
+printf '%s\n' 'fixture-only' > "$tmp/package-source/tasks/private.fixture"
+# package.sh expects its source directory to be called debian-client.
+mkdir "$tmp/build"; mv "$tmp/package-source" "$tmp/build/debian-client"
+"$tmp/build/debian-client/package.sh" "$tmp/release"
+if tar -tzf "$tmp/release/sasd-debian-client.tar.gz" | grep -q 'private.fixture'; then exit 1; fi
+if [ "$(id -u)" -ne 0 ]; then
+    rc=0
+    "$here/install-client.sh" --hostname=node.lab.invalid --site="$here/site.example.conf" --stage > "$tmp/staged-report" || rc=$?
+    [ "$rc" -eq 3 ]
+    candidate=$(sed -n 's/^Candidate directory: //p' "$tmp/staged-report")
+    case "$candidate" in /tmp/sasd-debian-stage.*) ;; *) exit 1 ;; esac
+    grep -qx 'nameserver 192.0.2.53' "$candidate/0010_DNS_Client_Set_Name_Server.candidate"
+    grep -q 'staged=9 pending=107 failed=0' "$tmp/staged-report"
+    rm -rf -- "$candidate"
+fi
 (cd "$tmp/release" && sha256sum -c sasd-debian-client.tar.gz.sha256)
 tar -tzf "$tmp/release/sasd-debian-client.tar.gz" | grep -q 'debian-client/install-client.sh'
 echo 'Offline Debian candidate tests passed'
