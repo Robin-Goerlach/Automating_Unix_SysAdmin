@@ -43,6 +43,16 @@ Das Hauptprofil ist 1999. Funktionen aus 2002–2009 benötigen ein klar gekennz
 
 Englische Markdown-Dateien sind kanonisch; deutsche Fassungen tragen den Suffix `.de.md`. Jede wesentliche Änderung an einer englischen technischen Dokumentation aktualisiert die deutsche Fassung im selben Commit. `make test` prüft Paare und offensichtliche relative Links, beweist aber nicht die Qualität einer Übersetzung.
 
+## Sitzungsabschluss und Kontextübergabe
+
+- Zu Beginn jeder Entwicklungssitzung `../logs/LAST-SESSION.md` und bei Bedarf das darin referenzierte vollständige Archiv lesen.
+- Am Ende jedes Entwicklungsauftrags ein vollständiges UTC-datiertes Sitzungsarchiv in `../logs` erstellen, auch bei teilweise erledigter Arbeit oder fehlgeschlagenem Push, CI-Lauf, Netzwerkzugriff oder technischen Gates.
+- `../logs/LAST-SESSION.md` erst aktualisieren, wenn das vollständige Archiv existiert und lesbar ist. Die Übergabe muss den tatsächlichen Repository-, Test-, Commit-, Remote- und CI-Zustand, Blocker und den nächsten sicheren Schritt nennen.
+- Vor einer Empfehlung zu `/new` Archiv und Übergabe vervollständigen und verifizieren. Nach einer Unterbrechung zuerst prüfen, ob der vorherige Entwicklungsstand dokumentiert wurde, und fehlende Dokumentation bei nächster Gelegenheit nachholen.
+- Keine Archive für gewöhnliche Zwischenmeldungen erzeugen. Niemals Geheimnisse, Tokens, private Schlüssel oder Produktionsdaten archivieren und unbestätigte Tests, Pushes oder CI nicht als erfolgreich darstellen.
+
+Die Sitzungsarchivierung ist Bestandteil der Definition of Done und keine optionale Berichtspflicht.
+
 ## Fertigstellung
 
 Ein neues Werkzeug benötigt Zweck, Ein-/Ausgabe, sichere Fehlerbehandlung, ein Offline-Fixture und mindestens einen Negativtest. Eine Integration Dritter benötigt eine Versionsmatrix und direkte Abnahmeevidenz, bevor sie als historische Funktion beschrieben wird. Geplante Aufgaben sind keine erledigten Aufgaben.

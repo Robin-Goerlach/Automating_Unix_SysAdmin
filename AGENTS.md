@@ -45,6 +45,16 @@ English Markdown is canonical and German Markdown is maintained in parallel usin
 
 Commits on main are acceptable for this solo experimental project when authorized and validated; do not force push, rewrite history, or delete unrelated work. Always confirm the current HEAD before publication.
 
+## Session closeout and context handoff
+
+- At the beginning of every development session, read `../logs/LAST-SESSION.md` and, when needed, the complete archive it references.
+- At the end of every development assignment, create one complete UTC-stamped session archive in `../logs`, even when the work is partial or a push, CI run, network connection or technical gate fails.
+- Update `../logs/LAST-SESSION.md` only after the complete archive exists and is readable. The handoff must identify the actual repository state, tests, commits, remote/CI status, blockers and next safe step.
+- Before recommending `/new`, complete and verify the session archive and handoff. After an interruption, first check whether the previous development state was documented and repair the missing documentation at the next opportunity.
+- Do not create archives for ordinary progress messages. Never record secrets, tokens, private keys or production data, and never describe unverified tests, pushes or CI as successful.
+
+Session archival is part of the definition of done, not an optional reporting task.
+
 ## Definition of done
 
 A new tool needs a documented purpose, supported input and output, a safe failure mode, an offline fixture and at least one negative test. A third-party integration additionally needs a version matrix and direct acceptance evidence before being described as functional on a historical target. Planned tasks are not completed tasks.
