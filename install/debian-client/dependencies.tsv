@@ -8,7 +8,9 @@ task	prerequisite	evidence
 0400	0250	verified
 0410	0200	verified
 0420	0410	verified
+0440	0430	verified
 0450	0440	verified
+0490	0480	verified
 0500	0490	verified
 0520	0510	verified
 0750	0730	verified

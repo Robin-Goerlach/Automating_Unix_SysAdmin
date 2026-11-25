@@ -68,6 +68,13 @@ ROTATE
         cronpolicy) printf '%s\n' 'path	policy' '/etc/crontab	KEEP_DISTRIBUTION' '/etc/cron.d	AUDIT_OWNER_MODE' '/etc/cron.daily	AUDIT_OWNER_MODE' '/etc/cron.hourly	AUDIT_OWNER_MODE' '/etc/cron.weekly	AUDIT_OWNER_MODE' '/etc/cron.monthly	AUDIT_OWNER_MODE' '/etc/cron.allow	KEEP_UNCHANGED' '/etc/cron.deny	KEEP_UNCHANGED' ;;
         serviceon) printf '%s\n' 'profile	package	unit	policy' 'baseline,workstation,laptop,server	cron	cron.service	REVIEW_ENABLE' 'workstation,laptop,server	rsyslog	rsyslog.service	REVIEW_ENABLE' 'workstation,laptop,server	sysstat	sysstat.service	REVIEW_ENABLE' 'workstation,laptop	cups	cups.service	REVIEW_ENABLE' 'server	openssh-server	ssh.service	REVIEW_ENABLE' ;;
         logwatchschedule) printf '%s\n' 'profile	package	policy' 'server	logwatch	REUSE_DISTRIBUTION_SCHEDULE' 'baseline,workstation,laptop	logwatch	NOT_SELECTED' ;;
+        sshknown) printf '%s\n' 'path	policy' '/etc/ssh/ssh_known_hosts	REVIEW_PINNED_PUBLIC_KEYS' '/etc/ssh/ssh_config	KEEP_UNCHANGED' ;;
+        sshpolicy) printf '%s\n' 'path	policy' '/etc/ssh/sshd_config	KEEP_AND_VALIDATE' '/etc/ssh/sshd_config.d	REVIEW_DROP_IN' '/etc/ssh/ssh_config	KEEP_AND_VALIDATE' '/etc/ssh/ssh_config.d	REVIEW_DROP_IN' '/etc/ssh/ssh_host_keys	NEVER_COPY_PRIVATE_KEYS' ;;
+        sshx11) printf '%s\n' '# Client candidate; evaluate effective Host/Match precedence first.' 'Host *' '    ForwardX11 no' '    ForwardX11Trusted no' ;;
+        aliases) printf '%s\n' 'alias	policy' 'root	EXPLICIT_REVIEWED_DESTINATION' 'other	KEEP_UNCHANGED' ;;
+        postfix) printf '%s\n' 'parameter	policy' 'relayhost	EXPLICIT_REVIEWED_RELAY' 'inet_interfaces	LOOPBACK_ONLY' 'mydestination	EMPTY_NULL_CLIENT' 'smtp_tls_security_level	VERIFY_RELAY' 'smtp_sasl_password_maps	NO_CREDENTIALS_IN_REPOSITORY' ;;
+        smtp) printf '%s\n' 'smtpd_banner = $myhostname ESMTP' ;;
+        sftpcheck) printf '%s\n' 'check	policy' 'sshd-effective	REVIEW_SUBSYSTEM_SFTP' 'host-key	INDEPENDENT_PIN_REQUIRED' 'authentication	OPERATOR_LAB_TEST' 'file-transfer	OPERATOR_LAB_TEST' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;
