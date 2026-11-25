@@ -1,0 +1,6 @@
+# service	applicable-role	check	profile	description
+filesystem	baseline	disk	1999	Filesystem capacity observation
+configuration	baseline	config-audit	1999	Role-specific configuration audit
+web	web	http	1999	Web service observation
+mail	mail	smtp	1999	Mail service observation
+monitoring	monitoring	monitoring	1999	Monitoring host self-check

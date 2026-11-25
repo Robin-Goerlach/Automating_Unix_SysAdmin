@@ -6,6 +6,10 @@ trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 
 ./bin/sasd-site-inventory --input site/hosts.tsv --roles site/roles.tsv --check > "$tmp/check"
 grep -q 'hosts=4 roles=4 status=OK' "$tmp/check"
+./bin/sasd-site-services --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --check > "$tmp/services-check"
+grep -q 'services=5 hosts=4 status=OK' "$tmp/services-check"
+./bin/sasd-site-services --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --host web.lab.invalid > "$tmp/web-services"
+grep -q '^web.lab.invalid.*http' "$tmp/web-services"
 ./bin/sasd-site-inventory --input site/hosts.tsv --roles site/roles.tsv --role web > "$tmp/web"
 grep -q '^web.lab.invalid' "$tmp/web"
 ./bin/sasd-site-classes --input site/hosts.tsv --roles site/roles.tsv --host web.lab.invalid > "$tmp/classes"
@@ -66,4 +70,10 @@ if ./bin/sasd-site-inventory --input "$tmp/unsafe.tsv" --roles site/roles.tsv --
     exit 1
 fi
 grep -q 'invalid host record' "$tmp/unsafe-error"
+printf 'bad\tweb\tmissing\t1999\tunsafe\n' > "$tmp/bad-services.tsv"
+if ./bin/sasd-site-services --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services "$tmp/bad-services.tsv" --check > "$tmp/bad-services-error" 2>&1; then
+    echo "unknown service check accepted" >&2
+    exit 1
+fi
+grep -q 'unknown service check' "$tmp/bad-services-error"
 echo "R2 site inventory and audit: PASS"

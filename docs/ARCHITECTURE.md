@@ -90,9 +90,9 @@ RRDtool bridge accepts explicit create or update commands. No archival deletion,
 
 ## Boundaries and open risks
 
-- Status-store uses exclusive temporary-file creation and rename but should not run in a directory writable by untrusted users; race-free replacement of an attacker-controlled final path is not formally proven.
+- Status-store validates a complete batch before modification, serializes cooperating writers with a private lock, and uses exclusive temporary-file creation plus rename. It should not run in a directory writable by untrusted users; crash-atomic multi-file replacement and race-free replacement against an attacker-controlled final path are not formally proven.
 - Status-board writes an explicitly chosen file. Do not run it as root or serve the generated HTML on an untrusted webserver without a separate access-control and exposure review.
-- Config-drift reads chosen directories and rejects symlink final objects, but ancestor directory symlink traversal is not comprehensively prevented: use only trusted lab roots. The R2 site audit inherits this limitation.
+- Config-drift reads chosen directories and rejects symlink final objects and symlink ancestors in each manifest path. A hostile concurrent rename can still invalidate a check between validation and read: use only trusted lab roots. The R2 site audit inherits this limitation.
 - The status format itself has no remote transport or authentication. M2.1 is a separate SSH adapter with explicit host-key trust, forced-command restrictions and serialized receiver staging; it does not add a TCP listener.
 - The RRD bridge is useful only if an appropriate RRDtool is installed. A selected target must be tested independently.
 - A modern Linux CI job does not prove Solaris, AIX, HP-UX, IRIX, OpenBSD, FreeBSD or older Perl support.

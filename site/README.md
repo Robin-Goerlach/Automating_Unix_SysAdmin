@@ -14,6 +14,13 @@ The address must be an IPv4 value; the example uses `192.0.2.0/24`. `groups` is 
 
 The manifest is relative to the selected golden root and is consumed by the read-only audit. A new host is added by appending one validated record and selecting an existing role; a new role requires a role record and a manifest.
 
+`services.tsv` is the versioned service layer: service name, applicable role, existing check name, compatibility profile and description. Validate and resolve it with:
+
+    bin/sasd-site-services --hosts site/hosts.tsv --roles site/roles.tsv \
+      --checks site/checks.tsv --services site/services.tsv --host web.lab.invalid
+
+This emits only applicable service selections. It does not probe, start, stop or configure a service. Generators and audits consume explicit files and retain their own safety boundaries.
+
 Run `bin/sasd-site-inventory --check` before using the data. `bin/sasd-site-classes` emits `host`, comma-separated independent SASD classes, role, profile, class and manifest. These class names are selection labels, not a replacement for CFEngine's native class engine.
 
 The audit command delegates file comparison to the existing `bin/sasd-config-drift` program:

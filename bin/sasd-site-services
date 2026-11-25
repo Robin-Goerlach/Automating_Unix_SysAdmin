@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+# Validate and resolve the independent SASD service model.
+# This selects work; it does not start, stop, configure or contact services.
+use strict;
+
+my ($hosts_file,$roles_file,$checks_file,$services_file,$want_host,$list,$check) = ('','','','','','','');
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--hosts') { $hosts_file = shift @ARGV; }
+    elsif ($a eq '--roles') { $roles_file = shift @ARGV; }
+    elsif ($a eq '--checks') { $checks_file = shift @ARGV; }
+    elsif ($a eq '--services') { $services_file = shift @ARGV; }
+    elsif ($a eq '--host') { $want_host = shift @ARGV; }
+    elsif ($a eq '--list') { $list = 1; }
+    elsif ($a eq '--check') { $check = 1; }
+    elsif ($a eq '--help') { print "usage: sasd-site-services --hosts hosts.tsv --roles roles.tsv --checks checks.tsv --services services.tsv [--list|--host HOST|--check]\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+for ($hosts_file,$roles_file,$checks_file,$services_file) { defined($_) && -f $_ && !-l $_ or die "invalid service model input\n"; }
+($list || $check || $want_host) or die "select --list, --host or --check\n";
+sub safe { my ($s) = @_; return defined($s) && $s !~ /[\x00-\x1f\x7f]/; }
+sub ident { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/; }
+sub profile { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,31}\z/; }
+sub host { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/; }
+sub fields { my ($line,$n,$where) = @_; my @v = split /\t/, $line, -1; @v == $n or die "invalid $where record\n"; safe($_) or die "control character in $where record\n" for @v; return @v; }
+my (%roles,%hosts,%checks,%services);
+open(R,"<$roles_file") or die "cannot read roles: $!\n";
+while (<R>) { chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/; my ($r,$class,$p,$manifest)=fields($_,4,'role'); ident($r) && ident($class) && profile($p) or die "invalid role record\n"; $roles{$r}=1; }
+close R;
+open(C,"<$checks_file") or die "cannot read checks: $!\n";
+while (<C>) { chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/; my ($c,$r,$description)=fields($_,3,'check'); ident($c) && ($r eq '*' || ident($r)) && length($description) && length($description) <= 120 or die "invalid check record\n"; $checks{$c}=$r; }
+close C;
+open(H,"<$hosts_file") or die "cannot read hosts: $!\n";
+while (<H>) { chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/; my ($h,$ip,$os,$r,$groups,$p)=fields($_,6,'host'); host($h) && ident($r) && profile($p) && exists($roles{$r}) or die "invalid host record\n"; exists($hosts{$h}) and die "duplicate host: $h\n"; $hosts{$h}=[$h,$r,$p]; }
+close H;
+open(S,"<$services_file") or die "cannot read services: $!\n";
+while (<S>) { chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/; my ($s,$r,$c,$p,$description)=fields($_,5,'service'); ident($s) && ($r eq '*' || $r eq 'baseline' || ident($r)) && ident($c) && profile($p) && length($description) && length($description) <= 120 or die "invalid service record\n"; exists($roles{$r}) || $r eq '*' || $r eq 'baseline' or die "unknown service role '$r'\n"; exists($checks{$c}) or die "unknown service check '$c'\n"; $checks{$c} ne '*' && $checks{$c} ne 'baseline' && $r ne $checks{$c} and die "service role does not match check '$c'\n"; exists($services{$s}) and die "duplicate service: $s\n"; $services{$s}=[$s,$r,$c,$p,$description]; }
+close S;
+scalar(keys %services) or die "service model has no records\n";
+sub applies { my ($service,$role) = @_; return $service->[1] eq '*' || $service->[1] eq 'baseline' || $service->[1] eq $role; }
+if ($want_host) { host($want_host) && exists($hosts{$want_host}) or die "unknown host: $want_host\n"; my $h = $hosts{$want_host}; for my $s (sort keys %services) { my $v=$services{$s}; print join("\t",$want_host,@$v),"\n" if applies($v,$h->[1]); } }
+elsif ($list) { for my $s (sort keys %services) { print join("\t",@{$services{$s}}),"\n"; } }
+print "services=",scalar(keys %services)," hosts=",scalar(keys %hosts)," status=OK\n" if $check;
+exit 0;

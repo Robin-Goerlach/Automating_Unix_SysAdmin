@@ -17,6 +17,18 @@ for ($root,$golden) { defined $_ && -d $_ && !-l $_ or die "invalid root directo
 -f $manifest && !-l $manifest or die "invalid manifest\n";
 open(LIST,"<$manifest") or die "cannot read manifest: $!\n";
 my ($changed,$errors,$seen)=(0,0,0);
+sub has_symlink_ancestor {
+    my ($path) = @_;
+    while (defined($path) && length($path) && $path ne '/') {
+        return 1 if -l $path;
+        my $parent = $path;
+        $parent =~ s!/[^/]+\z!!;
+        $parent = '/' if $parent eq '';
+        last if $parent eq $path;
+        $path = $parent;
+    }
+    return 0;
+}
 while (<LIST>) {
     chomp;
     s/\r\z//;
@@ -30,7 +42,7 @@ while (<LIST>) {
     }
     my ($wanted,$reference)=("$root/$v[0]","$golden/$v[1]");
     $seen++;
-    if (-l $wanted || -l $reference) {
+    if (has_symlink_ancestor($wanted) || has_symlink_ancestor($reference)) {
         print "UNSAFE\t$v[0]\tsymlink refused\n"; $errors++; next;
     }
     if (!-f $reference) {

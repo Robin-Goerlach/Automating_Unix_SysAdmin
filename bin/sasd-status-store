@@ -2,7 +2,7 @@
 # Original SASD status spool format, NOT the Big Brother wire protocol.
 # Purposefully file-based and offline: no TCP listener and no HTTP daemon.
 use strict;
-use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
+use Fcntl qw(O_WRONLY O_CREAT O_EXCL LOCK_EX);
 my ($spool,$input) = ('','-');
 while (@ARGV) {
     my $a = shift @ARGV;
@@ -13,11 +13,15 @@ while (@ARGV) {
     } else { die "unknown argument: $a\n"; }
 }
 defined $spool && -d $spool && !-l $spool or die "spool must be a real directory\n";
+-l "$spool/.sasd-status.lock" and die "refusing symlink spool lock\n";
+sysopen(LOCK,"$spool/.sasd-status.lock",O_WRONLY|O_CREAT,0600)
+    or die "cannot create spool lock: $!\n";
+flock(LOCK,LOCK_EX) or die "cannot lock spool: $!\n";
 if ($input ne '-') {
     -f $input && !-l $input or die "input must be a regular file\n";
     open(INPUT,"<$input") or die "cannot read input: $!\n";
 } else { *INPUT = *STDIN; }
-my $written = 0;
+my @records;
 while (<INPUT>) {
     chomp;
     s/\r\z//;
@@ -33,8 +37,22 @@ while (<INPUT>) {
         or die "invalid status color\n";
     $message !~ /[\x00-\x1f\x7f]/ && length($message) <= 240
         or die "unsafe status message\n";
+    push @records, [$host,$check,$color,$message];
+}
+close INPUT if $input ne '-';
+
+# Complete validation happens before any status file is changed.  The
+# private lock serializes cooperating writers; the spool must still not be
+# placed in an attacker-writable directory.
+my $written = 0;
+for my $r (@records) {
+    my ($host,$check) = @$r[0,1];
     my $dest = "$spool/$host.$check.status";
     -l $dest and die "refusing symlink status file\n";
+}
+for my $r (@records) {
+    my ($host,$check,$color,$message) = @$r;
+    my $dest = "$spool/$host.$check.status";
     my $tmp = "$spool/.$host.$check.$$.$written.tmp";
     sysopen(OUT,$tmp,O_WRONLY|O_CREAT|O_EXCL,0600) or die "cannot create spool temp: $!\n";
     print OUT join("\t",time(),$host,$check,$color,$message),"\n"

@@ -18,7 +18,7 @@ CI workflow: .github/workflows/test.yml. The workflow runs on a current Ubuntu G
 
 - sasd-config-drift: 0 matches, 1 missing or drifted target, 2 unsafe or missing golden reference; malformed arguments produce a nonzero exit.
 - sasd-disk-watch: four tab-separated fields; purple denotes unknown/invalid sample. A warning state is represented in stdout, not the exit status.
-- sasd-status-store: writes validated records or exits nonzero on invalid input. Files in a partially processed batch may already exist; batch atomicity is not claimed.
+- sasd-status-store: validates the complete input before changing status files, serializes cooperating writers with a private spool lock, and exits nonzero on invalid input. A filesystem or process failure during the rename phase can still leave a partially installed batch; full multi-file commit semantics are not claimed.
 - sasd-status-board: outputs static HTML; outdated and future-dated statuses become purple.
 - sasd-mrtg-counter: four newline-separated values, with first two nonnegative counter values. The program reads a local sample and does not poll an interface.
 - sasd-rrd-cycle: optional external program; use a disposable database and make no backward-compatibility claim before testing an actual RRDtool version.
@@ -29,8 +29,8 @@ No archived CFEngine 1, RRDtool 1999 release, MRTG 1999 release, old Perl, legac
 
 ## Offline and negative test backlog
 
-- batch validation before any spool record modification;
-- status spool directory symlink and race tests;
+- status batch validation before any spool record modification and cooperating-writer serialization;
+- status spool directory symlink, hostile ancestor and crash-consistency tests;
 - malformed/multibyte/oversized status samples;
 - status age simulation and recovery transition;
 - config golden/reference ancestor symlink and unreadable-file cases;
@@ -50,6 +50,12 @@ M1 optional dependency checks intentionally report `SKIPPED` when MRTG or RRDtoo
 `tests/m6-netboot.sh` checks the three offline configuration dialects, profile/image relationships, duplicate MAC/IP rejection, secret filtering, TFTP checksum staging, repeated staging and symlink/path failures. `tests/m7-postinstall.sh` checks fresh identities, image-version selection, clone/reinstallation rejection, operator approval/rejection and authenticated status handoff. Neither test starts a network service or claims a native boot.
 
 R2 categories are separate: offline `make test` is required; an optional integration run may use an explicitly selected `cfagent` in a disposable directory; historical acceptance remains open until CFEngine 1 is exercised on a documented period OS with provenance, checksum, command, output and cleanup evidence.
+
+## Compatibility matrix
+
+The current evidence is deliberately narrow. The WSL development host runs Perl 5.36.0 and a contemporary POSIX shell; `make test` is the CI-style offline evidence for that environment. The source uses post-5.004 Perl syntax in some utilities (including defined-or and substitution-return forms), so Perl 5.004 is not a supported claim. No historical Unix or alternate Perl release is claimed until a named binary and operating-system run is archived.
+
+See [COMPATIBILITY.md](COMPATIBILITY.md) for the evidence table and the exact boundary between observed, CI-verified, integration-verified and historical claims.
 
 ## Git checkout line endings
 

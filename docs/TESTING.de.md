@@ -15,7 +15,7 @@ Es werden weder Netzwerkzugriff noch root-Rechte benötigt.
 ## Zustands- und Exit-Verträge
 
 - `sasd-config-drift`: 0 ohne Abweichung, 1 bei fehlendem oder verändertem Ziel, 2 bei unbekanntem/unsicherem Referenzzustand.
-- `sasd-status-store`: validierte Datensätze speichern oder ungleich null beenden.
+- `sasd-status-store`: die vollständige Eingabe vor Änderungen validieren, kooperierende Schreiber mit einem privaten Spool-Lock serialisieren und bei ungültiger Eingabe ungleich null beenden. Ein Dateisystem- oder Prozessfehler während der Rename-Phase kann weiterhin einen teilweise installierten Batch hinterlassen; vollständige Mehrdatei-Commit-Semantik wird nicht behauptet.
 - `sasd-status-board` und `sasd-monitor-report`: statisches HTML; alte oder unbekannte Zustände werden `purple`.
 - `sasd-monitor-cycle`: deterministische Zeit über `--now`, keine erneute History-Zeile ohne Zustandswechsel.
 - `sasd-mrtg-counter`: vier Zeilen; kein SNMP-Polling.
@@ -24,7 +24,13 @@ Es werden weder Netzwerkzugriff noch root-Rechte benötigt.
 
 Fehlendes MRTG oder RRDtool wird als `SKIPPED` gemeldet und lässt Offline-Tests passieren. Das ist kein Nachweis einer nativen Integration. CFEngine 1, ältere Perl-Versionen, historische Unix-Systeme sowie echte MRTG-/RRDtool-Läufe benötigen eigene Versionsevidenz mit Betriebssystem, Binary, Kommando, Ausgabe und Cleanup.
 
-Die Dokumentationsprüfung `tests/docs-pairs.pl` meldet fehlende deutsche Partner und offensichtliche defekte lokale Markdown-Links. Sie prüft nicht die semantische Übersetzungsqualität.
+Die Dokumentationsprüfung `tests/docs-pairs.pl` meldet fehlende deutsche Partner und offensichtliche defekte lokale Markdown-Links. Sie prüft nicht die semantische Übersetzungsqualität. `sasd-status-store` prüft Batch-Fehler vor der ersten Änderung und serialisiert kooperierende Schreiber; Crash-Konsistenz bei mehreren Renames bleibt offen.
+
+## Kompatibilitätsmatrix
+
+Die aktuelle Evidenz ist bewusst eng. Der WSL-Entwicklungsrechner verwendet Perl 5.36.0 und eine zeitgenössische POSIX-Shell; `make test` ist die CI-artige Offline-Evidenz für diese Umgebung. Einige Werkzeuge verwenden Perl-Syntax nach 5.004 (unter anderem Defined-or und Substitutionsrückgabewerte), daher wird Perl 5.004 nicht als unterstützt behauptet. Für historische Unix-Systeme oder andere Perl-Versionen gilt erst nach einem archivierten Lauf mit benanntem Binary und Betriebssystem eine Kompatibilitätsaussage.
+
+Siehe [COMPATIBILITY.de.md](COMPATIBILITY.de.md) für die Evidenztabelle und die genaue Grenze zwischen beobachtet, CI-geprüft, integrationsgeprüft und historisch bestätigt.
 
 M2 benötigt die lokale `ssh-keygen`-Implementierung mit RSA-Erzeugung und `ssh-keygen -Y sign/verify`. `tests/m2-transport.sh` prüft das begrenzte M2.1-Framing und Ablehnungen. Die Suite beweist weiterhin keinen Live-SSH-Kanal, keine Hostschlüssel-Installation, Kontobeschränkung, Schlüsselrotation oder Produktionstransport; dafür ist ein isolierter `sshd`-Abnahmelauf erforderlich.
 

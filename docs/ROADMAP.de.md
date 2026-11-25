@@ -18,6 +18,7 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 
 - [x] Dateibasiertes Rechner- und Rolleninventar.
 - [x] Deterministische Klassen- und Rollenauflösung sowie lesendes Drift-Audit.
+- [x] Eine versionierte Service-Auswahldatei mit Host-Zuordnungsprüfung; die Auswahl bleibt schreibgeschützt und unabhängig von der Dienststeuerung.
 - [ ] CFEngine-1.4-Syntax mit Originalprogramm und Wegwerf-VM prüfen.
 - [x] Eigenständige Konfigurationsprüfung ohne CFEngine.
 - [ ] Staging, Backup und ausdrückliches Apply mit Rollback.

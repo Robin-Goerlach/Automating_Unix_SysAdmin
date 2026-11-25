@@ -71,7 +71,7 @@ M1 speichert empfangene lokale Meldungen mit Empfangszeit und Quelle. Der Zyklus
 5. Rollenbezogene Golden-Dateien vergleichen.
 6. MRTG oder RRDtool nur nach separater Versionsprüfung einsetzen.
 
-Es gibt keinen Listener und keinen beliebigen Remote-Befehl. M2 verwendet `ssh-keygen -Y sign/verify`, definiert keine eigene Kryptografie und prüft genehmigten Public-Key, Signatur, Rollen-/Check-Zuordnung, Ablauf, Zeitfenster und Sequenz. Ein Live-SSH-Kanal bleibt eine eigene Deployment- und Abnahmeaufgabe. `config-drift` und der R2-Audit weisen symbolische Endobjekte zurück, verhindern aber nicht jede Traversierung symbolischer Vorfahren. Nur vertrauenswürdige Verzeichnisse verwenden.
+Es gibt keinen Listener und keinen beliebigen Remote-Befehl. M2 verwendet `ssh-keygen -Y sign/verify`, definiert keine eigene Kryptografie und prüft genehmigten Public-Key, Signatur, Rollen-/Check-Zuordnung, Ablauf, Zeitfenster und Sequenz. Ein Live-SSH-Kanal bleibt eine eigene Deployment- und Abnahmeaufgabe. `config-drift` und der R2-Audit weisen symbolische Endobjekte und symbolische Vorfahren in Manifestpfaden zurück; ein feindlicher Rename zwischen Prüfung und Lesen bleibt möglich. Nur vertrauenswürdige Verzeichnisse verwenden.
 
 Die klassische Installation kann später `/usr/local/sasd` verwenden; der aktuelle Installer schreibt nur in ein ausdrücklich angegebenes Laborpräfix und nicht nach `/etc` oder `/usr/local`.
 
