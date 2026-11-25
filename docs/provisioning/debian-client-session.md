@@ -1,0 +1,79 @@
+# Debian client development handoff
+
+Deutsch: [Deutsche Fassung](debian-client-session.de.md)
+
+2026-11-25 — independent GitHub development on feature/debian-client-checklist. Do not modify main or the other active development session. Baseline: e5e947cf1bb536eee53089a20891f69b76648f93. User requested autonomous continuation in chat; no second Codex session. Local ../logs/LAST-SESSION.md is inaccessible from this environment. This sanitized repository document is the separate handoff; never include private site configuration or secrets.
+
+Completed: static read-only baseline checker and negative fixture tests, integrated test entry and archive member. Local fixture test as nobody passed (three initial file hashes unchanged). GitHub clone from the local container failed DNS resolution; no full make test or native Debian evidence. No live apply. The previous stage's complete CI status remains unknown. Next: centralize policy validation, implement fixture-backed atomic managed file installation preserving unrelated hosts entries, then dependency gates, rollback and task-specific verification. Only after acceptance enable an explicit native lab apply path. No automatic monitoring approval.
+
+## M7-D.1a — fixture application checkpoint
+
+Starting commit: 8e0d7fa8b48a546e15a99d6a8e659d79a91295b6. Shared policy validation, fixture-only apply-baseline.sh, read-only verifier tightened, test-apply.sh and packaging/test integration added. Executed the four new/refactored files locally as nobody; test-apply.sh passed with unchanged hashes after an injected final verification failure. Local GitHub DNS resolution failed again; full make test was not run. No native apply. Next: add explicit transaction evidence and operator-reviewed recovery, enforce task dependencies and central inventory selection, integrate the fixture path with the numbered tasks, then plan native Debian acceptance. Do not merge main or interact with the parallel Codex session. Retained backups grow per fixture apply; bounded cleanup and crash recovery are future work.
+
+## M7-D.1b — journal and recovery checkpoint
+
+Base: 14575c917e32d78250305d0e92bb9688d424c991. Added retained before/desired manifests, state transitions, directory flock, explicit recovery, and two local tests. Both tests passed as nobody in a Linux container, including real process SIGKILL after replacement, blocked reapply, restored original manifest, successful retry and unchanged repeat. Local GitHub DNS resolution failed; full repository tests and native Debian acceptance not run. Exact local hashes of the five changed/new scripts checked before publication. Next M7-D.1c: explicit task prerequisites and central inventory selection, followed by dispatcher integration. Keep main and parallel Codex work untouched. Power-loss durability, old backup migration, automatic pruning and reboot resume remain open.
+
+## M7-D.1c — read-only planning checkpoint
+
+Base: 1f5f5bf27ff49d4771e80875c616c761ca729914. Added plan-client.pl, dependencies.tsv (23 initial edges), test-plan.sh and test entry. Reused R2 validator without changes. Local syntax and unprivileged test-plan.sh passed with the exact published inventory validator and complete 116-row catalog (Git blob hashes matched), and synthetic no-execution task fixtures with matching names. New source blobs checked before branch update. Direct clone still fails DNS; complete repository tests, native Debian and CI not verified. No dispatcher enforcement or packaging integration yet; no live changes. Next M7-D.1d: bind validated inventory and plan to dispatcher, establish evidence contract and guard fixture execution; complete dependency coverage before native apply. Keep main and parallel Codex work untouched.
+
+## M7-D.1d.1 — candidate dispatcher integration
+
+Base 1cb65f33e6c09deeba3c1e4761f1ecafb7d06ad8. Integrated inventory-aware dryrun/stage and prerequisite enforcement, candidate hashes and allowlisted archive portability. Exact new dispatch-planned.sh tested as nobody against synthetic four-task planner and scripts; published blob checked. Real-catalog/packaging test added but not run; direct GitHub clone DNS unavailable, CI/native unverified. Next M7-D.1d.2: bounded transaction-backed fixture baseline apply and verified evidence, then native gate. Legacy no-inventory dryrun remains; no live apply. Main untouched.
+
+## M7-D.1d.2 — fixture transaction dispatcher checkpoint
+
+Base 80f506e05ca7ed4ca47bb29167780e8eaab1c57c. Added explicit inventory-bound baseline group transaction and private point-in-time evidence. Local unprivileged test-fixture-dispatch.sh passed with exact current entrypoint/planner/R2/catalog/dependency/transaction/policy/verifier files and synthetic task names, including repeat, conflict, changed dependency and pending journal. Root rejected. Exact new script blobs checked. Package and test entry updated, full archive and repository suite not run; no native writes. Next: M7-D.1e preparation, native acceptance contract (resolver ownership, runtime hostname/DNS, rollback, Debian version), complete offline integration where feasible; no live apply before disposable native gate. Main untouched. Known gaps: evidence lock gap, unsigned point-in-time report, no general verified edge enforcement or retention policy, DNS runtime open.
+
+## M7-D.1e.1 — native preflight preparation
+
+Base 480174582795e1d96d153e8bc77048e0d3ce1735. Added read-only native-preflight.pl, static fixture tests, bilingual native acceptance contract G0–G6, packaging/test integration. Perl syntax and unprivileged static tests passed. Actual Debian 13 container smoke run as nobody (no optional name queries) detected container, drift, unknown service states. No native VM or direct DNS/NSS test. Direct clone still fails DNS; full suite, archive and CI unverified. Exact new program/test blobs checked before publication. Next: close offline integration gap (G0) and implement bounded direct-DNS lab probe/evidence; native mutation remains disabled until a reviewed writer and disposable-VM acceptance. Main untouched.
+
+## M7-D.1e.2 — direct DNS verification preparation
+
+Recovered the actual published head 3d2453231e080b3396bb096dd51a50e8a0b4d51e after response interruption; no duplicate preflight implementation needed. Added verify-dns.pl, fixture tests, archive/test entry, and bilingual acceptance contract. Exact old preflight tests and new DNS tests executed as nobody in Debian 13 container; syntax and missing-dig exit 3 confirmed. New code blobs verified against local tested versions. No DNS traffic, live dig or native VM evidence; G5 open. G0 still open because direct GitHub clone fails DNS. Next prioritize complete offline provisioning integration and real dig compatibility using an approved isolated lab; no native apply. Main unchanged.
+
+## M7-D.1e.3 — full provisioning offline integration
+
+Base 89ae7c13399cd20fc587b74f2a6ab616bfe51301. Reconstructed exact 144-file provisioning Git tree e9fe44aec272690c79e1c5848307394559b4c041 plus R2 validator 5a1b56ba793ae92b75a6fb13a9dbe00c2b3cd22c. Ran complete provisioning test.sh as nobody, exit 0; added test-archive.sh and reran full provisioning suite, exit 0. Archive: 134 exact regular files/modes, all 116 real tasks, 8 staged in planned mode, fixture apply and static/DNS fixture verification. First new archive run found extraction umask issue in the test; corrected with --same-permissions inside private test tree. No runtime changes. G0 partly satisfied; full repository make test, independent release authentication, CI and native VM remain open. Next: G3 native write design and offline safety tests while preparing G1/G2 evidence collection; no live write authorization. Main untouched.
+
+## M7-D.1e.4a — native writer contract and review rehearsal
+
+Base 2d8a309957eacd7beffd7f20ec7e05b338a20cf4. Added unprivileged prepare-native.sh and test-prepare-native.sh, package/test integration and bilingual G3 native writer contract. Review reads three original source files, rehearses the existing transaction on copies and retains private source/desired evidence; PREPARED_NOT_AUTHORIZED is never a write authorization. Real provisioning suite and new packaged review tests ran as nobody in Debian 13, exit 0; archive has 135 exact files. Exact changed blobs checked before publication. No live review or native writes tested. Direct clone DNS still unavailable; repository-wide make test, independent release authentication, CI and VM acceptance open. Next: implement a separately reviewed native transaction backend and offline durability/metadata tests, prepare G1/G2 evidence collection; no native authorization until acceptance. Main untouched.
+
+## M7-D.1e.4b.1 — synchronized transaction foundation
+
+Base 4ae111cf147c97384912fe819897c0caacece9c3. Verified exact prior provisioning tree; extended fixture transaction library and apply with explicit file/directory sync ordering, basic staged uid/gid/mode checks, and best-effort SYNC_FAILED quarantine. Added test-durability.sh and test entry. Real sync, injected failure paths and actual rollback SIGKILL/recovery passed; complete provisioning suite as nobody on Debian 13 overlayfs, exit 0, archive 135 files. No privileged or native writes; no power-loss claim. Next: persistent native journal design and metadata contract/tests, with machine binding and VM acceptance separate. G3 open; full repo make test, CI and native VM still open. Main untouched.
+
+## M7-D.1e.4b.2 — versioned metadata and journal context
+
+Base be9dfef04c80348c0cabe983b5c5c452984ab5e6. Extended existing fixture journal with v2 context and versioned UID/GID/mode/size/hash manifests; synchronized before apply, rechecked before commit/recovery/evidence. Old open journals without v2 evidence refused. Added test-metadata.sh and updated recovery fixture. Full provisioning suite passed as nobody on Debian 13 overlayfs, exit 0, archive 135 files. Exact tested subtree checked. Persistent native journal layout and binding contract documented only; no native storage or writes, ACL/xattr/label support, authenticated machine binding or power-loss proof. Next: prioritize read-only G1/G2 lab evidence and native metadata capability validation, then bounded native backend with separate acceptance. Full repository make test/CI remain open. Main untouched.
+
+## M7-D.1e.4b.3 — native capabilities observation
+
+Base af89d803fe3ef1b43b0204e1f43395b777927f9c. Added optional Python 3 read-only native-capabilities.py and fixture tests, package/test integration. Real xattr and POSIX ACL detection, unsafe path/type/mode checks and synthetic mount policy tests passed as nobody on Debian 13 overlayfs. Complete provisioning suite exit 0, 136-file archive. Live unprivileged observation exit 3 (overlay, visibility unknown, journal absent). No native write, no actual ext4/XFS/VM acceptance. Exact tested subtree checked. Next prioritize G1/G2 lab runbook and evidence collection, then a separately reviewed bounded native backend. Do not equate diagnostic observations with authorization. Full repository make test and CI open; main untouched.
+
+## M7-D.1e.4c.1 — consolidated read-only acceptance evidence
+
+Base a7475ebaa613e8e72a708b3db1a402ae5baada8d. Added collect-native.sh and test-collect-native.sh, package/test integration and bilingual lab runbook. Unprivileged real fixture collection and source integrity tests passed; full provisioning suite as nobody exit 0, archive 137 exact files. Live read-only container smoke run without name probes exit 3; G2 BLOCKED, G5 NOT_RUN. Exact tested subtree checked. No native write, DNS live opt-in, actual VM acceptance or full repository make test/CI. Reports retain private inventories; no automatic gate approval. Next bounded lab-only native backend plus operator G1/G2 evidence, subject to separate review. Main untouched.
+
+## M7-D.1e.4c.2a — separate journal store rehearsal
+
+Base b25b96ecf924d1ba952349e7bf003bf9c5c4897d. Exact previous provisioning tree verified. Existing fixture engine supports explicit v1 legacy and v2 simulated persistent layouts, with validated store path, context binding, synchronization of store ancestors, apply/recovery and dispatcher integration. Added test-persistent-journal.sh; archive now exercises v2. Actual SIGKILL and rollback, changed parent and pre-mutation sync failure, full provisioning suite as nobody on Debian 13 overlayfs, exit 0, archive 137 files. Exact tested subtree checked. No actual native journal or privileged writes; native storage, reboot-stable machine binding, full repository tests/CI, independent release trust and VM acceptance remain open. Next native storage/machine identity contract validation and separate privileged backend review. Main untouched.
+
+## M7-D.1e.4c.2b — identity comparison checkpoint
+
+Base 1323993f98a8ae1c1b9d3f5508c19658774e82eb. Added optional native-identity.py, tests and package integration for installation UUID and application-scoped machine correlation digest comparison. Full provisioning suite as nobody exit 0, archive 138 files; live read-only smoke UNKNOWN/3. Exact tested subtree checked. No local identity initialization, no authenticated clone detection or reboot proof, no native gate enforcement. Next prioritize the bounded native installer backend and its independent lab authorization contract; integrate identity/release/policy checks before any native writes. G3 open, full repository make test/CI and VM acceptance open. Main untouched.
+
+## M7-D.1e.4c.2c — reference-bound fixture installation
+
+Base 8d8cfc909dcb2c57237f8740e06f42b00e3769d4. Added lab-install.py and tests, integrated source/desired metadata digests before mutation under the existing transaction lock, package and archive reference equality test. Full provisioning suite as nobody on Debian 13 exit 0; 139-file archive. No native writes or actual native backend. Unsigned reference, trusted same-UID source, remaining identity/code lock gap; direct fixture commands are not an authorization boundary. Next actual bounded native backend and disposable VM evidence, with independently trusted release and operator review. Full repository make test/CI open. Main untouched.
+
+## M7-D.1e.4c.2d — first native static writer
+
+Base 33e385cf766c84ad13f2552b69a6502deb6bd1d5. Added experimental native-install.py with root-only fixed live path, operator attestations, identity/release/plan/input/reference checks under journal-store lock, durable JSON snapshots and explicit open-transaction rollback. Shared baseline-render.sh with fixture engine; package and runtime digest integrated. Native primitives tested as nobody on Debian 13 overlayfs, including partial apply, interrupted rollback via injected failures, sync quarantine, xattrs and unchanged repeat. Entire provisioning suite exit 0, archive 141 files, exact tested subtree cb99258e437d6b430a7cfa186d99b171af651853. Actual privileged CLI/VM, independent release trust, native initialization, runtime verification, full repository make test and CI open. No actual native mutation. Next practical VM preparation/acceptance, not additional architecture detours; G3 not yet accepted. Main untouched.
+
+## M7-D.1e.4c.3a — lab preparation and native process interruption evidence
+
+Base c6566b58892d266259a5a1c721fe889223732e3e; prior subtree and R2 blob verified. Added final file/directory fsync before terminal native states and actual forked SIGKILL apply/rollback tests, final-flush fault test, bilingual lab runbook and corrected obsolete acceptance status header. Full provisioning suite as nobody on Debian 13 exit 0, archive 141 files, tested subtree 3e100f63c3a9bf1ec584a7dc0bb08133691fdb1b. No VM available here (no /dev/kvm, QEMU or virsh); direct clone DNS still unavailable. Main has diverged with independent work; no merge. Next G0 CI and operator-assisted G1/G2 initial read-only collection on disposable guest; no live write authorization.

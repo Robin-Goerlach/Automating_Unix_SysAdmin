@@ -138,3 +138,10 @@ Priorität haben R0-Härtung und R1-Werkzeuge; R2–R4 können bei unabhängigen
 - [x] Wiederverwendung des bestehenden M2-Enrollment und authentifizierten M2.1-Imports ohne automatische Freigabe (Offline-Abnahme).
 - [x] Abnahme von Reinstallation, doppelter Identität, veraltetem Image und Ablehnung (Offline-Abnahme).
 - [ ] Native Postinstallation nach echter Netzwerkinstallation sowie automatisierter Schlüsselwechsel/-Recovery.
+
+### M7-D — Moderne Debian-Checklistenerweiterung (Entwicklungsbranch)
+
+- Nummerierter Task-Dispatcher, Quellzeilen-Zuordnung und explizite offene Zustände; nur Kandidatenerzeugung.
+- R2-Inventar bleibt einziges Hostregister; validierte Standort- und Hostpolicy ergänzen. Zentrale Adapter und Entfernen/Deaktivieren bleiben geplant.
+- Geschütztes natives Apply, Paket-/Dienstprüfung, privater Inventarreport, Idempotenz, Backups, Rücknahme und Reboot-Resume vor Laborabnahme implementieren. M7-Betreiberfreigabe bleibt unverändert.
+- Siehe [provisioning/debian-client.de.md](provisioning/debian-client.de.md). Das ändert weder das native V1.1-Abnahmegate noch historische Profile.

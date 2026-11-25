@@ -16,6 +16,7 @@ test: syntax
 	sh tests/m5-golden.sh
 	sh tests/m6-netboot.sh
 	sh tests/m7-postinstall.sh
+	sh install/debian-client/test.sh
 site-test:
 	sh tests/r2-site.sh
 syntax:

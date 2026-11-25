@@ -1,0 +1,17 @@
+field	classification	proposed_source
+node_name	inventory	R2 hostname
+owner	private-metadata	operator inventory
+installation_date	local-evidence	installer or run timestamp
+ethernet_ip_mac_model	private-hardware	ip link and hardware inventory
+wlan_mac_model	private-hardware	ip link and hardware inventory
+serial_inventory_number	private-metadata	DMI plus operator asset number
+manufacturer_model	private-hardware	DMI
+cpu_type	private-hardware	lscpu
+memory_size_type	private-hardware	DMI and memory inventory
+disk_model_serial_capacity_device	private-hardware	lsblk and hardware inventory for all disks
+swap_size	private-hardware	/proc/swaps
+peripherals	private-hardware	operator review
+remarks	private-metadata	operator review
+os_version	local-evidence	/etc/os-release
+root_password	prohibited	never record
+disk_encryption_passphrase	prohibited	never record

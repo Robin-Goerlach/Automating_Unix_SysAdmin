@@ -25,3 +25,6 @@ M7 postinstallation and monitoring handoff is documented in [postinstall.md](pos
 The native Debian/KVM acceptance recipe and read-only prerequisite check are documented in [kvm-lab.md](kvm-lab.md). It requires an authorized isolated host and does not claim a native result until packet, guest, installation and cleanup evidence exists.
 
 The combined offline demonstration is `examples/sasd-provisioning-lab.sh`. Its output explicitly separates simulated provisioning from real network boot, native OS installation and historical Unix acceptance.
+
+
+The modern Debian checklist extension is described in [debian-client.md](debian-client.md). Its dispatcher and candidate renderers are independent of M7 enrollment; live apply is not yet implemented.

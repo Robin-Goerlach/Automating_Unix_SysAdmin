@@ -170,3 +170,10 @@ Open policy decisions: per-module packaging, real legacy OS installation media r
 - [x] Reuse of the existing M2 enrollment and M2.1 authenticated import without automatic approval (offline acceptance).
 - [x] Reinstallation, duplicate-identity, stale-image and rejection acceptance (offline acceptance).
 - [ ] Native postinstall after a real network installation and automated key-rotation/recovery.
+
+### M7-D — Modern Debian checklist extension (development branch)
+
+- Numbered task dispatcher, source-line traceability and explicit incomplete states; candidate generation only.
+- Preserve R2 inventory as the single host registry; extend with validated site and host policy. Central adapters and remove/disable remain planned.
+- Implement guarded native apply, package and service verification, private inventory report, idempotence, backups, rollback and reboot resume before lab acceptance. Keep M7 enrollment approval unchanged.
+- See [provisioning/debian-client.md](provisioning/debian-client.md). This does not change the V1.1 native acceptance gate or historical profiles.
