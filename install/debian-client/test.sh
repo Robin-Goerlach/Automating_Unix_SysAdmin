@@ -27,7 +27,7 @@ rc=0
 cp -R "$here" "$tmp/package-source"
 printf '%s\n' 'fixture-only' > "$tmp/package-source/tasks/private.fixture"
 # package.sh expects its source directory to be called debian-client.
-mkdir "$tmp/build"; mv "$tmp/package-source" "$tmp/build/debian-client"
+mkdir "$tmp/build" "$tmp/bin"; cp "$here/../../bin/sasd-site-inventory" "$tmp/bin/"; mv "$tmp/package-source" "$tmp/build/debian-client"
 "$tmp/build/debian-client/package.sh" "$tmp/release"
 if tar -tzf "$tmp/release/sasd-debian-client.tar.gz" | grep -q 'private.fixture'; then exit 1; fi
 if [ "$(id -u)" -ne 0 ]; then
@@ -47,4 +47,5 @@ sh "$here/test-apply.sh"
 sh "$here/test-recovery.sh"
 sh "$here/test-interruption.sh"
 sh "$here/test-plan.sh"
+sh "$here/test-dispatch.sh"
 echo 'Offline Debian candidate tests passed'

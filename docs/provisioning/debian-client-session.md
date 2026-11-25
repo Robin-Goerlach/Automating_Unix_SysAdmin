@@ -17,3 +17,7 @@ Base: 14575c917e32d78250305d0e92bb9688d424c991. Added retained before/desired ma
 ## M7-D.1c — read-only planning checkpoint
 
 Base: 1f5f5bf27ff49d4771e80875c616c761ca729914. Added plan-client.pl, dependencies.tsv (23 initial edges), test-plan.sh and test entry. Reused R2 validator without changes. Local syntax and unprivileged test-plan.sh passed with the exact published inventory validator and complete 116-row catalog (Git blob hashes matched), and synthetic no-execution task fixtures with matching names. New source blobs checked before branch update. Direct clone still fails DNS; complete repository tests, native Debian and CI not verified. No dispatcher enforcement or packaging integration yet; no live changes. Next M7-D.1d: bind validated inventory and plan to dispatcher, establish evidence contract and guard fixture execution; complete dependency coverage before native apply. Keep main and parallel Codex work untouched.
+
+## M7-D.1d.1 — candidate dispatcher integration
+
+Base 1cb65f33e6c09deeba3c1e4761f1ecafb7d06ad8. Integrated inventory-aware dryrun/stage and prerequisite enforcement, candidate hashes and allowlisted archive portability. Exact new dispatch-planned.sh tested as nobody against synthetic four-task planner and scripts; published blob checked. Real-catalog/packaging test added but not run; direct GitHub clone DNS unavailable, CI/native unverified. Next M7-D.1d.2: bounded transaction-backed fixture baseline apply and verified evidence, then native gate. Legacy no-inventory dryrun remains; no live apply. Main untouched.

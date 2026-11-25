@@ -10,14 +10,21 @@ here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 catalog="$here/checklist.tsv"
 [ -f "$catalog" ] && [ ! -L "$catalog" ] || exit 2
 names=$(awk -F '\t' 'NR==1 {next} NF!=5 || $1 !~ /^[0-9][0-9][0-9][0-9]$/ || $3 !~ /^[A-Za-z0-9_]+$/ || seen[$1]++ {bad=1; next} {print $1 "_" $3} END{if(bad || NR<2) exit 1}' "$catalog") || exit 2
-set -- "$1" debian-client/install-client.sh debian-client/verify-baseline.sh debian-client/apply-baseline.sh debian-client/recover-baseline.sh debian-client/lib/transaction.sh debian-client/lib/task.sh debian-client/lib/policy.sh debian-client/checklist.tsv debian-client/site.example.conf debian-client/package-policy.tsv debian-client/inventory-fields.tsv
+set -- "$1" debian-client/install-client.sh debian-client/dispatch-planned.sh debian-client/plan-client.pl debian-client/dependencies.tsv debian-client/verify-baseline.sh debian-client/apply-baseline.sh debian-client/recover-baseline.sh debian-client/lib/transaction.sh debian-client/lib/task.sh debian-client/lib/policy.sh debian-client/checklist.tsv debian-client/site.example.conf debian-client/package-policy.tsv debian-client/inventory-fields.tsv
 for name in $names; do set -- "$@" "debian-client/tasks/$name"; done
 destination=$1; shift
 for file do
     [ -f "$here/../$file" ] && [ ! -L "$here/../$file" ] || { echo 'Invalid package member' >&2; exit 2; }
 done
+validator="$here/../../bin/sasd-site-inventory"
+[ -f "$validator" ] && [ ! -L "$validator" ] || { echo 'Canonical R2 validator missing' >&2; exit 2; }
+bundle=$(mktemp -d)
+trap 'rm -rf -- "$bundle"' EXIT
+trap 'exit 1' HUP INT TERM
+(cd "$here/.." && cp -p --parents -- "$@" "$bundle")
+cp -p -- "$validator" "$bundle/debian-client/lib/sasd-site-inventory"
 mkdir -- "$destination"
 out=$(CDPATH= cd -- "$destination" && pwd)
-tar -C "$here/.." -czf "$out/sasd-debian-client.tar.gz" -- "$@"
+tar -C "$bundle" -czf "$out/sasd-debian-client.tar.gz" -- debian-client
 (cd "$out" && sha256sum sasd-debian-client.tar.gz > sasd-debian-client.tar.gz.sha256)
 echo 'Archive and checksum created; publish through authenticated HTTPS and pin digest independently.'
