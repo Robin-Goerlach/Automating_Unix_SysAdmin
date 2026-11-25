@@ -1,6 +1,6 @@
 #!/bin/sh
-# Checklist source line 737; deferred.
+# Checklist source line 737; render candidate.
 set -eu
 here=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 . "$here/lib/task.sh"
-task_main 'deferred' '' "$@"
+task_main 'render' 'localinventory' "$@"

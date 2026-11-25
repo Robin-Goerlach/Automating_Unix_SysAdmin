@@ -75,6 +75,13 @@ ROTATE
         postfix) printf '%s\n' 'parameter	policy' 'relayhost	EXPLICIT_REVIEWED_RELAY' 'inet_interfaces	LOOPBACK_ONLY' 'mydestination	EMPTY_NULL_CLIENT' 'smtp_tls_security_level	VERIFY_RELAY' 'smtp_sasl_password_maps	NO_CREDENTIALS_IN_REPOSITORY' ;;
         smtp) printf '%s\n' 'smtpd_banner = $myhostname ESMTP' ;;
         sftpcheck) printf '%s\n' 'check	policy' 'sshd-effective	REVIEW_SUBSYSTEM_SFTP' 'host-key	INDEPENDENT_PIN_REQUIRED' 'authentication	OPERATOR_LAB_TEST' 'file-transfer	OPERATOR_LAB_TEST' ;;
+        fstabformat) printf '%s\n' 'path	policy' '/etc/fstab	PRESERVE_AND_REVIEW' ;;
+        fstabsecure) printf '%s\n' 'mountpoint	proposed-options' '/home	nodev,nosuid,noexec' '/tmp	nodev,nosuid,noexec' '/var	nodev,nosuid' '/dev/shm	nodev,nosuid,noexec' ;;
+        usbmount) printf '%s\n' 'scope	policy' 'desktop-removable-media	REVIEW_AUTOMOUNT' 'usbfs	DO_NOT_ASSUME_PRESENT' ;;
+        nfspoints) printf '%s\n' 'path	policy' '/mnt/sasd	REVIEW_ROOT_OWNED_EMPTY_MOUNTPOINTS' ;;
+        nfsshares) printf '%s\n' 'scope	policy' 'nfs	EXPLICIT_READ_ONLY_SHARE_MANIFEST' 'remote-scripts	NEVER_EXECUTE' ;;
+        nfsautomount) printf '%s\n' 'mode	policy' 'manual	DEFAULT_NOAUTO' 'on-demand	EXPLICIT_SYSTEMD_AUTOMOUNT_REVIEW' 'autofs	KEEP_EXISTING_MAPS_UNCHANGED' ;;
+        localinventory) printf '%s\n' 'field	policy' 'kernel,architecture,logical-cpus,mount-count	LOCAL_OBSERVATION' 'serial,mac,owner	PRIVATE_REVIEW' 'password,passphrase	NEVER_COLLECT' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;
