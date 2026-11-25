@@ -4,12 +4,13 @@ set -eu
 LC_ALL=C; export LC_ALL
 [ "$(id -u)" -ne 0 ] || { echo 'Archive execution test SKIPPED: root'; exit 0; }
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
-tmp=$(mktemp -d); stage=; report=; fixture=; review=
+tmp=$(mktemp -d); stage=; report=; fixture=; review=; acceptance=
 cleanup(){
     [ -z "$stage" ] || rm -rf -- "$stage"
     [ -z "$report" ] || rm -rf -- "$report"
     [ -z "$fixture" ] || rm -rf -- "$fixture"
     [ -z "$review" ] || rm -rf -- "$review"
+    [ -z "$acceptance" ] || rm -rf -- "$acceptance"
     rm -rf -- "$tmp"
 }
 trap cleanup EXIT
@@ -22,7 +23,7 @@ tar --same-permissions -xzf "$tmp/release/sasd-debian-client.tar.gz" -C "$tmp/un
 archive=$tmp/unpack/debian-client
 # Independent expected file inventory. No local inventory, tests, reports or credentials.
 {
-    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py prepare-native.sh verify-dns.pl dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
+    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py prepare-native.sh collect-native.sh verify-dns.pl dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
     awk -F '\t' 'NR>1 {print "tasks/" $1 "_" $3}' "$here/checklist.tsv"
 } | sort > "$tmp/expected"
 (cd "$archive" && find . -type f -printf '%P\n' | sort) > "$tmp/actual"
@@ -77,6 +78,13 @@ if [ -x /usr/bin/python3 ]; then
 else
     echo 'Packaged native capabilities test SKIPPED: python3 unavailable'
 fi
+rc=0; "$archive/collect-native.sh" --root="$fixture" --hostname=node.lab.invalid --inventory="$tmp/hosts" --roles="$tmp/roles" --site="$archive/site.example.conf" > "$tmp/acceptance" || rc=$?
+[ "$rc" -eq 3 ]
+acceptance=$(sed -n 's/^Acceptance report: //p' "$tmp/acceptance")
+case "$acceptance" in /tmp/sasd-native-acceptance.*) ;; *) acceptance=; exit 1 ;; esac
+[ "$(cat "$acceptance/status")" = COLLECTED_NOT_AUTHORIZED ]
+grep -q '^G5[[:space:]]NOT_RUN' "$acceptance/gates.tsv"
+[ "$(cat "$acceptance/rehearsal/status")" = PREPARED_NOT_AUTHORIZED ]
 # Use the unchanged parser test harness against the unpacked executable.
 # Copy only into a separate test directory, not the delivered archive.
 mkdir "$tmp/dns-test"
