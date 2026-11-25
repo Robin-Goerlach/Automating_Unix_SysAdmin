@@ -51,5 +51,6 @@ sh "$here/test-dispatch.sh"
 sh "$here/test-fixture-dispatch.sh"
 sh "$here/test-native-preflight.sh"
 sh "$here/test-verify-dns.sh"
+sh "$here/test-prepare-native.sh"
 sh "$here/test-archive.sh"
 echo 'Offline Debian candidate tests passed'
