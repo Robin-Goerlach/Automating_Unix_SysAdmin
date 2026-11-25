@@ -4,12 +4,16 @@ set -eu
 LC_ALL=C; export LC_ALL
 umask 077
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+# Route explicit fixture operation before the inventory candidate path, regardless of option order.
+for arg do
+    case "$arg" in --fixture-apply) exec sh "$here/dispatch-fixture.sh" "$@" ;; esac
+done
 # Inventory arguments opt into dependency-aware execution; legacy dryrun stays available.
 for arg do
     case "$arg" in --inventory=*|--roles=*) exec sh "$here/dispatch-planned.sh" "$@" ;; esac
 done
 mode=--dryrun; host=; site=; only=; stage=; list=no
-usage(){ echo 'usage: install-client.sh --hostname=FQDN [--site=FILE] [--dryrun|--stage] [--only=NNNN] [--inventory=FILE --roles=FILE] | --list' >&2; exit 2; }
+usage(){ echo 'usage: install-client.sh --hostname=FQDN [--site=FILE] [--dryrun|--stage] [--only=NNNN] [--inventory=FILE --roles=FILE] | --list | --fixture-apply --root=FIXTURE --hostname=FQDN --site=FILE --inventory=FILE --roles=FILE' >&2; exit 2; }
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --dryrun|--dry-run) mode=--dryrun ;;

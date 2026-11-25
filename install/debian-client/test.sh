@@ -48,4 +48,5 @@ sh "$here/test-recovery.sh"
 sh "$here/test-interruption.sh"
 sh "$here/test-plan.sh"
 sh "$here/test-dispatch.sh"
+sh "$here/test-fixture-dispatch.sh"
 echo 'Offline Debian candidate tests passed'
