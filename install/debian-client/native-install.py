@@ -84,6 +84,22 @@ def sync_dir(path):
         os.close(fd)
 
 
+def sync_targets(etc, owner, expected):
+    """Flush every target, including unchanged files, before terminal journal state."""
+    require(snapshot(etc, owner) == expected, 'target changed before synchronization')
+    for name in NAMES:
+        fd = os.open(etc / name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            info = os.fstat(fd)
+            require(stat.S_ISREG(info.st_mode) and info.st_uid == owner and
+                    info.st_gid == owner and info.st_nlink == 1, 'unsafe sync target')
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    sync_dir(etc)
+    require(snapshot(etc, owner) == expected, 'target changed during synchronization')
+
+
 def atomic_write(path, data, mode, owner):
     fd, temp = tempfile.mkstemp(prefix='.sasd-write.', dir=path.parent)
     try:
@@ -154,6 +170,7 @@ def transition(etc, store, owner, reference, original, desired, verify):
         if original[name] != desired[name]:
             atomic_write(etc / name, bytes.fromhex(desired[name]['data']), desired[name]['mode'], owner)
     require(snapshot(etc, owner) == desired and verify(), 'static verification failed; recover explicitly')
+    sync_targets(etc, owner, desired)
     journal_write(path, j, 'COMMITTED_STATIC', owner)
     return path
 
@@ -171,6 +188,7 @@ def recover(etc, store, owner, reference, path):
             entry = j['original'][name]
             atomic_write(etc / name, bytes.fromhex(entry['data']), entry['mode'], owner)
     require(snapshot(etc, owner) == j['original'], 'rollback verification failed')
+    sync_targets(etc, owner, j['original'])
     journal_write(path, j, 'ROLLED_BACK', owner)
 
 

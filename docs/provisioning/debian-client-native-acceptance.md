@@ -2,7 +2,7 @@
 
 Deutsch: [Deutsche Fassung](debian-client-native-acceptance.de.md)
 
-Status: **PREPARATION ONLY — native apply not implemented or authorized.** Modern Debian profile only; the historical path is unchanged. See [client design](debian-client.md).
+Status: **EXPERIMENTAL IMPLEMENTATION — native static writer exists; native VM acceptance and authorization remain open.** Modern Debian profile only; the historical path is unchanged. See [client design](debian-client.md).
 
 ## Diagnostic tool
 
@@ -30,7 +30,7 @@ Resolver ownership is a hint, not a decision. Recognized symlinks and comments i
 | G5 | Direct DNS A query to each required DNS server and independent NSS lookup using known lab record; wrong answer and unreachable server tested | OPEN |
 | G6 | Repeat, induced failure, rollback, reboot and snapshot restoration; record results, no unverified task marked complete | OPEN |
 
-First proposed native target: Debian 12 or 13 minimal VM with operator-proven static resolver ownership; choose one actual release and record it. No version is accepted yet. Managed resolver support is a separate integration, not a fallback to overwriting files. Native scope initially limited to identity and resolver policy; no network reconfiguration, service enablement, packages, firewall or central enrollment. No automatic escalation or native apply switch exists.
+First proposed native target: Debian 12 or 13 minimal VM with operator-proven static resolver ownership; choose one actual release and record it. No version is accepted yet. Managed resolver support is a separate integration, not a fallback to overwriting files. Native scope initially limited to identity and resolver policy; no network reconfiguration, service enablement, packages, firewall or central enrollment. No automatic escalation; the later experimental native apply interface is separately described below and is not yet accepted.
 
 ## Lab procedure (read-only until a reviewed native writer exists)
 
@@ -187,3 +187,9 @@ Under the same lock, persist native.UUID.json (SASD-NATIVE-JOURNAL-1, mode 0600)
 ### Tests and remaining gates
 
 Verified exact base provisioning tree ba2eb4f6d5d8469a17e522b49500aa451eb42786 and R2 validator 5a1b56ba793ae92b75a6fb13a9dbe00c2b3cd22c. test-native-install.sh passed as nobody (UID/GID 65534) on Debian 13 overlayfs. It imports actual native transaction functions against disposable directories: shared renderer, original reference mismatch without writes, verification failure, new apply blocked by pending journal, wrong reference and external edit recovery refusal, injected partial replacement failure, injected rollback interruption/resumption, actual user xattr refusal, injected journal directory fsync failure before mutation and quarantine, successful static commit, unchanged repeat and closed-journal recovery refusal. The live CLI refuses unprivileged invocation. Full provisioning test.sh as nobody exit 0 including packaged native primitive tests and 141 exact delivered files. Local tested subtree cb99258e437d6b430a7cfa186d99b171af651853. No privileged apply/recovery, actual KVM VM or native ext4/XFS execution, real process/power-loss test of the new backend, or independent approval. Existing fixture SIGKILL tests still pass but are not native evidence. Repository-wide make test, documentation-pair check, CI and release authenticity remain open. G3 has implementation but not acceptance; next prioritize G0/G1/G2 VM preparation and practical native integration/negative tests instead of further architecture expansion.
+
+## M7-D.1e.4c.3a — practical VM preparation
+
+See the [lab runbook](debian-client-lab-runbook.md) for the first non-root collection and the stopping point before privileged operation. Before COMMITTED_STATIC and ROLLED_BACK the native backend now checks the expected snapshot, fsyncs all three targets (including unchanged ones), fsyncs their directory and rechecks the snapshot. A failed final flush leaves the transaction open, not successfully completed. This assumes stable trusted paths and cooperative exclusive administration; it is not a physical power-loss guarantee.
+
+Exact previous provisioning tree cb99258e437d6b430a7cfa186d99b171af651853 and R2 blob 5a1b56ba793ae92b75a6fb13a9dbe00c2b3cd22c verified. Extended test-native-install.sh uses actual forked child SIGKILL after two target replacements and after one restore; the parent verifies the interrupted state and resumes recovery with the actual backend. An injected final target-flush failure prevents both commit and rollback completion even for unchanged targets. Targeted tests and full provisioning test.sh as nobody on Debian 13 passed, exit 0; 141-file archive including native primitive tests passed. Tested subtree 3e100f63c3a9bf1ec584a7dc0bb08133691fdb1b. No real privileged CLI, KVM guest, physical crash or live DNS acceptance. Local direct clone still fails name resolution; full repository make test and docs-pair check remain pending. Main has independent changes; do not merge automatically. Existing CI triggers on main pushes and pull requests, not feature-only pushes. Draft PR is intended for review/CI only, not authorization or integration.

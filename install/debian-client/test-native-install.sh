@@ -5,7 +5,7 @@ set -eu
 [ "$(id -u)" -ne 0 ] || { echo 'Native installer test SKIPPED: root'; exit 0; }
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 /usr/bin/python3 -B - "$here" <<'PY'
-import importlib.util, os, pathlib, tempfile, sys
+import importlib.util, os, pathlib, signal, tempfile, sys
 here=pathlib.Path(sys.argv[1]); spec=importlib.util.spec_from_file_location('native',here/'native-install.py')
 m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 uid=os.geteuid(); os.umask(0o077)
@@ -57,6 +57,45 @@ with tempfile.TemporaryDirectory() as tmp:
     path=m.pending(store,uid)[0]; assert m.snapshot(etc,uid)['hostname']==desired['hostname']
     assert m.snapshot(etc,uid)['hosts']==original['hosts']
     m.recover(etc,store,uid,ref,path); assert m.snapshot(etc,uid)==original
+    # Real SIGKILL in a child after the second actual target replacement.
+    # The parent retains the private fixture and uses the unchanged recovery code.
+    def killed_after(name, operation):
+        pid = os.fork()
+        if pid == 0:
+            def kill_after(path, data, mode, owner):
+                atomic(path, data, mode, owner)
+                if path == etc/name:
+                    os.kill(os.getpid(), signal.SIGKILL)
+            m.atomic_write = kill_after
+            try:
+                operation()
+            finally:
+                os._exit(99)
+        _, status = os.waitpid(pid, 0)
+        assert os.WIFSIGNALED(status) and os.WTERMSIG(status) == signal.SIGKILL
+    killed_after('hosts', lambda:m.transition(etc,store,uid,ref,original,desired,lambda:True))
+    path=m.pending(store,uid)[0]
+    assert m.load_journal(path,uid)['state']=='APPLYING'
+    assert m.snapshot(etc,uid)=={**original,'hostname':desired['hostname'],'hosts':desired['hosts']}
+    killed_after('hostname', lambda:m.recover(etc,store,uid,ref,path))
+    assert m.load_journal(path,uid)['state']=='ROLLING_BACK'
+    assert m.snapshot(etc,uid)=={**original,'hosts':desired['hosts']}
+    m.recover(etc,store,uid,ref,path)
+    assert m.snapshot(etc,uid)==original and m.load_journal(path,uid)['state']=='ROLLED_BACK'
+    # A final synchronization failure must leave an open journal, even when all
+    # targets already match. Both terminal states require a successful flush.
+    flush=m.sync_targets
+    def fail_flush(*args): raise OSError('target sync fault')
+    m.sync_targets=fail_flush
+    unchanged={'original':ref['original'],'desired':ref['original']}
+    rejected(lambda:m.transition(etc,store,uid,unchanged,original,original,lambda:True))
+    path=m.pending(store,uid)[0]
+    assert m.load_journal(path,uid)['state']=='APPLYING'
+    rejected(lambda:m.recover(etc,store,uid,unchanged,path))
+    assert m.load_journal(path,uid)['state']=='ROLLING_BACK'
+    m.sync_targets=flush
+    m.recover(etc,store,uid,unchanged,path)
+    assert m.snapshot(etc,uid)==original and m.load_journal(path,uid)['state']=='ROLLED_BACK'
     # Extended attributes block rather than disappear.
     os.setxattr(etc/'hosts','user.sasd-test',b'test'); rejected(lambda:m.snapshot(etc,uid)); os.removexattr(etc/'hosts','user.sasd-test')
     # A failed journal sync must prevent target mutation and block further work.
