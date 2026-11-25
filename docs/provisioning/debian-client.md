@@ -101,3 +101,17 @@ Local test-fixture-dispatch.sh passed as nobody using the exact current planner,
 ## M7-D.1e — native acceptance preparation
 
 See [native Debian acceptance contract](debian-client-native-acceptance.md). Added standalone read-only native-preflight.pl and offline tests. Native apply remains absent; diagnostic output never grants authorization.
+
+## M7-D.2a — package stages: local APT plan (0200 and 0730)
+
+The optional modern Debian Python 3 tool plan-packages.py evaluates the existing candidate rows from package-policy.tsv (stage 1: 19; stage 2: 15; no optional/review/server/laptop/duplicate entries selected). Both lists are checked against the corresponding independent task renderers by tests. No policy expansion or real install. Run as an ordinary user against trusted local APT configuration and metadata:
+
+    ./plan-packages.py --live --stage=1
+    ./plan-packages.py --live --stage=2
+    ./plan-packages.py --live --stage=both --simulate
+
+The default stage is both. apt-cache policy uses fixed executable paths, a minimal C-locale environment, disabled binary package-cache files and a 60-second timeout per subprocess. No apt update, package download or write operation is requested. The TSV report associates task, package, status, installed and candidate version. INSTALLED_SAME and CANDIDATE describe APT metadata, not proof of a healthy dpkg state, downloadable packages or verified repository provenance. NO_LOCAL_RECORD/NO_LOCAL_CANDIDATE mean the local metadata is insufficient, not that the package is unavailable on Debian. VERSION_REVIEW flags a differing candidate, including possible downgrade; UNKNOWN marks command/parse failures. Raw APT output and repository locations are not emitted.
+
+--simulate is explicit and runs only if all selected rows have candidates and no version-review condition. It invokes apt-get --simulate --no-install-recommends --no-remove install with the selected names; only action counts are reported, not a complete dependency lockfile. APT summary and action counts must agree; upgrades, removals, existing-version changes or unknown output prevent a successful simulation claim. The simulation does not execute maintainer scripts, install packages, resolve actual service effects or prove that subsequent installation will work; local APT metadata may be stale or change during the run. The two-stage combined simulation is not a staged execution plan. No automatic installation, repository changes, release authentication or package task completion evidence. Exit 0 means observations/simulation without detected blocker, 3 review/block/unknown, 2 invalid invocation or policy. package-apply always NOT_AUTHORIZED. Existing dispatcher and catalog states are unchanged; 0730 is not verified and 0790 remains gated.
+
+Test evidence: exact base integration subtree 3e100f63c3a9bf1ec584a7dc0bb08133691fdb1b; full provisioning test.sh passed as nobody on Debian 13, including parser negatives, synthetic successful/blocked simulation dispatch and the 142-file archive. Actual local both-stage assessment returned 3 (three equal installed/candidate versions, 31 without local records/candidates); complete simulation was blocked. A separate actual apt-get simulation of already installed vim returned zero changes. Native package availability with populated trusted lab APT indexes, dependency plan, role-based package choices, dpkg state and privileged package installation remain open. Historical profiles are unaffected.

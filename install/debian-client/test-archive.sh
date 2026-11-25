@@ -24,7 +24,7 @@ tar --same-permissions -xzf "$tmp/release/sasd-debian-client.tar.gz" -C "$tmp/un
 archive=$tmp/unpack/debian-client
 # Independent expected file inventory. No local inventory, tests, reports or credentials.
 {
-    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py native-install.py dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
+    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
     awk -F '\t' 'NR>1 {print "tasks/" $1 "_" $3}' "$here/checklist.tsv"
 } | sort > "$tmp/expected"
 (cd "$archive" && find . -type f -printf '%P\n' | sort) > "$tmp/actual"
@@ -109,6 +109,9 @@ if [ -x /usr/bin/python3 ]; then
     case "$lab_report" in /tmp/sasd-debian-fixture-report.*) ;; *) lab_report=; exit 1 ;; esac
     [ "$(cat "$lab_report/status")" = VERIFIED_FIXTURE ]
     grep -q '^REFERENCE_MATCHED_FIXTURE_ONLY;' "$tmp/lab"
+    cp "$here/test-plan-packages.sh" "$archive/test-plan-packages.sh"
+    sh "$archive/test-plan-packages.sh"
+    rm "$archive/test-plan-packages.sh"
     # Exercise native transaction primitives from packaged code, never the live path.
     cp "$here/test-native-install.sh" "$archive/test-native-install.sh"
     sh "$archive/test-native-install.sh"
