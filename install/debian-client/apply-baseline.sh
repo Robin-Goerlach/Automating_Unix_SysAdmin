@@ -72,6 +72,7 @@ printf '%s\n' "$resolver" > "$work/check/etc/resolv.conf"
 manifest "$work/original" > "$work/original.tsv"
 manifest "$work/check/etc" > "$work/desired.tsv"
 # All recovery evidence precedes the first mutation; snapshots remain in place.
+sync_prepared || fail 'cannot synchronize recovery evidence'
 state_set APPLYING
 for name in hostname hosts resolv.conf; do
     if same_file "$work/check/etc/$name" "$root/etc/$name"; then
@@ -84,5 +85,6 @@ done
 "$here/verify-baseline.sh" --root="$root" --hostname="$host" --site="$site"
 actual=$(manifest "$root/etc")
 [ "$actual" = "$(cat "$work/desired.tsv")" ] || fail 'installed manifest mismatch'
+sync_targets || fail 'cannot synchronize installed files'
 state_set COMMITTED
 printf 'FIXTURE ONLY; backup=%s/original\n' "$work"

@@ -19,9 +19,42 @@ manifest(){
         printf '%s\t%s\t%s\n' "$file" "$(stat -c %a -- "$1/$file")" "${digest%% *}"
     done
 }
+# GNU sync with explicit path operands invokes fsync on files/directories.
+# This is the fixture backend; never treat a successful call as a power-loss test.
+sync_paths(){ /usr/bin/sync -- "$@"; }
+sync_targets(){
+    sync_paths "$root/etc/hostname" "$root/etc/hosts" "$root/etc/resolv.conf" || return 1
+    sync_paths "$root/etc"
+}
+sync_prepared(){
+    # Persist both snapshots and manifests before publishing APPLYING.
+    sync_targets || return 1
+    sync_paths "$work/original/hostname" "$work/original/hosts" "$work/original/resolv.conf" \
+        "$work/check/etc/hostname" "$work/check/etc/hosts" "$work/check/etc/resolv.conf" \
+        "$work/original.tsv" "$work/desired.tsv" "$root/.sasd-fixture" || return 1
+    sync_paths "$work/original" "$work/check/etc" || return 1
+    sync_paths "$work/check" || return 1
+    sync_paths "$work" || return 1
+    sync_paths "$root" || return 1
+    sync_paths /tmp
+}
 state_set(){
     tmpstate=$(mktemp "$work/.state.XXXXXXXX") || return 1
-    printf '%s\n' "$1" > "$tmpstate" && mv -fT -- "$tmpstate" "$work/state"
+    if ! printf '%s\n' "$1" > "$tmpstate" || ! sync_paths "$tmpstate" || ! mv -fT -- "$tmpstate" "$work/state"; then
+        rm -f -- "$tmpstate"; return 1
+    fi
+    if ! sync_paths "$work"; then
+        # Rename is visible but persistence is uncertain. Best-effort quarantine;
+        # no later automatic apply/recovery may interpret this as committed.
+        echo "JOURNAL SYNC UNCERTAIN: $work" >&2
+        if tmpstate=$(mktemp "$work/.state.XXXXXXXX"); then
+            if printf 'SYNC_FAILED\n' > "$tmpstate" && mv -fT -- "$tmpstate" "$work/state"; then
+                sync_paths "$work/state" "$work" || true
+            fi
+            rm -f -- "$tmpstate"
+        fi
+        return 1
+    fi
 }
 state_get(){ regular "$1/state" && cat "$1/state"; }
 # Return the sole open transaction, or fail closed for ambiguous/unknown state.
@@ -46,7 +79,7 @@ snapshot_valid(){
     actual=$(manifest "$work/original") && [ "$actual" = "$(cat "$work/original.tsv")" ] || return 1
     actual=$(manifest "$work/check/etc") && [ "$actual" = "$(cat "$work/desired.tsv")" ] || return 1
 }
-same_file(){ cmp -s -- "$1" "$2" && [ "$(stat -c %a -- "$1")" = "$(stat -c %a -- "$2")" ]; }
+same_file(){ cmp -s -- "$1" "$2" && [ "$(stat -c %u:%g:%a -- "$1")" = "$(stat -c %u:%g:%a -- "$2")" ]; }
 restore_preflight(){
     snapshot_valid || return 1
     for name in hostname hosts resolv.conf; do
@@ -59,7 +92,10 @@ restore_preflight(){
 replace_file(){
     # Stage in the private target directory so rename is on the same filesystem.
     staged=$(mktemp "$root/etc/.sasd-replace.XXXXXXXX") || return 1
-    if ! cp -p -- "$1" "$staged" || ! mv -fT -- "$staged" "$2"; then rm -f -- "$staged"; return 1; fi
+    if ! cp -p -- "$1" "$staged" || ! same_file "$1" "$staged" || ! sync_paths "$staged" || ! mv -fT -- "$staged" "$2"; then
+        rm -f -- "$staged"; return 1
+    fi
+    sync_paths "$root/etc"
 }
 restore_transaction(){
     restore_preflight || return 1
@@ -71,5 +107,6 @@ restore_transaction(){
         fi
     done
     actual=$(manifest "$root/etc") && [ "$actual" = "$(cat "$work/original.tsv")" ] || return 1
+    sync_targets || return 1
     state_set ROLLED_BACK
 }
