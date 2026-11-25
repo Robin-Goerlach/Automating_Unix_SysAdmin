@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 
 HERE = Path(__file__).resolve().parent
 ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LC_ALL': 'C'}
@@ -66,6 +67,38 @@ def select_profile(stages, path, profile):
     for stage, names in stages.items():
         selected[stage] = [n for n in names if profile == 'all-candidates' or profile in assigned[n]]
     return selected
+
+
+def inventory_selection(hostname, inventory, roles):
+    """Reuse the complete R2 planner; bind exact input bytes and selected profile."""
+    with tempfile.TemporaryDirectory(prefix='sasd-package-input.') as tmp:
+        copies = {}
+        hashes = {}
+        for label, source in (('inventory', inventory), ('roles', roles),
+                              ('policy', HERE / 'package-policy.tsv'),
+                              ('profiles', HERE / 'package-profiles.tsv')):
+            source = Path(source)
+            if source.is_symlink() or not source.is_file() or source.stat().st_size > 4 * 1024 * 1024:
+                raise ValueError('unsafe or oversized package planning input')
+            data = source.read_bytes()
+            if len(data) > 4 * 1024 * 1024:
+                raise ValueError('oversized package planning input')
+            copies[label] = Path(tmp) / label
+            copies[label].write_bytes(data)
+            hashes[label] = hashlib.sha256(data).hexdigest()
+        result = command('/usr/bin/perl', str(HERE / 'plan-client.pl'), '--hostname=' + hostname,
+                         '--inventory=' + str(copies['inventory']), '--roles=' + str(copies['roles']))
+        lines = result.stdout.splitlines()
+        if result.returncode or result.stderr.strip() or len(lines) < 4 or lines[0] != 'SASD-CLIENT-PLAN-1':
+            raise ValueError('R2 inventory plan rejected')
+        row = lines[1].split('\t')
+        if len(row) != 7 or row[:2] != ['host', hostname] or row[3] != 'debian' or row[6] not in PROFILES[1:]:
+            raise ValueError('no supported Debian package profile for selected host')
+        profile = row[6]
+        stages = select_profile(candidates(copies['policy']), copies['profiles'], profile)
+        context = {'host': row, 'inputs': hashes,
+                   'client-plan': hashlib.sha256(result.stdout.encode('utf-8')).hexdigest()}
+        return profile, stages, context
 
 
 def installed_result(output):
@@ -154,7 +187,10 @@ def main():
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument('--live', action='store_true')
     mode.add_argument('--list', action='store_true')
-    p.add_argument('--profile', choices=PROFILES, default='all-candidates')
+    p.add_argument('--profile', choices=PROFILES)
+    for key in ('hostname', 'inventory', 'roles'):
+        p.add_argument('--' + key)
+    p.add_argument('--expect-plan', help='compare a previously reviewed bound simulation digest')
     p.add_argument('--stage', choices=('1', '2', 'both'), default='both')
     operation = p.add_mutually_exclusive_group()
     operation.add_argument('--simulate', action='store_true')
@@ -164,13 +200,30 @@ def main():
         p.error('list cannot run live checks')
     if a.live and os.geteuid() == 0:
         p.error('run as an ordinary user; never install packages')
+    bound = any(v is not None for v in (a.hostname, a.inventory, a.roles))
+    if bound and (not all((a.hostname, a.inventory, a.roles)) or a.profile is not None):
+        p.error('provide hostname, inventory and roles together, without profile override')
+    if a.expect_plan is not None and (not bound or not a.simulate or
+                                     not re.fullmatch(r'[0-9a-f]{64}', a.expect_plan)):
+        p.error('expected plan requires an inventory-bound simulation and SHA-256 digest')
+    context = None
     try:
-        stages = select_profile(candidates(HERE / 'package-policy.tsv'), HERE / 'package-profiles.tsv', a.profile)
-    except (OSError, ValueError) as exc:
+        if bound:
+            a.profile, stages, context = inventory_selection(a.hostname, a.inventory, a.roles)
+        else:
+            a.profile = a.profile or 'all-candidates'
+            stages = select_profile(candidates(HERE / 'package-policy.tsv'), HERE / 'package-profiles.tsv', a.profile)
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
         print('plan-packages: ' + str(exc), file=sys.stderr)
         return 2
     print('SASD-PACKAGE-PLAN-1\nscope\t' + ('PROFILE_ONLY' if a.list else 'LOCAL_APT_READ_ONLY'))
     print('profile\t' + a.profile)
+    if context is not None:
+        print('inventory-host\t' + a.hostname)
+        print('inventory-plan-sha256\t' + context['client-plan'])
+        for label, value in sorted(context['inputs'].items()):
+            print('input-sha256\t' + label + '\t' + value)
+        print('runtime-identity\tNOT_VERIFIED')
     print('task\tpackage\tstatus\tinstalled\tcandidate')
     blocked = False
     pinned = []
@@ -209,6 +262,8 @@ def main():
         print('simulation\tNOT_RUN')
     elif blocked:
         print('simulation\tBLOCKED\tpackage-candidate-review')
+        if a.expect_plan is not None:
+            print('plan-reference\tNOT_COMPARED')
     else:
         try:
             r = command('/usr/bin/apt-get', *APT, '--simulate', '--no-install-recommends',
@@ -218,25 +273,35 @@ def main():
             status, upgraded, new, removed, held = simulation_result(r.stdout)
             actions = simulation_actions(r.stdout)
             # Configuring a package without an accompanying install is not a clean new-install plan.
-            installs = {row[1] for row in actions if row[0] == 'Inst'}
             versions = dict(item.split('=', 1) for item in pinned)
             requested_actions = [row for row in actions if row[0] == 'Inst' and row[1].split(':')[0] in versions]
             if (not expected_new <= {row[1].split(':')[0] for row in requested_actions} or
                     any(row[3] != versions[row[1].split(':')[0]] for row in requested_actions)):
                 raise ValueError('requested packages differ from simulated actions')
-            if any(row[0] == 'Conf' and row[1] not in installs for row in actions):
+            configurations = {row[1]: row[3] for row in actions if row[0] == 'Conf'}
+            install_versions = {row[1]: row[3] for row in actions if row[0] == 'Inst'}
+            if configurations != install_versions:
                 status = 'REVIEW_REQUIRED'
-                print('simulation-review\tconfiguration-without-install')
+                print('simulation-review\tinstall-configuration-mismatch')
             print('simulation\t%s\tupgraded=%d,new=%d,removed=%d,not-upgraded=%d' %
                   (status, upgraded, new, removed, held))
             for row in actions:
                 print('action\t' + '\t'.join(row))
             record = {'profile': a.profile, 'stage': a.stage, 'requested': pinned, 'actions': actions,
                       'summary': [upgraded, new, removed, held], 'status': status}
-            print('plan-sha256\t' + hashlib.sha256(json.dumps(record, sort_keys=True, separators=(',', ':')).encode('ascii')).hexdigest())
+            if context is not None:
+                record.update(format='SASD-BOUND-PACKAGE-PLAN-1', inventory=context)
+            plan_digest = hashlib.sha256(json.dumps(record, sort_keys=True, separators=(',', ':')).encode('ascii')).hexdigest()
+            print('plan-sha256\t' + plan_digest)
             blocked = status != 'SIMULATED'
+            if a.expect_plan is not None:
+                matches = not blocked and plan_digest == a.expect_plan
+                print('plan-reference\t' + ('MATCH' if matches else 'MISMATCH'))
+                blocked |= not matches
         except (OSError, ValueError, subprocess.SubprocessError):
             print('simulation\tUNKNOWN\tAPT-error-or-unrecognized-output')
+            if a.expect_plan is not None:
+                print('plan-reference\tNOT_COMPARED')
             blocked = True
     print('package-apply\tNOT_AUTHORIZED')
     return 3 if blocked else 0

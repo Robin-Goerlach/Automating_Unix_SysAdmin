@@ -101,6 +101,57 @@ m.command=missing_action; out=StringIO()
 with redirect_stdout(out): assert m.main()==3
 assert 'simulation\tUNKNOWN' in out.getvalue() and 'plan-sha256' not in out.getvalue()
 m.command=real
+# Exercise the actual R2 planner, including the packaged canonical validator.
+with tempfile.TemporaryDirectory() as tmp:
+    inv=pathlib.Path(tmp)/'hosts'; roles=pathlib.Path(tmp)/'roles'
+    roles.write_text('workstation\tsite_workstation\tmodern\troles/workstation.tsv\nserver\tsite_server\tmodern\troles/server.tsv\ncustom\tsite_custom\tmodern\troles/custom.tsv\n')
+    row='node.lab.invalid\t192.0.2.40\tdebian\tworkstation\t\tbaseline\n'
+    inv.write_text(row)
+    bound=['--hostname=node.lab.invalid','--inventory='+str(inv),'--roles='+str(roles)]
+    def cli(*args):
+        return subprocess.run([str(here/'plan-packages.py'),*args],capture_output=True,text=True)
+    result=cli('--list',*bound)
+    assert result.returncode==0 and 'profile\tbaseline' in result.stdout and result.stdout.count('SELECTED')==8
+    assert 'runtime-identity\tNOT_VERIFIED' in result.stdout
+    assert cli('--list',*bound,'--profile=server').returncode==2
+    assert cli('--list',bound[0]).returncode==2
+    inv.write_text(row.replace('baseline','workstation'))
+    result=cli('--list',*bound)
+    assert result.returncode==0 and result.stdout.count('SELECTED')==18 and 'profile\tworkstation' in result.stdout
+    inv.write_text(row.replace('workstation','server').replace('baseline','server'))
+    result=cli('--list',*bound)
+    assert result.returncode==0 and 'openssh-server\tSELECTED' in result.stdout and 'cups\tSELECTED' not in result.stdout
+    for invalid in (row.replace('debian','freebsd'),row.replace('workstation','custom').replace('baseline','custom'),row+row,row.replace('node.lab.invalid','other.lab.invalid')):
+        inv.write_text(invalid); assert cli('--list',*bound).returncode==2
+    inv.write_text(row)
+    def bound_fake(*args):
+        return real(*args) if args[0].endswith('perl') else fake(*args)
+    m.command=bound_fake
+    def simulate(*args):
+        sys.argv=['plan-packages.py','--live','--simulate',*bound,*args]
+        out=StringIO()
+        with redirect_stdout(out): rc=m.main()
+        return rc,out.getvalue()
+    rc,output=simulate(); assert rc==0
+    digest=next(line.split('\t')[1] for line in output.splitlines() if line.startswith('plan-sha256\t'))
+    rc,output=simulate('--expect-plan='+digest); assert rc==0 and 'plan-reference\tMATCH' in output
+    inv.write_text('# reviewed inventory changed\n'+row)
+    rc,output=simulate('--expect-plan='+digest); assert rc==3 and 'plan-reference\tMISMATCH' in output
+    inv.write_text(row)
+    def bad_conf(*args):
+        if args[0].endswith('perl'): return real(*args)
+        if args[0].endswith('apt-cache'):
+            return SimpleNamespace(returncode=0,stderr='',stdout=args[-1]+':\n  Installed: 1\n  Candidate: 1\n')
+        return SimpleNamespace(returncode=0,stderr='',stdout='0 upgraded, 1 newly installed, 0 to remove and 0 not upgraded.\nInst dependency (1 Debian)\nConf dependency (2 Debian)\n')
+    m.command=bad_conf
+    rc,output=simulate('--expect-plan='+digest)
+    assert rc==3 and 'simulation\tREVIEW_REQUIRED' in output and 'plan-reference\tMISMATCH' in output
+    def blocked_bound(*args):
+        return real(*args) if args[0].endswith('perl') else unknown(*args)
+    m.command=blocked_bound
+    rc,output=simulate('--expect-plan='+digest)
+    assert rc==3 and 'plan-reference\tNOT_COMPARED' in output
+    m.command=real
 PY
 rc=0; "$here/plan-packages.py" --live --stage=1 > /dev/null || rc=$?
 [ "$rc" -eq 0 ] || [ "$rc" -eq 3 ]
