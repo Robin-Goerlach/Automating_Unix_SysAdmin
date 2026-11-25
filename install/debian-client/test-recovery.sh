@@ -18,6 +18,7 @@ for name in hostname hosts resolv.conf; do
 done
 manifest "$work/original" > "$work/original.tsv"
 manifest "$work/check/etc" > "$work/desired.tsv"
+record_metadata
 state_set APPLYING
 # Simulate interrupted apply after one replacement.
 cp -p "$work/check/etc/hostname" "$root/etc/hostname"

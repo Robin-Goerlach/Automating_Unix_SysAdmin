@@ -41,7 +41,7 @@ cleanup(){
 if [ "$mode" = apply ]; then
     trap cleanup EXIT; trap 'exit 1' HUP INT TERM
 fi
-for name in hostname hosts resolv.conf; do regular "$root/etc/$name" || fail "unsafe or missing $name"; done
+metadata_manifest "$root/etc" >/dev/null || fail "unsafe or unsupported target metadata"
 old=$(cat "$root/etc/hostname"); short=${host%%.*}
 printf '%s\n' "$old" | awk 'NR!=1 || length($0)>63 || $0!~/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/ {bad=1} END{exit(bad || NR!=1)}' || fail 'old hostname must be a short name'
 # Preserve unrelated entries, IPv6 and comments. Reject ambiguous local mapping.
@@ -64,6 +64,7 @@ mkdir "$work/original" "$work/check" "$work/check/etc"
 for name in hostname hosts resolv.conf; do
     cp -p -- "$root/etc/$name" "$work/original/$name"
     cp -p -- "$root/etc/$name" "$work/check/etc/$name"
+    same_file "$root/etc/$name" "$work/original/$name" && same_file "$root/etc/$name" "$work/check/etc/$name" || fail "snapshot mismatch: $name"
 done
 printf '%s\n' "$short" > "$work/check/etc/hostname"
 printf '%s\n' "$hosts" > "$work/check/etc/hosts"
@@ -71,6 +72,8 @@ printf '%s\n' "$resolver" > "$work/check/etc/resolv.conf"
 "$here/verify-baseline.sh" --root="$work/check" --hostname="$host" --site="$site"
 manifest "$work/original" > "$work/original.tsv"
 manifest "$work/check/etc" > "$work/desired.tsv"
+record_metadata || fail "cannot record metadata"
+verify_target_metadata original || fail "source changed before apply"
 # All recovery evidence precedes the first mutation; snapshots remain in place.
 sync_prepared || fail 'cannot synchronize recovery evidence'
 state_set APPLYING
@@ -85,6 +88,7 @@ done
 "$here/verify-baseline.sh" --root="$root" --hostname="$host" --site="$site"
 actual=$(manifest "$root/etc")
 [ "$actual" = "$(cat "$work/desired.tsv")" ] || fail 'installed manifest mismatch'
+verify_target_metadata desired || fail "installed metadata mismatch"
 sync_targets || fail 'cannot synchronize installed files'
 state_set COMMITTED
 printf 'FIXTURE ONLY; backup=%s/original\n' "$work"

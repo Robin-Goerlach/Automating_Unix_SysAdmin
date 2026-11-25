@@ -61,6 +61,8 @@ pending=$(pending_transaction) || exit 1
 [ -z "$pending" ] || exit 1
 actual=$(manifest "$root/etc") || exit 1
 [ "$actual" = "$(cat "$work/desired.tsv")" ] || { echo 'Fixture changed since commit' >&2; exit 1; }
+verify_target_metadata desired || { echo "Fixture metadata changed since commit" >&2; exit 1; }
+cp -- "$work/desired-metadata.tsv" "$report/metadata.tsv"
 sh "$here/verify-baseline.sh" "--root=$root" "--hostname=$host" "--site=$site" > "$report/verify.tsv" || exit 1
 printf '%s\n' "$actual" > "$report/manifest.tsv"
 printf '%s\n' "$work" > "$report/transaction"
