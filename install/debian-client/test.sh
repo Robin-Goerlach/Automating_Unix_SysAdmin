@@ -59,5 +59,6 @@ sh "$here/test-verify-dns.sh"
 sh "$here/test-prepare-native.sh"
 sh "$here/test-collect-native.sh"
 sh "$here/test-lab-install.sh"
+sh "$here/test-native-install.sh"
 sh "$here/test-archive.sh"
 echo 'Offline Debian candidate tests passed'
