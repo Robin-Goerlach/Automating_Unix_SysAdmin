@@ -101,4 +101,18 @@ if ./bin/sasd-site-config --hosts "$tmp/admin-hosts.tsv" --roles site/roles.tsv 
     exit 1
 fi
 grep -q 'output exists' "$tmp/site-config-existing"
+./bin/sasd-site-consistency --hosts "$tmp/admin-hosts.tsv" --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --monitoring site/monitoring.conf --check > "$tmp/site-consistency"
+grep -q 'hosts=3 selections=8 status=OK' "$tmp/site-consistency"
+printf 'profile-mismatch\tbaseline\tdisk\t2009\twrong profile\n' > "$tmp/bad-profile-services.tsv"
+if ./bin/sasd-site-consistency --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services "$tmp/bad-profile-services.tsv" --monitoring site/monitoring.conf --check > "$tmp/consistency-error" 2>&1; then
+    echo "profile mismatch accepted" >&2
+    exit 1
+fi
+grep -q 'profile mismatch' "$tmp/consistency-error"
+printf 'inventory=other.tsv\n' > "$tmp/bad-monitoring.conf"
+if ./bin/sasd-site-consistency --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --monitoring "$tmp/bad-monitoring.conf" --check > "$tmp/monitoring-error" 2>&1; then
+    echo "monitoring inventory mismatch accepted" >&2
+    exit 1
+fi
+grep -q 'monitoring inventory' "$tmp/monitoring-error"
 echo "R2 site inventory and audit: PASS"

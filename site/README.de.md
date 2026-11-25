@@ -25,6 +25,8 @@ Die Ausgabe enthält nur für den Host passende Serviceauswahlen. Das Kommando p
 
 `bin/sasd-site-config` liest die vier Inventarschichten und erzeugt deterministische `host-services.tsv`- und `manifest.tsv`-Dateien in einem neuen Staging-Verzeichnis. Deaktivierte oder entfernte Hosts aus der benachbarten Zustandsdatei werden ausgelassen. `--check` ist lesend; `--apply` erzeugt nur das ausgewählte Staging-Verzeichnis und verteilt keine native Produktkonfiguration.
 
+`bin/sasd-site-consistency` ist eine lesende Querverbindung zwischen aktiver Host-/Service-Auswahl und `site/monitoring.conf`. Es prüft, dass das Monitoringmodell dieselben Inventarschichten nennt, jeder aktive Host mindestens einen passenden Dienst erhält und Dienstprofile zum Monitoringprofil passen. Es gibt ausgewählte Host-, Dienst-, Check- und Profilzeilen sowie eine Zusammenfassung aus; Rechner werden nicht kontaktiert und native Produktkonfigurationen nicht geparst.
+
 Vor der Verwendung `bin/sasd-site-inventory --check` ausführen. `bin/sasd-site-classes` gibt Rechner, unabhängige SASD-Klassen, Rolle, Profil, Klasse und Manifest aus. Die Klassen dienen nur der Auswahl und ersetzen nicht die native CFEngine-Klassenlogik.
 
 Die Prüfung delegiert den Bytevergleich an `bin/sasd-config-drift`:

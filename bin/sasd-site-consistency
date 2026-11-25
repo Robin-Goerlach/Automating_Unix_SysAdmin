@@ -1,0 +1,98 @@
+#!/usr/bin/env perl
+# Read-only cross-check of the shared site model and monitoring configuration.
+use strict;
+
+my ($hosts,$roles,$checks,$services,$monitoring,$state,$check) = ('','','','','','',0);
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--hosts') { $hosts = shift @ARGV; }
+    elsif ($a eq '--roles') { $roles = shift @ARGV; }
+    elsif ($a eq '--checks') { $checks = shift @ARGV; }
+    elsif ($a eq '--services') { $services = shift @ARGV; }
+    elsif ($a eq '--monitoring') { $monitoring = shift @ARGV; }
+    elsif ($a eq '--state') { $state = shift @ARGV; }
+    elsif ($a eq '--check') { $check = 1; }
+    elsif ($a eq '--help') { print "usage: sasd-site-consistency --hosts hosts.tsv --roles roles.tsv --checks checks.tsv --services services.tsv --monitoring monitoring.conf [--state state.tsv] --check\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+$hosts && $roles && $checks && $services && $monitoring && $check or die "all inputs and --check are required\n";
+for ($hosts,$roles,$checks,$services,$monitoring) { -f $_ && !-l $_ or die "invalid input file\n"; }
+$state = "$hosts.state" if $state eq '';
+
+sub safe { my ($s) = @_; return defined($s) && $s !~ /[\x00-\x1f\x7f]/; }
+sub ident { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/; }
+sub profile { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,31}\z/; }
+sub host_name { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/; }
+sub address { my ($s) = @_; return defined($s) && $s =~ /\A(\d+)\.(\d+)\.(\d+)\.(\d+)\z/ && $1 <= 255 && $2 <= 255 && $3 <= 255 && $4 <= 255; }
+sub fields { my ($line,$count) = @_; my @v = split /\t/, $line, -1; @v == $count or die "invalid TSV record\n"; safe($_) or die "control character in record\n" for @v; return @v; }
+sub read_lines {
+    my ($path,$callback) = @_;
+    open(my $fh, '<', $path) or die "cannot read $path: $!\n";
+    while (<$fh>) { chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/; $callback->($_); }
+    close($fh) or die "cannot close $path: $!\n";
+}
+
+my (%role,%check_def,%host,%state,%setting,%service);
+read_lines($roles, sub {
+    my @v = fields($_[0],4);
+    ident($v[0]) && ident($v[1]) && profile($v[2]) && $v[3] =~ m!\A[A-Za-z0-9_./-]+\z! && $v[3] !~ m!^/! && $v[3] !~ m!(?:^|/)\.\.(?:/|$)! or die "invalid role record\n";
+    exists($role{$v[0]}) and die "duplicate role: $v[0]\n";
+    $role{$v[0]} = $v[2];
+});
+read_lines($checks, sub {
+    my @v = fields($_[0],3);
+    ident($v[0]) && ($v[1] eq '*' || ident($v[1])) && length($v[2]) <= 120 or die "invalid check record\n";
+    exists($check_def{$v[0]}) and die "duplicate check: $v[0]\n";
+    $check_def{$v[0]} = $v[1];
+});
+read_lines($hosts, sub {
+    my @v = fields($_[0],6);
+    host_name($v[0]) && address($v[1]) && $v[2] =~ /\A[A-Za-z0-9_.-]{1,31}\z/ && exists($role{$v[3]}) && profile($v[5]) or die "invalid host record\n";
+    exists($host{$v[0]}) and die "duplicate host: $v[0]\n";
+    $host{$v[0]} = \@v;
+});
+if (-e $state) {
+    -l $state and die "state file is a symlink\n";
+    read_lines($state, sub {
+        my @v = fields($_[0],3);
+        host_name($v[0]) && $v[1] =~ /\A(?:enabled|disabled|removed)\z/ or die "invalid host state\n";
+        $state{$v[0]} = $v[1];
+    });
+}
+for my $name (keys %state) { exists($host{$name}) || $state{$name} eq 'removed' or die "state refers to unknown host $name\n"; }
+read_lines($services, sub {
+    my @v = fields($_[0],5);
+    ident($v[0]) && ($v[1] eq '*' || $v[1] eq 'baseline' || ident($v[1])) && exists($check_def{$v[2]}) && profile($v[3]) && length($v[4]) <= 120 or die "invalid service record\n";
+    exists($service{$v[0]}) and die "duplicate service: $v[0]\n";
+    $service{$v[0]} = \@v;
+});
+read_lines($monitoring, sub {
+    my ($key,$value) = $_[0] =~ /\A([^=]+)=(.*)\z/ or die "invalid monitoring setting\n";
+    $key =~ /\A[A-Za-z][A-Za-z0-9_]*\z/ && length($value) <= 240 or die "invalid monitoring setting\n";
+    exists($setting{$key}) and die "duplicate monitoring setting: $key\n";
+    $setting{$key} = $value;
+});
+$setting{inventory} eq 'hosts.tsv' or die "monitoring inventory must be hosts.tsv\n";
+$setting{roles} eq 'roles.tsv' or die "monitoring roles must be roles.tsv\n";
+$setting{checks} eq 'checks.tsv' or die "monitoring checks must be checks.tsv\n";
+$setting{profile} or die "monitoring profile is missing\n";
+
+my %selected;
+for my $name (sort keys %host) {
+    next if exists($state{$name}) && $state{$name} ne 'enabled';
+    my $role_name = $host{$name}->[3];
+    for my $service_name (sort keys %service) {
+        my $v = $service{$service_name};
+        next unless $v->[1] eq '*' || $v->[1] eq 'baseline' || $v->[1] eq $role_name;
+        my $check_role = $check_def{$v->[2]};
+        $check_role eq '*' || $check_role eq 'baseline' || $check_role eq $role_name or die "service/check role conflict for $service_name\n";
+        $v->[3] eq $setting{profile} or die "profile mismatch for service $service_name\n";
+        push @{$selected{$name}}, [$service_name,$v->[2],$v->[3]];
+    }
+    @{$selected{$name}} or die "active host has no selected service: $name\n";
+}
+my $count = 0;
+for my $name (sort keys %selected) {
+    for my $v (@{$selected{$name}}) { print join("\t",$name,@$v),"\n"; $count++; }
+}
+print "hosts=",scalar(keys %selected)," selections=$count status=OK\n";

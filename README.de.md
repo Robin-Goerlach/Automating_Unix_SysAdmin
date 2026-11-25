@@ -37,8 +37,9 @@ Eine eigenständig entwickelte SASD-Sammlung für Unix-Systemadministration. Aus
 - install/install-sasd-client.sh – einen Wegwerf-Client und Registrierungsantrag vorbereiten.
 - bin/sasd-host-admin – das zentrale Hostinventar mit explizitem Apply verwalten.
 - bin/sasd-site-config – Host-/Service-Auswahl reproduzierbar in ein Staging-Verzeichnis schreiben.
+- bin/sasd-site-consistency – aktive Auswahl lesend gegen das Monitoringmodell prüfen.
 
-Die integrierte Infrastruktur, ihre Grenzen und der Status der Checkpoints sind in [docs/INTEGRATED-SCOPE.de.md](docs/INTEGRATED-SCOPE.de.md) beschrieben. Die neuen B-Werkzeuge starten keine Dienste, installieren keine Pakete und genehmigen kein Enrollment.
+Die integrierte Infrastruktur, ihre Grenzen und der Status der Checkpoints sind in [docs/INTEGRATED-SCOPE.de.md](docs/INTEGRATED-SCOPE.de.md) beschrieben. `sasd-site-consistency` prüft zusätzlich die aktive Auswahl gegen `site/monitoring.conf`. Die neuen B-Werkzeuge starten keine Dienste, installieren keine Pakete und genehmigen kein Enrollment.
 
 ## Schnellstart
 

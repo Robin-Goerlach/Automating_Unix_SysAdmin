@@ -25,6 +25,8 @@ This emits only applicable service selections. It does not probe, start, stop or
 
 `bin/sasd-site-config` reads the four inventory layers and emits deterministic `host-services.tsv` and `manifest.tsv` files into a new staging directory. It ignores disabled or removed hosts from the sibling state file. `--check` is read-only; `--apply` only creates the selected staging directory and does not deploy native product configuration.
 
+`bin/sasd-site-consistency` is a read-only cross-check of the active host/service selection and `site/monitoring.conf`. It verifies that the monitoring model names the same inventory layers, that every active host receives at least one applicable service, and that service profiles match the monitoring profile. It prints the selected host, service, check and profile records followed by a summary; it does not contact hosts or parse a native product configuration.
+
 Run `bin/sasd-site-inventory --check` before using the data. `bin/sasd-site-classes` emits `host`, comma-separated independent SASD classes, role, profile, class and manifest. These class names are selection labels, not a replacement for CFEngine's native class engine.
 
 The audit command delegates file comparison to the existing `bin/sasd-config-drift` program:

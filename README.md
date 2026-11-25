@@ -27,6 +27,7 @@ An independently developed SASD collection of Unix system-administration scripts
 | bin/sasd-site-audit | Select a role manifest and delegate a read-only drift audit | Read-only |
 | bin/sasd-host-admin | Validate or explicitly mutate the local host inventory | Read-only unless `--apply` |
 | bin/sasd-site-config | Stage deterministic host/service selections | Read-only check or explicit staging write |
+| bin/sasd-site-consistency | Cross-check active selections against the monitoring model | Read-only |
 | bin/sasd-monitor-config | Validate bounded central-monitor configuration | Read-only |
 | bin/sasd-monitor-hosts | List and inspect monitored R2 hosts | Read-only |
 | bin/sasd-monitor-import | Validate and store local status observations | Explicit local runtime write |
@@ -71,7 +72,7 @@ See [bigbrother/README.md](bigbrother/README.md) for the period-style host inven
 
 The R2 site inventory is documented in [site/README.md](site/README.md). It uses reserved `192.0.2.0/24` documentation records, never performs DNS lookups, and connects role-specific manifests to the existing read-only `sasd-config-drift` checker. The CFEngine 1 files under [cfengine/v1](cfengine/v1/README.md) remain candidate templates pending native acceptance.
 
-The integrated infrastructure direction, boundaries and checkpoint status are documented in [docs/INTEGRATED-SCOPE.md](docs/INTEGRATED-SCOPE.md). The current B-stage tools are `sasd-host-admin` for explicit inventory changes and `sasd-site-config` for deterministic host/service selection into a disposable staging directory; they do not start services, install packages or approve enrollment.
+The integrated infrastructure direction, boundaries and checkpoint status are documented in [docs/INTEGRATED-SCOPE.md](docs/INTEGRATED-SCOPE.md). The current B-stage tools are `sasd-host-admin` for explicit inventory changes, `sasd-site-config` for deterministic host/service selection into a disposable staging directory and `sasd-site-consistency` for a read-only cross-check against `site/monitoring.conf`; they do not start services, install packages or approve enrollment.
 
 The M1 central monitoring server is documented under [docs/monitoring/README.md](docs/monitoring/README.md). It installs into a disposable prefix, imports local four-column status records, derives stale/unknown state, retains bounded transitions, and writes static HTML. The bounded M2 enrollment and M2.1 fixed-command SSH transport are documented under [docs/monitoring/enrollment.md](docs/monitoring/enrollment.md) and [docs/monitoring/transport.md](docs/monitoring/transport.md); no listening service is added by SASD. The exact V1.0 scope is in [docs/RELEASE-1.0.md](docs/RELEASE-1.0.md). M5–M7 provisioning work is documented under [docs/provisioning/README.md](docs/provisioning/README.md); its current offline tools never write block devices or automatically approve monitoring.
 
