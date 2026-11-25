@@ -24,6 +24,7 @@ expected=$(render_resolver) || fail 'invalid DNS policy'
 # The kernel releases this lock on process exit; no PID guessing is required.
 exec 9< "$root"
 flock -n -x 9 || fail 'fixture busy'
+fixture_check || fail 'fixture or journal layout changed'
 [ ! -e "$root/.baseline-lock" ] && [ ! -L "$root/.baseline-lock" ] || fail 'legacy lock requires review'
 pending=$(pending_transaction) || fail 'ambiguous or invalid journal'
 [ -z "$pending" ] || fail "recovery required: $pending"
@@ -58,7 +59,7 @@ if [ "$mode" = dry ]; then
     printf 'PLANNED hostname=%s\nPLANNED hosts (preserve unrelated lines)\nPLANNED static resolver (preserve non-policy lines)\n' "$host"
     exit 0
 fi
-work=$(mktemp -d "$root/baseline.XXXXXXXX")
+work=$(mktemp -d "$journal_parent/baseline.XXXXXXXX")
 state_set PREPARING
 mkdir "$work/original" "$work/check" "$work/check/etc"
 for name in hostname hosts resolv.conf; do

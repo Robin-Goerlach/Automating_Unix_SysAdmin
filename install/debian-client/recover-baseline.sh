@@ -22,8 +22,9 @@ suffix=${transaction#baseline.}
 case "$suffix" in ''|*[!a-zA-Z0-9]*) fail 'invalid transaction name' ;; esac
 exec 9< "$root"
 flock -n -x 9 || fail 'fixture busy'
+fixture_check || fail 'fixture or journal layout changed'
 [ ! -e "$root/.baseline-lock" ] && [ ! -L "$root/.baseline-lock" ] || fail 'legacy lock requires review'
-work=$root/$transaction
+work=$journal_parent/$transaction
 pending=$(pending_transaction) || fail 'ambiguous or invalid journal'
 [ "$pending" = "$work" ] || fail 'transaction not the sole open transaction'
 restore_preflight || fail 'backup or target conflict; no files changed'

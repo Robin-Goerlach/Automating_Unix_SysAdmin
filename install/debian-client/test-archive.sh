@@ -53,7 +53,8 @@ while IFS="$(printf '\t')" read -r id name status digest; do
 done < "$stage/results.tsv"
 fixture=$(mktemp -d /tmp/sasd-debian-lab.XXXXXXXX)
 mkdir "$fixture/etc"
-printf 'SASD-DEBIAN-FIXTURE-1\n' > "$fixture/.sasd-fixture"
+printf 'SASD-DEBIAN-FIXTURE-2\n' > "$fixture/.sasd-fixture"
+mkdir -p "$fixture/var/lib/sasd/provisioning/transactions"
 printf 'old\n' > "$fixture/etc/hostname"
 printf '127.0.0.1 localhost\n127.0.1.1 old.lab.invalid old\n::1 localhost\n' > "$fixture/etc/hosts"
 printf 'nameserver 192.0.2.99\nsearch old.invalid\n' > "$fixture/etc/resolv.conf"
@@ -61,6 +62,8 @@ run --fixture-apply --root="$fixture" > "$tmp/apply.out"
 report=$(sed -n 's/^Fixture report: //p' "$tmp/apply.out")
 case "$report" in /tmp/sasd-debian-fixture-report.*) ;; *) report=; exit 1 ;; esac
 [ "$(cat "$report/status")" = VERIFIED_FIXTURE ]
+transaction=$(cat "$report/transaction")
+[ "${transaction%/*}" = "$fixture/var/lib/sasd/provisioning/transactions" ]
 [ "$(grep -c FIXTURE_VERIFIED "$report/results.tsv")" -eq 3 ]
 grep -q '0020.*WAIT_RUNTIME' "$report/results.tsv"
 "$archive/verify-baseline.sh" --root="$fixture" --hostname=node.lab.invalid --site="$archive/site.example.conf"

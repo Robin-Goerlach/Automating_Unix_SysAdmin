@@ -6,7 +6,21 @@ fixture_check() {
     suffix=${root#/tmp/sasd-debian-lab.}
     case "$suffix" in ''|*[!a-zA-Z0-9]*) return 2 ;; esac
     private_dir "$root" && private_dir "$root/etc" || return 2
-    regular "$root/.sasd-fixture" && [ "$(cat "$root/.sasd-fixture")" = SASD-DEBIAN-FIXTURE-1 ] || return 2
+    regular "$root/.sasd-fixture" || return 2
+    layout=$(cat "$root/.sasd-fixture") || return 2
+    journal_parent=$root
+    case "$layout" in
+        SASD-DEBIAN-FIXTURE-1)
+            # Never silently select the legacy store when a second store exists.
+            [ ! -e "$root/var/lib/sasd/provisioning/transactions" ] && [ ! -L "$root/var/lib/sasd/provisioning/transactions" ] || return 2 ;;
+        SASD-DEBIAN-FIXTURE-2)
+            # Simulated persistent layout; never create or use a live /var path.
+            for part in var lib sasd provisioning transactions; do
+                journal_parent=$journal_parent/$part
+                private_dir "$journal_parent" || return 2
+            done ;;
+        *) return 2 ;;
+    esac
 }
 private_dir(){ [ -d "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%u:%a' -- "$1")" = "$uid:700" ]; }
 regular(){ [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%u:%h' -- "$1")" = "$uid:1" ] && [ -r "$1" ]; }
@@ -23,10 +37,16 @@ manifest(){
 # Only trusted private fixtures: device/inode identity is not machine authentication.
 context_manifest(){
     private_dir "$root" && private_dir "$root/etc" && private_dir "$work" || return 1
+    [ "${work%/*}" = "$journal_parent" ] || return 1
     root_id=$(stat -c '%d:%i:%u:%g' -- "$root") || return 1
     etc_id=$(stat -c '%d:%i:%u:%g' -- "$root/etc") || return 1
     journal_id=$(stat -c '%d:%i:%u:%g' -- "$work") || return 1
     printf 'SASD-FIXTURE-JOURNAL-2\nroot\t%s\nroot-id\t%s\netc-id\t%s\njournal-id\t%s\t%s\n' "$root" "$root_id" "$etc_id" "${work##*/}" "$journal_id"
+    if [ "$layout" = SASD-DEBIAN-FIXTURE-2 ]; then
+        [ "${work%/*}" = "$journal_parent" ] && private_dir "$journal_parent" || return 1
+        parent_id=$(stat -c '%d:%i:%u:%g' -- "$journal_parent") || return 1
+        printf 'layout\tpersistent-fixture\nstore-id\t%s\n' "$parent_id"
+    fi
 }
 metadata_manifest(){
     private_dir "$1" || return 1
@@ -76,6 +96,12 @@ sync_prepared(){
     sync_paths "$work/original" "$work/check/etc" || return 1
     sync_paths "$work/check" || return 1
     sync_paths "$work" || return 1
+    # Persist all ancestor directory entries for the new journal layout.
+    ancestor=$journal_parent
+    while [ "$ancestor" != "$root" ]; do
+        sync_paths "$ancestor" || return 1
+        ancestor=${ancestor%/*}
+    done
     sync_paths "$root" || return 1
     sync_paths /tmp
 }
@@ -102,10 +128,19 @@ state_get(){ regular "$1/state" && cat "$1/state"; }
 # Legacy backups have no state; they are not recoverable by this protocol.
 pending_transaction(){
     pending=
-    for dir in "$root"/baseline.*; do
+    if [ "$layout" = SASD-DEBIAN-FIXTURE-2 ]; then
+        # No implicit migration or split transaction history between stores.
+        for legacy in "$root"/baseline.*; do
+            [ ! -e "$legacy" ] && [ ! -L "$legacy" ] || return 2
+        done
+    fi
+    for dir in "$journal_parent"/baseline.*; do
         [ -e "$dir" ] || [ -L "$dir" ] || continue
         private_dir "$dir" || return 2
-        if [ ! -e "$dir/state" ] && [ ! -L "$dir/state" ]; then continue; fi
+        if [ ! -e "$dir/state" ] && [ ! -L "$dir/state" ]; then
+            [ "$layout" = SASD-DEBIAN-FIXTURE-1 ] || return 2
+            continue
+        fi
         state=$(state_get "$dir") || return 2
         case "$state" in
             PREPARING|COMMITTED|ROLLED_BACK) ;;

@@ -49,10 +49,10 @@ if ! sh "$here/apply-baseline.sh" "--root=$root" "--hostname=$host" "--site=$sit
 fi
 # Bind evidence to the particular transaction reported by this invocation.
 backup=$(sed -n 's/^FIXTURE ONLY; backup=//p' "$report/apply.log")
-case "$backup" in "$root"/baseline.*/original) ;; *) echo 'Missing transaction reference' >&2; exit 1 ;; esac
+case "$backup" in "$journal_parent"/baseline.*/original) ;; *) echo 'Missing transaction reference' >&2; exit 1 ;; esac
 work=${backup%/original}; token=${work##*/baseline.}
 case "$token" in ''|*[!a-zA-Z0-9]*) echo 'Invalid transaction reference' >&2; exit 1 ;; esac
-[ "$work" = "$root/baseline.$token" ] || exit 1
+[ "$work" = "$journal_parent/baseline.$token" ] || exit 1
 # Lock again and reject any changed or open transaction before recording evidence.
 exec 9< "$root"
 flock -n -x 9 || { echo 'Evidence lock busy' >&2; exit 1; }
