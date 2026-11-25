@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 # Build a deterministic shared host/service selection for disposable staging.
-use strict;
+use strict; use FindBin; use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_checks valid_identifier valid_profile valid_host);
 my ($hosts,$roles,$checks,$services,$state_path,$out,$apply,$check) = ('','','','','','','',0,0);
 while (@ARGV) { my $a=shift @ARGV; if ($a eq '--hosts') {$hosts=shift @ARGV} elsif ($a eq '--roles') {$roles=shift @ARGV} elsif ($a eq '--checks') {$checks=shift @ARGV} elsif ($a eq '--services') {$services=shift @ARGV} elsif ($a eq '--state') {$state_path=shift @ARGV} elsif ($a eq '--out') {$out=shift @ARGV} elsif ($a eq '--apply') {$apply=1} elsif ($a eq '--check') {$check=1} elsif ($a eq '--help') { print "usage: sasd-site-config --hosts hosts.tsv --roles roles.tsv --checks checks.tsv --services services.tsv [--state state.tsv] [--out DIR --apply|--check]\n"; exit 0; } else { die "unknown argument: $a\n"; } }
 $hosts && $roles && $checks && $services or die "all inventory inputs are required\n";
@@ -13,9 +14,9 @@ sub profile { my ($s)=@_; return defined($s) && $s =~ /\A[A-Za-z0-9][A-Za-z0-9_.
 sub host { my ($s)=@_; return defined($s) && $s =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/; }
 sub fields { my ($l,$n)=@_; my @v=split /\t/,$l,-1; @v==$n or die "invalid record\n"; safe($_) or die "control character\n" for @v; return @v; }
 my (%role,%check,%host,%service,%state);
-open(F,"<$roles") or die $!; while (<F>) {chomp;s/\r\z//;next if /^\s*$/||/^\s*#/;my($r,$c,$p,$m)=fields($_,4);ident($r)&&ident($c)&&profile($p) or die "invalid role\n";$role{$r}=1;}close F;
-open(F,"<$checks") or die $!; while (<F>) {chomp;s/\r\z//;next if /^\s*$/||/^\s*#/;my($c,$r,$d)=fields($_,3);ident($c)&&($r eq '*'||ident($r))&&length($d)<=120 or die "invalid check\n";$check{$c}=$r;}close F;
-open(F,"<$hosts") or die $!; while (<F>) {chomp;s/\r\z//;next if /^\s*$/||/^\s*#/;my @v=fields($_,6);host($v[0])&&ident($v[3])&&exists($role{$v[3]}) or die "invalid host\n";exists($host{$v[0]}) and die "duplicate host\n";$host{$v[0]}=\@v;}close F;
+my $role_ref=read_roles($roles); my ($host_ref)=read_host_records($hosts,$role_ref,0); my $check_ref=read_checks($checks);
+%role=map { $_ => 1 } keys %$role_ref; %check=map { $_ => $check_ref->{$_}->{role} } keys %$check_ref;
+%host=map { $_ => [ $host_ref->{$_}->{host},$host_ref->{$_}->{address},$host_ref->{$_}->{os},$host_ref->{$_}->{role},$host_ref->{$_}->{groups},$host_ref->{$_}->{profile} ] } keys %$host_ref;
 open(F,"<$services") or die $!; while (<F>) {chomp;s/\r\z//;next if /^\s*$/||/^\s*#/;my @v=fields($_,5);ident($v[0])&&($v[1] eq '*'||$v[1] eq 'baseline'||ident($v[1]))&&ident($v[2])&&exists($check{$v[2]})&&profile($v[3])&&length($v[4])<=120 or die "invalid service\n";exists($service{$v[0]}) and die "duplicate service\n";$service{$v[0]}=\@v;}close F;
 if (-e $state_path) { -l $state_path and die "state file is a symlink\n"; open(F,"<$state_path") or die $!; while (<F>) { chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/; my ($h,$s,$reason)=fields($_,3); host($h) && $s =~ /\A(?:enabled|disabled|removed)\z/ or die "invalid host state\n"; $state{$h}=$s; } close F; }
 sub applies { my($s,$r)=@_; return $s->[1] eq '*'||$s->[1] eq 'baseline'||$s->[1] eq $r; }

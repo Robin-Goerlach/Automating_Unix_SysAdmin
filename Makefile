@@ -6,6 +6,7 @@ test: syntax
 	sh tests/classic.sh
 	sh tests/bb-hosts.sh
 	sh tests/r2-site.sh
+	sh tests/cfengine1.sh
 	sh tests/m1-monitoring.sh
 	sh tests/m2-enrollment.sh
 	sh tests/m2-transport.sh
@@ -22,7 +23,7 @@ syntax:
 	@perl tests/check-eol.pl bin/* tests/*.sh tests/*.pl examples/*.sh install/*.sh lib/SASD/*.pm site/*.tsv Makefile
 	@perl -c tests/docs-pairs.pl
 	@for x in bin/sasd-disk-watch bin/sasd-status-store bin/sasd-status-board bin/sasd-config-drift bin/sasd-mrtg-counter bin/sasd-passwd-audit bin/sasd-syslog-count bin/sasd-ntp-sources bin/sasd-cron-inspect bin/sasd-bb-hosts-lint bin/sasd-site-inventory bin/sasd-site-classes bin/sasd-site-audit bin/sasd-site-services bin/sasd-host-admin bin/sasd-site-config bin/sasd-site-consistency bin/sasd-monitor-config bin/sasd-monitor-hosts bin/sasd-monitor-import bin/sasd-monitor-auth-import bin/sasd-monitor-receive bin/sasd-monitor-cycle bin/sasd-monitor-report bin/sasd-monitor-mrtg bin/sasd-monitor-control bin/sasd-enrollment bin/sasd-node-status bin/sasd-node-send bin/sasd-golden-audit bin/sasd-golden-catalog bin/sasd-netboot-config lib/SASD/Monitor.pm; do perl -c $$x || exit 1; done
-	@for x in bin/sasd-host-facts bin/sasd-rrd-cycle bin/sasd-monitor-backup bin/sasd-monitor-restore bin/sasd-golden-capture bin/sasd-golden-restore bin/sasd-netboot-stage bin/sasd-postinstall install/install-monitoring-server.sh install/install-sasd-client.sh tests/smoke.sh tests/classic.sh tests/bb-hosts.sh tests/r2-site.sh tests/m1-monitoring.sh tests/m2-enrollment.sh tests/m2-transport.sh tests/m2-ssh-integration.sh tests/m3-native.sh tests/m4-backup.sh tests/m4-operations.sh tests/m5-golden.sh tests/m6-netboot.sh tests/m6-kvm-preflight.sh tests/m7-postinstall.sh examples/demo.sh examples/monitoring-lab.sh examples/m2-enrollment-lab.sh examples/m5-golden-lab.sh examples/m6-netboot-lab.sh examples/m7-install-to-monitoring.sh examples/sasd-provisioning-lab.sh release/package-1.0.sh release/package.sh; do sh -n $$x || exit 1; done
+	@for x in bin/sasd-host-facts bin/sasd-rrd-cycle bin/sasd-monitor-backup bin/sasd-monitor-restore bin/sasd-golden-capture bin/sasd-golden-restore bin/sasd-netboot-stage bin/sasd-postinstall install/install-monitoring-server.sh install/install-sasd-client.sh tests/smoke.sh tests/classic.sh tests/bb-hosts.sh tests/r2-site.sh tests/cfengine1.sh tests/m1-monitoring.sh tests/m2-enrollment.sh tests/m2-transport.sh tests/m2-ssh-integration.sh tests/m3-native.sh tests/m4-backup.sh tests/m4-operations.sh tests/m5-golden.sh tests/m6-netboot.sh tests/m6-kvm-preflight.sh tests/m7-postinstall.sh examples/demo.sh examples/monitoring-lab.sh examples/m2-enrollment-lab.sh examples/m5-golden-lab.sh examples/m6-netboot-lab.sh examples/m7-install-to-monitoring.sh examples/sasd-provisioning-lab.sh release/package-1.0.sh release/package.sh; do sh -n $$x || exit 1; done
 
 release-test:
 	@tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT HUP INT TERM; release/package.sh --version 1.1.0-dev --ref HEAD --out "$$tmp" --test; release/package.sh --version 1.1.0-dev --ref HEAD --out "$$tmp/second" --test; cmp "$$tmp/sasd-1.1.0-dev-src.tar.gz" "$$tmp/second/sasd-1.1.0-dev-src.tar.gz"

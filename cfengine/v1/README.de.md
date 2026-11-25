@@ -14,4 +14,6 @@ SASD-Rollenklassen wie `baseline` und `role_web` sind vom Resolver `bin/sasd-sit
 
 Die Datei darf nicht automatisch nach `/etc/cfengine` installiert werden. Einen historischen Daemon nicht als root ausführen und sein Kontrollsocket nicht an ein echtes Netz öffnen. Für unbeaufsichtigte Abweichungsprüfungen ohne externe Abhängigkeit dient `bin/sasd-config-drift`.
 
+`bin/sasd-config-cfengine1` ist der begrenzte Adapter zum Site-Modell. Er erzeugt pro aktiviertem Host und dessen Rolle einen nur warnenden Markerpfad und lässt deaktivierte oder entfernte Hosts aus. `--dry-run` dient der Prüfung; `--out DATEI --apply` schreibt eine Kandidatendatei in einem Wegwerfbereich. Das Programm verteilt oder führt CFEngine nicht aus.
+
 CFEngine-2-Policies späterer Profile gehören nach erfolgreicher Prüfung von Parser und Originalbefehlen getrennt unter `cfengine/v2`. Moderne CFEngine-3-Syntax darf nicht stillschweigend als Ersatz verwendet werden.

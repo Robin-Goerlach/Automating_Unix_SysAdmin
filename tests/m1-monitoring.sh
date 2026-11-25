@@ -17,6 +17,20 @@ if grep -q 'Target\[web_lab_invalid_interface\]' "$tmp/mrtg-disabled.cfg"; then
     echo "disabled host was emitted to MRTG" >&2; exit 1
 fi
 grep -q 'Target\[cfg_lab_invalid_interface\]' "$tmp/mrtg-disabled.cfg"
+printf 'cfg.lab.invalid\tenabled\toperator\ncfg.lab.invalid\tenabled\tduplicate\n' > "$tmp/duplicate-state.tsv"
+if ./bin/sasd-monitor-mrtg --config site/monitoring.conf --host-state "$tmp/duplicate-state.tsv" > "$tmp/duplicate-state-error" 2>&1; then
+    echo "duplicate MRTG state accepted" >&2; exit 1
+fi
+grep -q 'duplicate host state record' "$tmp/duplicate-state-error"
+cp site/hosts.tsv "$tmp/collision-hosts.tsv"
+printf 'cfg_lab.invalid\t192.0.2.40\tunix\tweb\tlab\tweb\n' >> "$tmp/collision-hosts.tsv"
+cp site/roles.tsv site/checks.tsv "$tmp/"
+cp site/monitoring.conf "$tmp/collision.conf"
+sed -i 's#inventory=hosts.tsv#inventory=collision-hosts.tsv#' "$tmp/collision.conf"
+if ./bin/sasd-monitor-mrtg --config "$tmp/collision.conf" > "$tmp/collision-error" 2>&1; then
+    echo "duplicate MRTG target id accepted" >&2; exit 1
+fi
+grep -q 'duplicate MRTG target id' "$tmp/collision-error"
 if ./bin/sasd-monitor-mrtg --config site/monitoring.conf --out "$tmp/mrtg.cfg" > "$tmp/mrtg-error" 2>&1; then
     echo "MRTG output overwrite was not rejected" >&2; exit 1
 fi

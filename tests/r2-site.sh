@@ -116,6 +116,7 @@ if ./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv -
     exit 1
 fi
 grep -q 'requires --apply' "$tmp/admin-no-apply"
+test ! -e "$tmp/admin-hosts.tsv.lock"
 ./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv --operation disable --host web.lab.invalid --apply > "$tmp/admin-disable"
 grep -q 'status=APPLIED' "$tmp/admin-disable"
 ./bin/sasd-site-config --hosts "$tmp/admin-hosts.tsv" --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --check > "$tmp/site-config-check"
@@ -146,4 +147,24 @@ if ./bin/sasd-site-consistency --hosts site/hosts.tsv --roles site/roles.tsv --c
     exit 1
 fi
 grep -q 'monitoring inventory' "$tmp/monitoring-error"
+
+printf 'one.lab.invalid\t192.0.2.30\tunix\tweb\tlab\tweb\n' > "$tmp/one-host.tsv"
+if ./bin/sasd-host-admin --input "$tmp/one-host.tsv" --roles site/roles.tsv --operation remove --host one.lab.invalid --apply > "$tmp/last-remove-error" 2>&1; then
+    echo "last active host was removed" >&2
+    exit 1
+fi
+grep -q 'last active host' "$tmp/last-remove-error"
+printf 'one.lab.invalid\t192.0.2.30\tunix\tweb\tbad/group\tweb\n' > "$tmp/bad-group.tsv"
+if ./bin/sasd-host-admin --input "$tmp/bad-group.tsv" --roles site/roles.tsv --operation validate > "$tmp/bad-group-error" 2>&1; then
+    echo "unsafe group accepted" >&2
+    exit 1
+fi
+grep -q 'invalid host group' "$tmp/bad-group-error"
+mkdir "$tmp/real-parent"
+ln -s "$tmp/real-parent" "$tmp/path-link"
+if ./bin/sasd-host-admin --input "$tmp/path-link/hosts.tsv" --roles site/roles.tsv --operation validate > "$tmp/ancestor-error" 2>&1; then
+    echo "symlink ancestor accepted" >&2
+    exit 1
+fi
+grep -q 'symlink ancestor' "$tmp/ancestor-error"
 echo "R2 site inventory and audit: PASS"

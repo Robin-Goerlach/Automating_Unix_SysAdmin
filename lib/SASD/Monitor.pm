@@ -7,9 +7,9 @@ use Exporter 'import';
 use File::Spec;
 use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
 
-our @EXPORT_OK = qw(read_config read_inventory read_checks applicable_checks
+our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read_checks applicable_checks
     validate_status atomic_write read_state read_latest html_escape ensure_dir
-    valid_identifier valid_host valid_color valid_path_value valid_epoch
+    valid_identifier valid_host valid_address valid_profile valid_color valid_path_value valid_epoch
     valid_fingerprint valid_public_key valid_os_value read_enrollment_record
     enrollment_record_line append_event read_operations now_seconds);
 
@@ -20,6 +20,12 @@ my %CONFIG_KEYS = map { $_ => 1 } qw(inventory roles checks status_dir history_f
 sub _real_file {
     my ($path, $label) = @_;
     -f $path && !-l $path or die "invalid $label file\n";
+}
+
+sub _regular_or_absent {
+    my ($path, $label) = @_;
+    -l $path and die "invalid $label file\n";
+    -e $path && !-f $path and die "invalid $label file\n";
 }
 
 sub _safe_line {
@@ -35,6 +41,17 @@ sub valid_identifier {
 sub valid_host {
     my ($s) = @_;
     return defined($s) && $s =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/;
+}
+
+sub valid_address {
+    my ($s) = @_;
+    return 0 unless defined($s) && $s =~ /\A(\d+)\.(\d+)\.(\d+)\.(\d+)\z/;
+    return $1 <= 255 && $2 <= 255 && $3 <= 255 && $4 <= 255;
+}
+
+sub valid_profile {
+    my ($s) = @_;
+    return defined($s) && $s =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,31}\z/;
 }
 
 sub valid_color {
@@ -118,14 +135,15 @@ sub read_config {
     return \%cfg;
 }
 
-sub _address {
-    my ($s) = @_;
-    return 0 unless defined($s) && $s =~ /\A(\d+)\.(\d+)\.(\d+)\.(\d+)\z/;
-    return $1 <= 255 && $2 <= 255 && $3 <= 255 && $4 <= 255;
-}
-
 sub read_inventory {
     my ($hosts_path, $roles_path) = @_;
+    my $roles = read_roles($roles_path);
+    my ($hosts) = read_host_records($hosts_path, $roles, 0);
+    return ($hosts, $roles);
+}
+
+sub read_roles {
+    my ($roles_path) = @_;
     _real_file($roles_path, 'roles');
     open(my $rf, '<', $roles_path) or die "cannot read roles: $!\n";
     my %roles;
@@ -138,15 +156,20 @@ sub read_inventory {
         $roles{$role} = { class => $class, profile => $profile, manifest => $manifest };
     }
     close $rf;
+    return \%roles;
+}
+
+sub read_host_records {
+    my ($hosts_path, $roles, $allow_empty) = @_;
     _real_file($hosts_path, 'inventory');
     open(my $hf, '<', $hosts_path) or die "cannot read inventory: $!\n";
     my (%hosts, %addresses);
     while (<$hf>) {
         chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
         my ($host, $address, $os, $role, $groups, $profile) = _fields($_, 6, 'host');
-        valid_host($host) && _address($address) && $os =~ /\A[A-Za-z0-9_.-]{1,31}\z/ &&
-            valid_identifier($role) && valid_path_value($profile) or die "invalid host record at line $.\n";
-        exists $roles{$role} or die "unknown role '$role'\n";
+        valid_host($host) && valid_address($address) && $os =~ /\A[A-Za-z0-9_.-]{1,31}\z/ &&
+            valid_identifier($role) && valid_profile($profile) or die "invalid host record at line $.\n";
+        exists $roles->{$role} or die "unknown role '$role'\n";
         if (length $groups) { valid_identifier($_) or die "invalid host group\n" for split /,/, $groups; }
         exists $hosts{$host} and die "duplicate hostname: $host\n";
         exists $addresses{$address} and die "address assigned to multiple hosts: $address\n";
@@ -155,8 +178,8 @@ sub read_inventory {
         $addresses{$address} = $host;
     }
     close $hf;
-    scalar(keys %hosts) or die "inventory has no host records\n";
-    return (\%hosts, \%roles);
+    scalar(keys %hosts) || $allow_empty or die "inventory has no host records\n";
+    return (\%hosts, $roles);
 }
 
 sub read_checks {

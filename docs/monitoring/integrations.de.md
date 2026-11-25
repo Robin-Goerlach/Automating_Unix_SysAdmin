@@ -16,4 +16,4 @@ M1 besitzt den kanonischen lokalen SASD-Zustand und die Historie. Künftige Adap
 
 ## CFEngine
 
-Das R2-`sasd-site-audit` bleibt eine unabhängige lokale Prüfung. M1 importiert sein Vierfeld-Ergebnis wie jede andere lokale Beobachtung. M1 emuliert keine CFEngine-Klassen und behauptet keine native CFEngine-1-Ausführung.
+Das R2-`sasd-site-audit` bleibt eine unabhängige lokale Prüfung. M1 importiert sein Vierfeld-Ergebnis wie jede andere lokale Beobachtung. `bin/sasd-config-cfengine1` erzeugt aus gemeinsamem Inventar und Lebenszykluszustand einen kleinen, nur warnenden CFEngine-1-Kandidaten. Deaktivierte und entfernte Hosts werden ausgelassen. Der Kandidat ist auf das Profil 1999 begrenzt und bleibt unbestätigt, bis ein originales CFEngine-1.4-Programm ausgeführt wurde. Grundlage ist die historisch dokumentierte Form mit `control`/`actionsequence`/`files`; eine native Parserprüfung wird nicht behauptet. Der Generator installiert keine Policy, startet keinen Agenten und repariert keine Systeme. CFEngine 1 und der spätere CFEngine-2-Adapter bleiben getrennte Profile.

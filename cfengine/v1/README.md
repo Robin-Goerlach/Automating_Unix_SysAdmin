@@ -14,4 +14,6 @@ SASD role classes such as `baseline` and `role_web` are selection labels emitted
 
 Do not install the file into /etc/cfengine automatically. Do not run a historical daemon as root or open its control socket to a real network. For unattended drift checks without external dependencies use bin/sasd-config-drift.
 
+`bin/sasd-config-cfengine1` is the bounded site-model adapter. It emits a warning-only marker path per enabled host and role, and omits disabled or removed hosts. Use `--dry-run` for validation or `--out FILE --apply` for a disposable candidate file. It does not deploy or execute CFEngine.
+
 Later-profile CFEngine 2 policies should live separately under cfengine/v2, after the exact parser and original commands are verified. Modern CFEngine 3 policy syntax must never be substituted silently.

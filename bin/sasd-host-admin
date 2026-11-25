@@ -1,178 +1,27 @@
 #!/usr/bin/env perl
 # Explicit inventory administration. Writes only with --apply; no service action.
-use strict;
-use Fcntl qw(:DEFAULT :flock);
-
-my ($input,$roles,$state,$history,$op,$host,$record,$apply,$help) = ('','','','','','','',0,0);
-while (@ARGV) {
-    my $a = shift @ARGV;
-    if ($a eq '--input') { $input = shift @ARGV; }
-    elsif ($a eq '--roles') { $roles = shift @ARGV; }
-    elsif ($a eq '--state') { $state = shift @ARGV; }
-    elsif ($a eq '--history') { $history = shift @ARGV; }
-    elsif ($a eq '--operation') { $op = shift @ARGV; }
-    elsif ($a eq '--host') { $host = shift @ARGV; }
-    elsif ($a eq '--record') { $record = shift @ARGV; }
-    elsif ($a eq '--apply') { $apply = 1; }
-    elsif ($a eq '--help') { $help = 1; }
-    else { die "unknown argument: $a\n"; }
-}
-if ($help) {
-    print "usage: sasd-host-admin --input hosts.tsv --roles roles.tsv [--state state.tsv] [--history events.tsv] --operation validate|list|show|add|update|enable|disable|remove|reconcile [--host HOST] [--record TSV] [--apply]\n";
-    exit 0;
-}
-$input && $roles && $op or die "input, roles and operation are required\n";
-$state = "$input.state" if $state eq '';
-$history = "$input.history.tsv" if $history eq '';
-$op =~ /\A(?:validate|list|show|add|update|enable|disable|remove|reconcile)\z/ or die "invalid operation\n";
-(-f $input && !-l $input && -f $roles && !-l $roles) or die "inventory or roles file is invalid\n";
-
-sub safe { my ($s) = @_; return defined($s) && $s !~ /[\x00-\x1f\x7f]/; }
-sub ident { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/; }
-sub profile { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,31}\z/; }
-sub host_name { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/; }
-sub address { my ($s) = @_; return defined($s) && $s =~ /\A(\d+)\.(\d+)\.(\d+)\.(\d+)\z/ && $1 <= 255 && $2 <= 255 && $3 <= 255 && $4 <= 255; }
-sub fields {
-    my ($line,$n) = @_;
-    my @v = split /\t/, $line, -1;
-    @v == $n or die "invalid record\n";
-    safe($_) or die "control character in record\n" for @v;
-    return @v;
-}
-sub valid_host_record {
-    my ($v,$role) = @_;
-    host_name($v->[0]) && address($v->[1]) && $v->[2] =~ /\A[A-Za-z0-9_.-]{1,31}\z/
-        && ident($v->[3]) && exists($role->{$v->[3]}) && ident($v->[5])
-        && ($v->[5] eq 'baseline' || $v->[5] eq $v->[3]);
-}
-sub current_state { my ($states,$name) = @_; return exists($states->{$name}) ? $states->{$name}->[0] : 'enabled'; }
-sub history_line {
-    my ($when,$name,$event,$from,$to,$reason) = @_;
-    return join("\t",$when,$name,$event,$from,$to,$reason)."\n";
-}
-sub read_history {
-    my ($path) = @_;
-    my @rows;
-    return @rows unless -e $path;
-    -l $path and die "history file is a symlink\n";
-    open(my $fh,"<",$path) or die "cannot read history: $!\n";
-    while (<$fh>) {
-        chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
-        my ($when,$name,$event,$from,$to,$reason) = fields($_,6);
-        $when =~ /\A[0-9]{1,15}\z/ && host_name($name)
-            && $event =~ /\A(?:add|update|enable|disable|remove)\z/
-            && $from =~ /\A(?:none|enabled|disabled|removed)\z/
-            && $to =~ /\A(?:enabled|disabled|removed)\z/
-            && safe($reason) or die "invalid history record\n";
-        push @rows, join("\t",$when,$name,$event,$from,$to,$reason)."\n";
-    }
-    close $fh or die "cannot close history: $!\n";
-    return @rows;
-}
-sub write_file {
-    my ($path,$lines,$mode) = @_;
-    -l $path and die "refusing symlink: $path\n";
-    my $tmp = "$path.$$";
-    sysopen(my $fh,$tmp,O_WRONLY|O_CREAT|O_EXCL,$mode) or die "cannot create temporary file: $!\n";
-    print $fh @$lines or die "cannot write temporary file\n";
-    close $fh or die "cannot close temporary file: $!\n";
-    chmod $mode,$tmp or die "cannot set temporary file mode: $!\n";
-    rename($tmp,$path) or die "cannot install $path: $!\n";
-}
-
-my $write_op = $op =~ /\A(?:add|update|enable|disable|remove)\z/;
-my $lock;
-if ($write_op) {
-    my $lockpath = "$input.lock";
-    -l $lockpath and die "lock is a symlink\n";
-    sysopen($lock,$lockpath,O_WRONLY|O_CREAT,0600) or die "cannot open lock: $!\n";
-    flock($lock,LOCK_EX) or die "cannot lock inventory\n";
-}
-
-my %role;
-open(my $rfh,"<",$roles) or die "cannot read roles: $!\n";
-while (<$rfh>) {
-    chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
-    my ($r,$c,$p,$m) = fields($_,4);
-    ident($r) && ident($c) && profile($p) && $m =~ /\A[A-Za-z0-9_.\/-]+\z/ && $m !~ m!^/! && $m !~ m!(?:^|/)\.\.(?:/|$)!
-        or die "invalid role record\n";
-    exists($role{$r}) and die "duplicate role: $r\n";
-    $role{$r}=1;
-}
-close $rfh or die "cannot close roles: $!\n";
-
-my (@order,%host,%addr);
-open(my $ifh,"<",$input) or die "cannot read inventory: $!\n";
-while (<$ifh>) {
-    chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
-    my @v=fields($_,6); valid_host_record(\@v,\%role) or die "invalid host record\n";
-    exists($host{$v[0]}) and die "duplicate hostname: $v[0]\n";
-    exists($addr{$v[1]}) and die "duplicate address: $v[1]\n";
-    for my $x (split /,/, $v[4]) { ident($x) or die "invalid group\n" if $v[4] ne ''; }
-    $host{$v[0]}=\@v; $addr{$v[1]}=1; push @order,$v[0];
-}
-close $ifh or die "cannot close inventory: $!\n";
-scalar(@order) or die "inventory has no hosts\n";
-for my $n (@order) { my $p=$host{$n}->[5]; $p eq 'baseline' || $p eq $host{$n}->[3] or die "profile conflicts for $n\n"; }
-
-my %states;
-if (-e $state) {
-    -l $state and die "state file is a symlink\n";
-    open(my $sfh,"<",$state) or die "cannot read state: $!\n";
-    while (<$sfh>) {
-        chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
-        my ($n,$s,$reason)=fields($_,3);
-        host_name($n) && $s =~ /\A(?:enabled|disabled|removed)\z/ or die "invalid state record\n";
-        exists($states{$n}) and die "duplicate state record: $n\n";
-        $states{$n}=[$s,$reason];
-    }
-    close $sfh or die "cannot close state: $!\n";
-}
-for my $n (keys %states) { exists($host{$n}) || $states{$n}->[0] eq 'removed' or die "state refers to unknown host $n\n"; }
-my @history = read_history($history);
-
-if ($op eq 'validate') { print "hosts=",scalar(@order)," states=",scalar(keys %states)," status=OK history=",scalar(@history),"\n"; exit 0; }
-if ($op eq 'list') { for my $n (sort @order) { print join("\t",@{$host{$n}}),"\t",current_state(\%states,$n),"\n"; } exit 0; }
-$host or die "--host is required for $op\n" unless $op eq 'reconcile';
-if ($op eq 'reconcile') { for my $n (sort @order) { print "$n\t",current_state(\%states,$n),"\n"; } print "status=OK\n"; exit 0; }
-if ($op eq 'show') {
-    exists($host{$host}) or die "unknown host: $host\n";
-    print join("\t",@{$host{$host}}),"\t",current_state(\%states,$host),"\n";
-    exit 0;
-}
-
-my ($from,$to,$reason);
-if ($op eq 'add') {
-    $record or die "--record is required\n";
-    my @v=fields($record,6); $v[0] eq $host && valid_host_record(\@v,\%role) or die "invalid host record\n";
-    exists($host{$host}) and die "host already exists\n";
-    exists($states{$host}) && $states{$host}->[0] ne 'removed' and die "host already has an active state\n";
-    for my $n (@order) { $v[1] eq $host{$n}->[1] and die "address already assigned\n"; }
-    $from = exists($states{$host}) ? $states{$host}->[0] : 'none';
-    $host{$host}=\@v; push @order,$host; $states{$host}=['enabled','operator']; $to='enabled'; $reason='operator';
-} elsif ($op eq 'update') {
-    exists($host{$host}) or die "host does not exist\n";
-    $record or die "--record is required\n";
-    my @v=fields($record,6); $v[0] eq $host && valid_host_record(\@v,\%role) or die "invalid host record\n";
-    for my $n (@order) { next if $n eq $host; $v[1] eq $host{$n}->[1] and die "address already assigned\n"; }
-    $from=current_state(\%states,$host); $to=$from; $reason='operator'; $host{$host}=\@v;
-    $states{$host}=[$to,$reason] if exists $states{$host};
-} elsif ($op eq 'enable' || $op eq 'disable') {
-    exists($host{$host}) or die "host does not exist\n";
-    $from=current_state(\%states,$host); $to=$op eq 'enable' ? 'enabled' : 'disabled';
-    $from eq ($op eq 'enable' ? 'disabled' : 'enabled') or die "invalid state transition: $from to $to\n";
-    $reason='operator'; $states{$host}=[$to,$reason];
-} elsif ($op eq 'remove') {
-    exists($host{$host}) or die "host does not exist\n";
-    $from=current_state(\%states,$host); $from ne 'removed' or die "host is already removed\n";
-    $to='removed'; $reason='operator'; $states{$host}=[$to,$reason]; delete $host{$host}; @order=grep { $_ ne $host } @order;
-} else { die "unsupported write operation\n"; }
-
-$apply or die "write operation requires --apply\n";
-push @history, history_line(time(),$host,$op,$from,$to,$reason);
-my @hosts=map { join("\t",@{$host{$_}})."\n" } sort @order;
-write_file($input,\@hosts,0640);
-my @states=map { join("\t",$_,@{$states{$_}})."\n" } sort keys %states;
-write_file($state,\@states,0600);
-write_file($history,\@history,0600);
-print "operation=$op host=$host from=$from to=$to status=APPLIED\n";
+use strict; use File::Spec; use Fcntl qw(:DEFAULT :flock); use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records valid_host valid_address valid_identifier valid_profile);
+my($input,$roles_path,$state,$history,$op,$host,$record,$apply,$help)=('','','','','','','',0,0);
+while(@ARGV){my$a=shift@ARGV;if($a eq'--input'){$input=shift@ARGV}elsif($a eq'--roles'){$roles_path=shift@ARGV}elsif($a eq'--state'){$state=shift@ARGV}elsif($a eq'--history'){$history=shift@ARGV}elsif($a eq'--operation'){$op=shift@ARGV}elsif($a eq'--host'){$host=shift@ARGV}elsif($a eq'--record'){$record=shift@ARGV}elsif($a eq'--apply'){$apply=1}elsif($a eq'--help'){$help=1}else{die"unknown argument: $a\n"}}
+if($help){print"usage: sasd-host-admin --input hosts.tsv --roles roles.tsv [--state state.tsv] [--history events.tsv] --operation validate|list|show|add|update|enable|disable|remove|reconcile [--host HOST] [--record TSV] [--apply]\n";exit 0}
+$input&&$roles_path&&$op or die"input, roles and operation are required\n";$state||="$input.state";$history||="$input.history.tsv";
+$op=~/\A(?:validate|list|show|add|update|enable|disable|remove|reconcile)\z/ or die"invalid operation\n";
+my $write_op=$op=~/\A(?:add|update|enable|disable|remove)\z/;
+$write_op && !$apply and die "write operation requires --apply\n";
+sub path_ok{my($p,$label)=@_;defined$p&&length$p or die"$label path is empty\n";my$abs=File::Spec->rel2abs($p);my($v,$d)=File::Spec->splitpath($abs);my$cur=$v||'/';for my$x(File::Spec->splitdir($d)){next if$x eq''||$x eq'.';$cur=File::Spec->catdir($cur,$x);-l$cur and die"$label path has symlink ancestor\n";}-l$abs and die($label eq'history'?"history file is a symlink\n":"$label path is a symlink\n");return File::Spec->canonpath($abs)}
+sub overlap{my($a,$b)=map{File::Spec->canonpath(File::Spec->rel2abs($_))}@_;return$a eq$b||index($a,"$b/")==0||index($b,"$a/")==0}
+sub fields{my($l,$n)=@_;my@v=split/\t/,$l,-1;@v==$n or die"invalid host record\n";return@v}
+sub host_line{my($h)=@_;return join("\t",map{$h->{$_}}qw(host address os role groups profile))}
+sub candidate_ok{my($v,$roles,$hosts,$name)=@_;return 0 unless valid_host($v->[0])&&valid_address($v->[1])&&$v->[2]=~/\A[A-Za-z0-9_.-]{1,31}\z/&&valid_identifier($v->[3])&&exists$roles->{$v->[3]}&&valid_profile($v->[5])&&($v->[5]eq'baseline'||$v->[5]eq$v->[3]);if(length$v->[4]){for my$g(split/,/,$v->[4]){return 0 unless valid_identifier($g)}}for my$n(keys%$hosts){return 0 if$n ne$name&&$hosts->{$n}->{address}eq$v->[1]}return 1}
+sub history_line{return join("\t",@_)."\n"}
+sub read_history{my($p)=@_;return()unless-e$p;-f$p&&!-l$p or die"history file is invalid\n";open(my$f,'<',$p)or die"cannot read history: $!\n";my@r;while(<$f>){chomp;s/\r\z//;next if/^\s*$/||/^\s*#/;my@v=fields($_,6);$v[0]=~/\A[0-9]{1,15}\z/&&valid_host($v[1])&&$v[2]=~/\A(?:add|update|enable|disable|remove)\z/&&$v[3]=~/\A(?:none|enabled|disabled|removed)\z/&&$v[4]=~/\A(?:enabled|disabled|removed)\z/ or die"invalid history record\n";push@r,join("\t",@v)."\n"}close$f or die"cannot close history: $!\n";return@r}
+sub temp_file{my($p,$c,$m)=@_;my$t="$p.tmp.$$";sysopen(my$f,$t,O_WRONLY|O_CREAT|O_EXCL,$m)or die"cannot create temporary file: $!\n";print $f $c or die"cannot write temporary file\n";close$f or die"cannot close temporary file: $!\n";chmod$m,$t or die"cannot set temporary file mode: $!\n";return$t}
+sub install_set{my($items)=@_;my(@backs,@done);eval{for my$i(@$items){push@$i,temp_file($i->[0],$i->[1],$i->[2])}for my$i(@$items){my$p=$i->[0];if(-e$p){my$b="$p.bak.$$";rename$p,$b or die"cannot stage backup $p: $!\n";push@backs,[$p,$b]}}for my$i(@$items){rename$i->[3],$i->[0]or die"cannot install $i->[0]: $!\n";push@done,$i->[0]}unlink$_->[1]for@backs;1}or do{my$e=$@||"multi-file install failed\n";unlink$_ for@done;for my$b(reverse@backs){rename$b->[1],$b->[0]if-e$b->[1]}unlink$_->[3]for grep{defined$_->[3]&&-e$_->[3]}@$items;die$e}}
+my$ia=path_ok($input,'inventory');my$ra=path_ok($roles_path,'roles');my$sa=path_ok($state,'state');my$ha=path_ok($history,'history');overlap($ia,$sa)||overlap($ia,$ha)||overlap($sa,$ha)and die"inventory, state and history paths overlap\n";-f$ia&&! -l$ia&&-f$ra&&! -l$ra or die"inventory or roles file is invalid\n";my$lp="$ia.lock";my$lock;if($write_op){-l$lp and die"lock is a symlink\n";sysopen($lock,$lp,O_WRONLY|O_CREAT,0600)or die"cannot open lock: $!\n";flock$lock,LOCK_EX or die"cannot lock inventory\n"}
+my$roles=read_roles($ra);my($hr)=read_host_records($ia,$roles,1);my%host=%$hr;my@order=sort keys%host;my%states;
+if(-e$sa){-f$sa&&! -l$sa or die"state file is invalid\n";open(my$f,'<',$sa)or die"cannot read state: $!\n";while(<$f>){chomp;s/\r\z//;next if/^\s*$/||/^\s*#/;my@v=split/\t/,$_, -1;@v==3&&valid_host($v[0])&&$v[1]=~/\A(?:enabled|disabled|removed)\z/ or die"invalid state record\n";exists$states{$v[0]}and die"duplicate state record: $v[0]\n";$states{$v[0]}=[$v[1],$v[2]]}close$f}for my$n(keys%states){exists$host{$n}||$states{$n}->[0]eq'removed'or die"state refers to unknown host $n\n"}my@history=read_history($ha);
+if($op eq'validate'){print"hosts=",scalar@order," states=",scalar keys%states," status=OK history=",scalar@history,"\n";exit 0}if($op eq'list'){print host_line($host{$_}),"\t",(exists$states{$_}?$states{$_}->[0]:'enabled'),"\n"for@order;exit 0}if($op eq'reconcile'){print"$_\t",(exists$states{$_}?$states{$_}->[0]:'enabled'),"\n"for@order;print"status=OK\n";exit 0}$host&&valid_host($host)or die"--host is required or invalid\n";if($op eq'show'){exists$host{$host}or die"unknown host: $host\n";print host_line($host{$host}),"\t",(exists$states{$host}?$states{$host}->[0]:'enabled'),"\n";exit 0}$apply or die"write operation requires --apply\n";
+my($from,$to,$reason)=('','','operator');if($op eq'add'){$record or die"--record is required\n";my@v=fields($record,6);$v[0]eq$host&&candidate_ok(\@v,$roles,\%host,$host)or die"invalid host record\n";exists$host{$host}and die"host already exists\n";exists$states{$host}&&$states{$host}->[0]ne'removed'and die"host already has an active state\n";$from=exists$states{$host}?$states{$host}->[0]:'none';$to='enabled';$host{$host}={host=>$v[0],address=>$v[1],os=>$v[2],role=>$v[3],groups=>$v[4],profile=>$v[5]};push@order,$host;$states{$host}=[$to,$reason]}elsif($op eq'update'){exists$host{$host}or die"host does not exist\n";$record or die"--record is required\n";my@v=fields($record,6);$v[0]eq$host&&candidate_ok(\@v,$roles,\%host,$host)or die"invalid host record\n";$from=exists$states{$host}?$states{$host}->[0]:'enabled';$to=$from;$host{$host}={host=>$v[0],address=>$v[1],os=>$v[2],role=>$v[3],groups=>$v[4],profile=>$v[5]};$states{$host}=[$to,$reason]if exists$states{$host}}elsif($op eq'enable'||$op eq'disable'){exists$host{$host}or die"host does not exist\n";$from=exists$states{$host}?$states{$host}->[0]:'enabled';$to=$op eq'enable'?'enabled':'disabled';$from eq($op eq'enable'?'disabled':'enabled')or die"invalid state transition: $from to $to\n";$states{$host}=[$to,$reason]}elsif($op eq'remove'){exists$host{$host}or die"host does not exist\n";@order>1 or die"cannot remove the last active host; inventory must remain valid\n";$from=exists$states{$host}?$states{$host}->[0]:'enabled';$from ne'removed'or die"host is already removed\n";$to='removed';$states{$host}=[$to,$reason];delete$host{$host};@order=grep{$_ ne$host}@order}else{die"unsupported write operation\n"}
+push@history,history_line(time(),$host,$op,$from,$to,$reason);my$ht=join('',map{host_line($host{$_})."\n"}sort keys%host);my$st=join('',map{join("\t",$_,@{$states{$_}})."\n"}sort keys%states);my$et=join('',@history);install_set([[$ia,$ht,0640],[$sa,$st,0600],[$ha,$et,0600]]);print"operation=$op host=$host from=$from to=$to status=APPLIED\n";

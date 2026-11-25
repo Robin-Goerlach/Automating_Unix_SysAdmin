@@ -16,4 +16,4 @@ M1 owns the canonical local SASD state and history. Future adapters may export o
 
 ## CFEngine
 
-The R2 `sasd-site-audit` remains an independent local configuration check. M1 imports its four-column result like any other approved local observation. M1 does not emulate CFEngine classes or claim CFEngine 1 native execution.
+The R2 `sasd-site-audit` remains an independent local configuration check. M1 imports its four-column result like any other approved local observation. `bin/sasd-config-cfengine1` generates a small, warning-only CFEngine 1 candidate from the shared inventory and lifecycle state. Disabled and removed hosts are omitted. The candidate is profile-limited to 1999 and remains unverified until an original CFEngine 1.4 binary is run. The documented syntax basis is the historical `control`/`actionsequence`/`files` form; native parsing is not claimed. The generator does not install policies, start agents or repair systems. CFEngine 1 and the future CFEngine 2 adapter remain separate profiles.
