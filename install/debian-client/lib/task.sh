@@ -128,6 +128,12 @@ ROTATE
         nfsshares) printf '%s\n' 'scope	policy' 'nfs	EXPLICIT_READ_ONLY_SHARE_MANIFEST' 'remote-scripts	NEVER_EXECUTE' ;;
         nfsautomount) printf '%s\n' 'mode	policy' 'manual	DEFAULT_NOAUTO' 'on-demand	EXPLICIT_SYSTEMD_AUTOMOUNT_REVIEW' 'autofs	KEEP_EXISTING_MAPS_UNCHANGED' ;;
         localinventory) printf '%s\n' 'field	policy' 'kernel,architecture,logical-cpus,mount-count	LOCAL_OBSERVATION' 'serial,mac,owner	PRIVATE_REVIEW' 'password,passphrase	NEVER_COLLECT' ;;
+        cronaccess) printf '%s\n' 'path	policy' '/etc/cron.allow	KEEP_AND_REVIEW' '/etc/cron.deny	KEEP_AND_REVIEW' '/etc/at.allow	KEEP_AND_REVIEW' '/etc/at.deny	KEEP_AND_REVIEW' ;;
+        limitsreview) printf '%s\n' 'path	policy' '/etc/security/limits.conf	PRESERVE_AND_REVIEW' '/etc/security/limits.d	WORKLOAD_SPECIFIC_LIMITS_REVIEW' 'systemd-services	REVIEW_UNIT_LIMITS_SEPARATELY' ;;
+        pamreview) printf '%s\n' 'path	policy' '/etc/pam.d/common-auth	KEEP_AND_REVIEW' '/etc/pam.d/common-password	KEEP_AND_REVIEW' '/etc/pam.d/common-session	KEEP_AND_REVIEW' 'pam-auth-update	OPERATOR_LAB_REVIEW' ;;
+        hashreview) printf '%s\n' 'setting	policy' 'ENCRYPT_METHOD	REVIEW_YESCRYPT_IF_SUPPORTED' 'pam_unix	VERIFY_EFFECTIVE_PASSWORD_POLICY' 'existing-passwords	NO_REHASH_OR_RESET' ;;
+        videoreview) printf '%s\n' 'group	policy' 'video	EXPLICIT_LEAST_PRIVILEGE_REVIEW' 'render	EXPLICIT_LEAST_PRIVILEGE_REVIEW' ;;
+        sudoreview) printf '%s\n' 'path	policy' '/etc/sudoers	REVIEW_ROOT_OWNED_0440' '/etc/sudoers.d	PRESERVE_AND_REVIEW' 'visudo	OPERATOR_SYNTAX_AND_ACCESS_TEST' 'grants	NO_AUTOMATIC_PRIVILEGE_CHANGE' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;

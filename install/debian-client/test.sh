@@ -37,7 +37,7 @@ if [ "$(id -u)" -ne 0 ]; then
     candidate=$(sed -n 's/^Candidate directory: //p' "$tmp/staged-report")
     case "$candidate" in /tmp/sasd-debian-stage.*) ;; *) exit 1 ;; esac
     grep -qx 'nameserver 192.0.2.53' "$candidate/0010_DNS_Client_Set_Name_Server.candidate"
-    grep -q 'staged=38 pending=78 failed=0' "$tmp/staged-report"
+    grep -q 'staged=44 pending=72 failed=0' "$tmp/staged-report"
     rm -rf -- "$candidate"
 fi
 (cd "$tmp/release" && sha256sum -c sasd-debian-client.tar.gz.sha256)
@@ -65,5 +65,6 @@ sh "$here/test-core-services.sh"
 sh "$here/test-communications.sh"
 sh "$here/test-storage.sh"
 sh "$here/test-shell.sh"
+sh "$here/test-security.sh"
 sh "$here/test-archive.sh"
 echo 'Offline Debian candidate tests passed'
