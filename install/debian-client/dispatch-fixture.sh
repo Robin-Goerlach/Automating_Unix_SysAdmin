@@ -6,7 +6,7 @@ umask 077
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 . "$here/lib/transaction.sh"
 . "$here/lib/policy.sh"
-root=; host=; site=; inventory=; roles=; enabled=no
+root=; host=; site=; inventory=; roles=; enabled=no; expect_original=; expect_desired=
 fail(){ echo "fixture dispatch: $*" >&2; exit 2; }
 for arg do
     case "$arg" in
@@ -16,6 +16,8 @@ for arg do
         --site=*) [ -z "$site" ] || fail 'duplicate site'; site=${arg#*=} ;;
         --inventory=*) [ -z "$inventory" ] || fail 'duplicate inventory'; inventory=${arg#*=} ;;
         --roles=*) [ -z "$roles" ] || fail 'duplicate roles'; roles=${arg#*=} ;;
+        --expect-original=*) [ -z "$expect_original" ] || fail 'duplicate original digest'; expect_original=${arg#*=} ;;
+        --expect-desired=*) [ -z "$expect_desired" ] || fail 'duplicate desired digest'; expect_desired=${arg#*=} ;;
         *) fail 'invalid argument; fixture baseline is an indivisible operation' ;;
     esac
 done
@@ -42,7 +44,11 @@ cp -- "$site" "$report/site.conf"
 site=$report/site.conf
 render_resolver >/dev/null || fail 'invalid copied site policy'
 # The child owns the transaction lock; it releases it after commit.
-if ! sh "$here/apply-baseline.sh" "--root=$root" "--hostname=$host" "--site=$site" --apply > "$report/apply.log" 2>&1; then
+set -- "--root=$root" "--hostname=$host" "--site=$site" --apply
+if [ -n "$expect_original" ] || [ -n "$expect_desired" ]; then
+    set -- "$@" "--expect-original=$expect_original" "--expect-desired=$expect_desired"
+fi
+if ! sh "$here/apply-baseline.sh" "$@" > "$report/apply.log" 2>&1; then
     printf 'APPLY_FAILED_OR_INTERRUPTED\n' > "$report/status"
     echo 'Fixture apply failed; inspect transaction journal and apply.log' >&2
     exit 1

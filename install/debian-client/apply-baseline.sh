@@ -6,7 +6,7 @@ umask 077
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 . "$here/lib/policy.sh"
 . "$here/lib/transaction.sh"
-root=; host=; site=; mode=dry
+root=; host=; site=; mode=dry; expect_original=; expect_desired=
 fail(){ echo "baseline: $*" >&2; exit 2; }
 for arg do
     case "$arg" in
@@ -15,10 +15,18 @@ for arg do
         --site=*) site=${arg#*=} ;;
         --dryrun|--dry-run) mode=dry ;;
         --apply) mode=apply ;;
+        --expect-original=*) [ -z "$expect_original" ] || fail "duplicate original digest"; expect_original=${arg#*=} ;;
+        --expect-desired=*) [ -z "$expect_desired" ] || fail "duplicate desired digest"; expect_desired=${arg#*=} ;;
         *) fail 'unknown argument' ;;
     esac
 done
 fixture_check || fail 'invalid fixture or root execution'
+if [ -n "$expect_original" ] || [ -n "$expect_desired" ]; then
+    [ "$mode" = apply ] && [ "$layout" = SASD-DEBIAN-FIXTURE-2 ] || fail 'reference requires V2 apply'
+    for digest in "$expect_original" "$expect_desired"; do
+        printf '%s\n' "$digest" | grep -Eq '^[0-9a-f]{64}$' || fail 'invalid reference digest'
+    done
+fi
 valid_hostname || fail 'invalid hostname'
 expected=$(render_resolver) || fail 'invalid DNS policy'
 # The kernel releases this lock on process exit; no PID guessing is required.
@@ -75,6 +83,12 @@ manifest "$work/original" > "$work/original.tsv"
 manifest "$work/check/etc" > "$work/desired.tsv"
 record_metadata || fail "cannot record metadata"
 verify_target_metadata original || fail "source changed before apply"
+if [ -n "$expect_original" ]; then
+    actual=$(sha256sum < "$work/original-metadata.tsv")
+    [ "${actual%% *}" = "$expect_original" ] || fail 'reference original mismatch'
+    actual=$(sha256sum < "$work/desired-metadata.tsv")
+    [ "${actual%% *}" = "$expect_desired" ] || fail 'reference desired mismatch'
+fi
 # All recovery evidence precedes the first mutation; snapshots remain in place.
 sync_prepared || fail 'cannot synchronize recovery evidence'
 state_set APPLYING

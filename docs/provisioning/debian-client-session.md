@@ -65,3 +65,7 @@ Base b25b96ecf924d1ba952349e7bf003bf9c5c4897d. Exact previous provisioning tree 
 ## M7-D.1e.4c.2b — identity comparison checkpoint
 
 Base 1323993f98a8ae1c1b9d3f5508c19658774e82eb. Added optional native-identity.py, tests and package integration for installation UUID and application-scoped machine correlation digest comparison. Full provisioning suite as nobody exit 0, archive 138 files; live read-only smoke UNKNOWN/3. Exact tested subtree checked. No local identity initialization, no authenticated clone detection or reboot proof, no native gate enforcement. Next prioritize the bounded native installer backend and its independent lab authorization contract; integrate identity/release/policy checks before any native writes. G3 open, full repository make test/CI and VM acceptance open. Main untouched.
+
+## M7-D.1e.4c.2c — reference-bound fixture installation
+
+Base 8d8cfc909dcb2c57237f8740e06f42b00e3769d4. Added lab-install.py and tests, integrated source/desired metadata digests before mutation under the existing transaction lock, package and archive reference equality test. Full provisioning suite as nobody on Debian 13 exit 0; 139-file archive. No native writes or actual native backend. Unsigned reference, trusted same-UID source, remaining identity/code lock gap; direct fixture commands are not an authorization boundary. Next actual bounded native backend and disposable VM evidence, with independently trusted release and operator review. Full repository make test/CI open. Main untouched.

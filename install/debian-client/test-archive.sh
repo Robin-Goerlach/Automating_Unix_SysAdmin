@@ -4,13 +4,14 @@ set -eu
 LC_ALL=C; export LC_ALL
 [ "$(id -u)" -ne 0 ] || { echo 'Archive execution test SKIPPED: root'; exit 0; }
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
-tmp=$(mktemp -d); stage=; report=; fixture=; review=; acceptance=
+tmp=$(mktemp -d); stage=; report=; fixture=; review=; acceptance=; lab_report=
 cleanup(){
     [ -z "$stage" ] || rm -rf -- "$stage"
     [ -z "$report" ] || rm -rf -- "$report"
     [ -z "$fixture" ] || rm -rf -- "$fixture"
     [ -z "$review" ] || rm -rf -- "$review"
     [ -z "$acceptance" ] || rm -rf -- "$acceptance"
+    [ -z "$lab_report" ] || rm -rf -- "$lab_report"
     rm -rf -- "$tmp"
 }
 trap cleanup EXIT
@@ -23,7 +24,7 @@ tar --same-permissions -xzf "$tmp/release/sasd-debian-client.tar.gz" -C "$tmp/un
 archive=$tmp/unpack/debian-client
 # Independent expected file inventory. No local inventory, tests, reports or credentials.
 {
-    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
+    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv inventory-fields.tsv
     awk -F '\t' 'NR>1 {print "tasks/" $1 "_" $3}' "$here/checklist.tsv"
 } | sort > "$tmp/expected"
 (cd "$archive" && find . -type f -printf '%P\n' | sort) > "$tmp/actual"
@@ -99,6 +100,15 @@ if [ -x /usr/bin/python3 ]; then
     "$archive/native-identity.py" --root="$fixture" --hostname=node.lab.invalid --expected-installation="$iid" --expected-fingerprint="$digest" > "$tmp/identity"
     grep -q 'binding.*MATCH' "$tmp/identity"
     grep -q 'native-apply.*NOT_AUTHORIZED' "$tmp/identity"
+    # The packaged and repository release identities must be identical.
+    "$archive/lab-install.py" --review --root="$fixture" --hostname=node.lab.invalid --inventory="$tmp/hosts" --roles="$tmp/roles" --site="$archive/site.example.conf" --installation="$iid" --fingerprint="$digest" > "$tmp/reference"
+    "$here/lab-install.py" --review --root="$fixture" --hostname=node.lab.invalid --inventory="$tmp/hosts" --roles="$tmp/roles" --site="$archive/site.example.conf" --installation="$iid" --fingerprint="$digest" > "$tmp/source-reference"
+    cmp "$tmp/reference" "$tmp/source-reference"
+    "$archive/lab-install.py" --apply-fixture --reference="$tmp/reference" --root="$fixture" --hostname=node.lab.invalid --inventory="$tmp/hosts" --roles="$tmp/roles" --site="$archive/site.example.conf" --installation="$iid" --fingerprint="$digest" > "$tmp/lab"
+    lab_report=$(sed -n 's/^Fixture report: //p' "$tmp/lab")
+    case "$lab_report" in /tmp/sasd-debian-fixture-report.*) ;; *) lab_report=; exit 1 ;; esac
+    [ "$(cat "$lab_report/status")" = VERIFIED_FIXTURE ]
+    grep -q '^REFERENCE_MATCHED_FIXTURE_ONLY;' "$tmp/lab"
 else
     echo 'Packaged native identity test SKIPPED: python3 unavailable'
 fi
