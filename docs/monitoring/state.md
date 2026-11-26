@@ -22,6 +22,11 @@ Latest files contain six tab-separated fields:
 
     receipt_epoch  host  check  observed_color  message  source
 
+External status adapters may add a fifth input field containing a validated
+measurement epoch after the message. `sasd-monitor-import` uses that value as
+the receipt/measurement time; ordinary four-field input continues to use its
+explicit `--received-at` value.
+
 Derived state contains eight fields:
 
     cycle_epoch  host  check  observed_color  state  receipt_epoch  source  message

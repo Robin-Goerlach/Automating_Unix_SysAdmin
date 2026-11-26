@@ -4,7 +4,7 @@ use strict;
 use FindBin;
 use File::Spec;
 use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(read_roles read_host_records read_host_state atomic_write ensure_dir);
+use SASD::Monitor qw(read_roles read_host_records read_host_state atomic_write ensure_dir paths_conflict);
 
 my ($hosts, $roles, $state, $out) = ('', '', '', '');
 my ($apply, $profile) = (0, '1999');
@@ -55,6 +55,7 @@ for my $host (sort keys %$host_records) {
     $active++;
     my $role = $host_records->{$host}->{role};
     my $marker = "/tmp/sasd-cfengine-$host-$role-marker";
+    $text .= "        # host=$host role=$role\n";
     $text .= "        $marker mode=644 action=warn\n";
 }
 $text .= "\n# active_hosts=$active\n";
@@ -63,8 +64,7 @@ if ($apply) {
     $out or die "--out is required with --apply\n";
     my $output_path = File::Spec->canonpath(File::Spec->rel2abs($out));
     for my $input_path ($hosts, $roles, $state) {
-        my $canonical_input = File::Spec->canonpath(File::Spec->rel2abs($input_path));
-        $output_path eq $canonical_input
+        paths_conflict($out, $input_path)
             and die "output path overlaps an input file\n";
     }
     my (undef, $directory) = File::Spec->splitpath($out);

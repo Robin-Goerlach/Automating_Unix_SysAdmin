@@ -11,7 +11,7 @@ Dieses Verzeichnis enthält ein kleines Rechnerinventar für das Kompatibilität
 Vor dem Datenbereich kann `# SASD-SITE-INVENTORY-1` stehen. Das ist die
 explizite aktuelle Formatversion. Unmarkierte bestehende Dateien bleiben als
 Legacy-Daten lesbar. Mit `bin/sasd-site-migrate --input site/hosts.tsv
---dry-run` lässt sich die Migration prüfen; `--apply` legt eine
+--roles site/roles.tsv --dry-run` lässt sich die Migration prüfen; `--apply` legt eine
 `.pre-versioned`-Sicherung an und ergänzt den Marker. Die Zeilen bleiben
 unverändert, Kollisionen werden abgewiesen und eine Wiederholung meldet
 `ALREADY-MIGRATED`.

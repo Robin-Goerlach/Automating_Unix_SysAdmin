@@ -20,6 +20,7 @@ SASD ist eine 2026 neu erstellte, eigenständige Sammlung von Systemverwaltungsp
 - MRTG — https://mrtg.org/mrtg/doc/mrtg-reference.en.html
 - RRDtool — https://oss.oetiker.ch/rrdtool/
 - Big Brother — https://linuxgazette.net/issue15/bb-info.html
+- Big Sister, Konfigurationsreferenz und Änderungshistorie — https://www.bigsister.ch/bigsister.html, https://www.bigsister.ch/pdoc/CONFIG.html, https://www.bigsister.ch/pdoc/CHANGES.html
 - Nagios — https://www.nagios.org/about/history/
 
 Diese Links bezeichnen fachliche Quellen. Sie sind keine Lizenz- oder Weitergabegenehmigung und bedeuten keine Zugehörigkeit.
@@ -31,6 +32,10 @@ Keine urheberrechtlich geschützten Listings, umfangreichen Texte, Diagramme ode
 ## Neue Funktionen dokumentieren
 
 Für jede Funktion sind Zweck, Profil, unabhängige Implementierung, Erstellungsdatum, Schnittstellen Dritter und bekannte Kompatibilitätstests zu erfassen. Keine historischen Tests oder angeblich zeitgenössischen Belege behaupten, wenn sie nicht nachweisbar sind.
+
+## Big-Sister-Forschungsgrenze
+
+Die Big-Sister-Kandidatin verwendet nur dokumentierte Prozent-Direktiven aus `bb-display.cfg` und Rechner-/Check-Zeilen aus `uxmon-net`. Die öffentliche Projektgeschichte ordnet relevante Konfigurationsarbeiten dem Profil 2000 zu; Big-Sister-Quelltext und Lizenztext werden nicht importiert. Generator und Statusadapter bleiben Offline-Kandidaten, bis eine genau benannte Big-Sister-Version auf historischem Unix ausgeführt wurde.
 
 ## R2-Grenze der CFEngine-1-Forschung
 

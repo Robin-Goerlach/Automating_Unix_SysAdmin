@@ -20,6 +20,7 @@ SASD is authoring a new, stand-alone script collection in 2026 to explore classi
 - MRTG external target reference — https://mrtg.org/mrtg/doc/mrtg-reference.en.html
 - RRDtool — https://oss.oetiker.ch/rrdtool/
 - Big Brother history — https://linuxgazette.net/issue15/bb-info.html
+- Big Sister project, configuration reference and change history — https://www.bigsister.ch/bigsister.html, https://www.bigsister.ch/pdoc/CONFIG.html, https://www.bigsister.ch/pdoc/CHANGES.html
 - Nagios history — https://www.nagios.org/about/history/
 
 These links identify historical and technical background. They are not assertions of license compatibility or permission to redistribute third-party code.
@@ -33,6 +34,10 @@ SASD-original project files use the repository's MIT license. An individually co
 ## How to record a new feature
 
 Record the feature's practical purpose, operating-system/period profile, independent implementation approach, authoring date, third-party interfaces and known compatibility tests. Never claim historical testing or publish staged screenshots as genuine 1990s evidence unless provenance is explicit.
+
+## Big Sister research boundary
+
+The Big Sister candidate uses only documented `bb-display.cfg` percent directives and `uxmon-net` host/check lines. The public project history places relevant configuration work in the 2000 profile, but no Big Sister source or license text is imported. The generator and status adapter remain offline candidates until an exact Big Sister release and historical operating system are exercised.
 
 ## R2 CFEngine 1 research boundary
 

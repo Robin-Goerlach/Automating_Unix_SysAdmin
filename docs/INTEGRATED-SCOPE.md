@@ -22,6 +22,7 @@ Checkpoint B is being built incrementally:
 - `bin/sasd-site-config` produces a deterministic staged host/service selection and a consistency report; it does not claim to generate native CFEngine, MRTG, Nagios, DHCP or TFTP syntax.
 - `bin/sasd-monitor-mrtg` is the first existing product adapter to consume the same host lifecycle projection and omit disabled or removed hosts from its candidate output.
 - `bin/sasd-config-bigbrother` is an independent, review-only host/service candidate generator using the same inventory and lifecycle projection. It is not native Big Brother acceptance evidence.
+- `bin/sasd-config-bigsister` and `bin/sasd-status-import-bigsister` are separate 2000-profile offline candidates based on documented Big Sister interfaces; they are not native acceptance evidence.
 
 The next B increments are additional product-specific generators, a controlled deploy/apply boundary and a fuller offline end-to-end lab. Host lifecycle event retention is now implemented by `sasd-host-admin`. A disabled or removed host must not cause historical monitoring data to be deleted. Current host state is represented separately from the active inventory.
 

@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+# Convert a bounded synthetic Big Sister status file to SASD's four-column input.
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_checks read_external_status);
+
+my ($input, $hosts, $roles, $checks) = ('','','','');
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--input') { $input = shift @ARGV; }
+    elsif ($a eq '--hosts') { $hosts = shift @ARGV; }
+    elsif ($a eq '--roles') { $roles = shift @ARGV; }
+    elsif ($a eq '--checks') { $checks = shift @ARGV; }
+    elsif ($a eq '--help') { print "usage: sasd-status-import-bigsister --input FILE --hosts FILE --roles FILE --checks FILE\n"; exit 0; }
+    else { die "unknown argument: $a\n"; }
+}
+$input && $hosts && $roles && $checks or die "input, hosts, roles and checks are required\n";
+my $role_records = read_roles($roles);
+my ($host_records) = read_host_records($hosts, $role_records, 0);
+my $check_records = read_checks($checks);
+my $records = read_external_status($input, 'bigsister', $host_records, $check_records);
+for my $record (@$records) {
+    my @output = @$record;
+    my $measurement = pop @output;
+    push @output, $measurement if length $measurement;
+    print join("\t", @output), "\n";
+}
+print STDERR "product=bigsister imported=", scalar(@$records), " status=OK\n";

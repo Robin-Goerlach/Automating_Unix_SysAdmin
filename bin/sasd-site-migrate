@@ -3,44 +3,58 @@
 # The data rows are unchanged; migration is deliberately offline and bounded.
 use strict;
 use File::Spec;
+use Fcntl qw(:DEFAULT :flock);
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_roles read_host_records inventory_format inventory_header
     paths_conflict atomic_write);
 
-my ($input, $out, $backup, $apply, $dry_run) = ('', '', '', 0, 0);
+my ($input, $roles_path, $out, $backup, $apply, $dry_run) = ('', '', '', '', 0, 0);
 while (@ARGV) {
     my $a = shift @ARGV;
     if ($a eq '--input') { $input = shift @ARGV; }
+    elsif ($a eq '--roles') { $roles_path = shift @ARGV; }
     elsif ($a eq '--out') { $out = shift @ARGV; }
     elsif ($a eq '--backup') { $backup = shift @ARGV; }
     elsif ($a eq '--apply') { $apply = 1; }
     elsif ($a eq '--dry-run') { $dry_run = 1; }
     elsif ($a eq '--help') {
-        print "usage: sasd-site-migrate --input hosts.tsv [--out FILE] [--backup FILE] --dry-run|--apply\n";
+        print "usage: sasd-site-migrate --input hosts.tsv --roles roles.tsv [--out FILE] [--backup FILE] --dry-run|--apply\n";
         exit 0;
     } else { die "unknown argument: $a\n"; }
 }
-$input && ($apply || $dry_run) or die "input and exactly one operation are required\n";
+$input && $roles_path && ($apply || $dry_run) or die "input, roles and exactly one operation are required\n";
 $apply && $dry_run and die "choose --dry-run or --apply\n";
 $out = $input if $out eq '';
-my $roles = $input;
-$roles =~ s/\.tsv\z/.roles.tsv/;
+(-f $input && !-l $input) or die "invalid inventory file\n";
+(-f $roles_path && !-l $roles_path) or die "invalid roles file\n";
 my $format = inventory_format($input);
 if ($format eq '1') {
+    File::Spec->canonpath(File::Spec->rel2abs($out)) eq File::Spec->canonpath(File::Spec->rel2abs($input))
+        or die "input is already migrated; explicit output was not created\n";
     print "format=1 status=ALREADY-MIGRATED\n";
     exit 0;
 }
-my $role_file = -f $roles && !-l $roles ? $roles : '';
-if ($role_file) {
-    my $role_records = read_roles($role_file);
-    read_host_records($input, $role_records, 0);
-}
+my $role_records = read_roles($roles_path);
+read_host_records($input, $role_records, 0);
 paths_conflict($out, $input) && File::Spec->canonpath(File::Spec->rel2abs($out)) ne File::Spec->canonpath(File::Spec->rel2abs($input))
     and die "output path conflicts with input\n";
 $backup ||= "$input.pre-versioned";
 if ($apply && paths_conflict($backup, $input)) {
     die "backup path conflicts with input\n";
+}
+my $lock_path = "$input.lock";
+paths_conflict($lock_path, $input) and die "lock path conflicts with input\n";
+paths_conflict($lock_path, $roles_path) and die "lock path conflicts with roles\n";
+paths_conflict($lock_path, $out) and die "lock path conflicts with output\n";
+paths_conflict($lock_path, $backup) and die "lock path conflicts with backup\n";
+my $lock;
+if ($apply) {
+    -l $lock_path and die "lock is a symlink\n";
+    sysopen($lock, $lock_path, O_WRONLY | O_CREAT, 0600)
+        or die "cannot open lock: $!\n";
+    chmod(0600, $lock_path) or die "cannot set lock permissions: $!\n";
+    flock($lock, LOCK_EX) or die "cannot lock inventory: $!\n";
 }
 open(my $fh, '<', $input) or die "cannot read inventory: $!\n";
 my $body = do { local $/; <$fh> };
@@ -58,9 +72,15 @@ if ($out eq $input) {
     open(my $in, '<', $input) or die "cannot reopen inventory: $!\n";
     my $original = do { local $/; <$in> };
     close($in) or die "cannot close inventory: $!\n";
-    open(my $bf, '>', $backup) or die "cannot create backup: $!\n";
-    print $bf $original or die "cannot write backup: $!\n";
-    close($bf) or die "cannot close backup: $!\n";
+    sysopen(my $bf, $backup, O_WRONLY | O_CREAT | O_EXCL, 0600)
+        or die "cannot create exclusive backup: $!\n";
+    chmod(0600, $backup) or die "cannot set backup permissions: $!\n";
+    my $backup_ok = print($bf $original);
+    $backup_ok = close($bf) && $backup_ok;
+    if (!$backup_ok) {
+        unlink($backup);
+        die "cannot write or close backup: $!\n";
+    }
 }
 atomic_write($out, $migrated, 0640);
 print "format=1 output=$out backup=$backup status=MIGRATED\n";

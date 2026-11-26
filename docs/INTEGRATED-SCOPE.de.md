@@ -22,6 +22,7 @@ Checkpoint B wird schrittweise umgesetzt:
 - `bin/sasd-site-config` erzeugt eine deterministische Host-/Service-Auswahl im Staging und einen Konsistenzbericht; es behauptet nicht, native CFEngine-, MRTG-, Nagios-, DHCP- oder TFTP-Syntax zu erzeugen.
 - `bin/sasd-monitor-mrtg` ist der erste vorhandene Produktadapter, der dieselbe Host-Lebenszyklusprojektion nutzt und deaktivierte oder entfernte Rechner aus seiner Kandidatenausgabe auslässt.
 - `bin/sasd-config-bigbrother` ist ein unabhängiger Generator für eine nur zu prüfende Host-/Dienst-Kandidatenkonfiguration aus demselben Inventar und Lebenszykluszustand. Er ist kein Nachweis einer nativen Big-Brother-Abnahme.
+- `bin/sasd-config-bigsister` und `bin/sasd-status-import-bigsister` sind getrennte Offline-Kandidaten des Profils 2000 auf Basis dokumentierter Big-Sister-Schnittstellen; sie sind kein Nachweis einer nativen Abnahme.
 
 Weitere B-Schritte sind zusätzliche produktspezifische Generatoren, eine kontrollierte Deploy-/Apply-Grenze und ein vollständigeres Offline-Ende-zu-Ende-Labor. Die Aufbewahrung der Host-Lebenszyklusereignisse ist nun in `sasd-host-admin` umgesetzt. Deaktivierung oder Entfernung eines Hosts darf historische Monitoringdaten nicht löschen. Der aktuelle Hostzustand wird getrennt vom aktiven Inventar geführt.
 

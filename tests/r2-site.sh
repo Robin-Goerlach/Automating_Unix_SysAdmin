@@ -43,15 +43,40 @@ sed 's/$/\r/' site/hosts.tsv > "$tmp/crlf-hosts.tsv"
 grep -q 'status=OK' "$tmp/crlf-check"
 
 cp site/hosts.tsv "$tmp/legacy.tsv"
-./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --dry-run > "$tmp/migrate-dry"
+./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --roles site/roles.tsv --dry-run > "$tmp/migrate-dry"
 grep -q 'status=DRY-RUN' "$tmp/migrate-dry"
-./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --apply > "$tmp/migrate-apply"
+./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --roles site/roles.tsv --apply > "$tmp/migrate-apply"
 head -n 1 "$tmp/legacy.tsv" | grep -q '^# SASD-SITE-INVENTORY-1$'
 test -f "$tmp/legacy.tsv.pre-versioned"
 ./bin/sasd-site-inventory --input "$tmp/legacy.tsv" --roles site/roles.tsv --check > "$tmp/versioned-check"
 grep -q 'status=OK' "$tmp/versioned-check"
-./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --apply > "$tmp/migrate-repeat"
+./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --roles site/roles.tsv --apply > "$tmp/migrate-repeat"
 grep -q 'ALREADY-MIGRATED' "$tmp/migrate-repeat"
+if ./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --roles site/roles.tsv \
+    --out "$tmp/already-copy.tsv" --apply > "$tmp/already-copy-error" 2>&1; then
+    echo "already migrated inventory copied to explicit output" >&2
+    exit 1
+fi
+grep -q 'explicit output was not created' "$tmp/already-copy-error"
+test ! -e "$tmp/already-copy.tsv"
+printf '# SASD-SITE-INVENTORY-1\n# SASD-SITE-INVENTORY-1\n' > "$tmp/duplicate-marker.tsv"
+if ./bin/sasd-site-inventory --input "$tmp/duplicate-marker.tsv" --roles site/roles.tsv --check > "$tmp/duplicate-marker-error" 2>&1; then
+    echo "duplicate inventory marker accepted" >&2
+    exit 1
+fi
+grep -q 'duplicate inventory format marker' "$tmp/duplicate-marker-error"
+printf '# SASD-SITE-INVENTORY-1\nweb.lab.invalid\t192.0.2.11\tunix\tweb\tlab\tweb\n# SASD-SITE-INVENTORY-1\n' > "$tmp/misplaced-marker.tsv"
+if ./bin/sasd-site-inventory --input "$tmp/misplaced-marker.tsv" --roles site/roles.tsv --check > "$tmp/misplaced-marker-error" 2>&1; then
+    echo "misplaced inventory marker accepted" >&2
+    exit 1
+fi
+grep -q 'inventory format marker is misplaced' "$tmp/misplaced-marker-error"
+printf 'web.lab.invalid\t192.0.2.999\tunix\tweb\tlab\tweb\n' > "$tmp/invalid-migration.tsv"
+if ./bin/sasd-site-migrate --input "$tmp/invalid-migration.tsv" --roles site/roles.tsv --apply > "$tmp/invalid-migration-error" 2>&1; then
+    echo "invalid inventory migrated" >&2
+    exit 1
+fi
+grep -q 'invalid host record' "$tmp/invalid-migration-error"
 
 ln -s "$tmp/missing-state.tsv" "$tmp/dangling-state.tsv"
 if ./bin/sasd-site-config --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --state "$tmp/dangling-state.tsv" --check > "$tmp/dangling-state-error" 2>&1; then

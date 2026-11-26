@@ -1,0 +1,71 @@
+#!/usr/bin/env perl
+# Generate an offline Big Sister candidate from the shared SASD model.
+# This emits documented text files only; it never starts bbd or uxmon.
+use strict;
+use File::Spec;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_host_state read_checks read_services
+    atomic_write ensure_dir paths_conflict);
+
+my ($hosts, $roles, $checks, $services, $state, $out, $force) = ('','','','','','',0);
+my $state_explicit = 0;
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--hosts') { $hosts = shift @ARGV; }
+    elsif ($a eq '--roles') { $roles = shift @ARGV; }
+    elsif ($a eq '--checks') { $checks = shift @ARGV; }
+    elsif ($a eq '--services') { $services = shift @ARGV; }
+    elsif ($a eq '--state') { $state = shift @ARGV; $state_explicit = 1; }
+    elsif ($a eq '--out') { $out = shift @ARGV; }
+    elsif ($a eq '--force') { $force = 1; }
+    elsif ($a eq '--help') {
+        print "usage: sasd-config-bigsister --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--out FILE --force]\n";
+        exit 0;
+    } else { die "unknown argument: $a\n"; }
+}
+$hosts && $roles && $checks && $services or die "hosts, roles, checks and services are required\n";
+for my $path ($hosts, $roles, $checks, $services) {
+    -f $path && !-l $path or die "invalid Big Sister input file\n";
+}
+$state = "$hosts.state" if $state eq '';
+my $role_records = read_roles($roles);
+my ($host_records) = read_host_records($hosts, $role_records, 0);
+my $state_records = read_host_state($state, $host_records, !$state_explicit);
+my $check_records = read_checks($checks);
+my $service_records = read_services($services, $role_records, $check_records);
+my %state = map { $_ => $state_records->{$_}->{state} } keys %$state_records;
+
+my $display = "# SASD Big Sister candidate; profile=2000; review with the selected Big Sister version.\n"
+    . "# Generated offline from the shared inventory; no listener or network action is enabled.\n"
+    . "%Option -DNS +BBLog\n"
+    . "%Groups\n";
+my $network = "# SASD Big Sister uxmon-net candidate; status delivery is not performed by this tool.\n";
+for my $host (sort keys %$host_records) {
+    next if exists($state{$host}) && $state{$host} ne 'enabled';
+    my $role = $host_records->{$host}->{role};
+    my $group = "role_$role";
+    $display .= "$host($host) $group\n";
+    my @checks = ('conn');
+    for my $name (sort keys %$service_records) {
+        my $service = $service_records->{$name};
+        next unless $service->{role} eq '*' || $service->{role} eq 'baseline' || $service->{role} eq $role;
+        push @checks, $service->{check};
+    }
+    my %seen;
+    @checks = grep { !$seen{$_}++ } @checks;
+    $network .= "$host " . join(' ', @checks) . " bsdisplay\n";
+}
+$display .= "%Page sasd SASD\n%table ALL\n";
+$network =~ s/\n\z//;
+my $text = $display . "\n" . $network . "\n";
+
+if ($out eq '') { print $text; exit 0; }
+-e $out && !$force and die "output exists; use --force explicitly\n";
+for my $input ($hosts, $roles, $checks, $services, $state) {
+    paths_conflict($out, $input) and die "output path overlaps an input file\n";
+}
+my (undef, $directory) = File::Spec->splitpath($out);
+ensure_dir($directory, 0750) if length $directory;
+atomic_write($out, $text, 0640);
+print "output=$out hosts=", scalar(keys %$host_records), " status=APPLIED\n";

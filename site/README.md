@@ -11,7 +11,7 @@ This directory contains a small site inventory for the 1999 compatibility profil
 The first non-empty data section may be preceded by `# SASD-SITE-INVENTORY-1`.
 This is the explicit current format version. Existing unmarked files remain
 readable as legacy data. Use `bin/sasd-site-migrate --input site/hosts.tsv
---dry-run` to inspect a migration, then `--apply` to create a `.pre-versioned`
+--roles site/roles.tsv --dry-run` to inspect a migration, then `--apply` to create a `.pre-versioned`
 backup and add the marker. Rows are unchanged; collisions are rejected and a
 repeat reports `ALREADY-MIGRATED`.
 

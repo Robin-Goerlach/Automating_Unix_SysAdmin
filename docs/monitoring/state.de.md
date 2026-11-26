@@ -22,6 +22,11 @@ Letzte Meldungen:
 
     receipt_epoch  host  check  observed_color  message  source
 
+Externe Statusadapter dürfen nach der Nachricht ein fünftes Eingabefeld mit
+einem geprüften Messzeitpunkt ergänzen. `sasd-monitor-import` verwendet diesen
+Wert als Empfangs-/Messzeitpunkt; gewöhnliche Vierfeld-Eingaben verwenden
+weiterhin den ausdrücklichen Wert von `--received-at`.
+
 Abgeleiteter Zustand:
 
     cycle_epoch  host  check  observed_color  state  receipt_epoch  source  message

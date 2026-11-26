@@ -7,12 +7,12 @@ use Exporter 'import';
 use File::Spec;
 use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
 
-our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read_checks applicable_checks
+our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read_checks read_services applicable_checks
     read_host_state validate_status atomic_write read_state read_latest html_escape ensure_dir
     valid_identifier valid_host valid_address valid_profile valid_color valid_path_value valid_epoch
     valid_fingerprint valid_public_key valid_os_value read_enrollment_record
     paths_conflict inventory_format inventory_header
-    enrollment_record_line append_event read_operations now_seconds);
+    enrollment_record_line append_event read_operations read_external_status now_seconds);
 
 my %CONFIG_KEYS = map { $_ => 1 } qw(inventory roles checks status_dir history_file
     state_file report_file mrtg_file rrd_dir enrollment_dir operations_dir profile freshness
@@ -115,18 +115,20 @@ sub inventory_format {
     open(my $fh, '<', $path) or die "cannot read inventory: $!\n";
     my $format = 'legacy';
     my $seen_data = 0;
+    my $seen_marker = 0;
     while (<$fh>) {
         chomp; s/\r\z//;
         next if /^\s*$/;
-        if (!$seen_data && /^# SASD-SITE-INVENTORY-(\d+)\z/) {
+        if (/^# SASD-SITE-INVENTORY-/) {
+            $seen_data and die "inventory format marker is misplaced\n";
+            $seen_marker and die "duplicate inventory format marker\n";
+            /^# SASD-SITE-INVENTORY-(\d+)\z/ or die "invalid inventory format header\n";
             $1 == 1 or die "unsupported inventory format version: $1\n";
+            $seen_marker = 1;
             $format = '1';
             next;
         }
         /^#/ or $seen_data = 1;
-        if (!$seen_data && /^# SASD-SITE-INVENTORY-/) {
-            die "invalid inventory format header\n";
-        }
     }
     close($fh) or die "cannot close inventory: $!\n";
     return $format;
@@ -277,6 +279,33 @@ sub read_checks {
     return \%checks;
 }
 
+sub read_services {
+    my ($path, $roles, $checks) = @_;
+    _real_file($path, 'services');
+    open(my $fh, '<', $path) or die "cannot read services: $!\n";
+    my %services;
+    while (<$fh>) {
+        chomp; s/\r\z//;
+        next if /^\s*$/ || /^\s*#/;
+        my ($service, $role, $check, $profile, $description) = _fields($_, 5, 'service');
+        valid_identifier($service) && ($role eq '*' || $role eq 'baseline' || valid_identifier($role)) &&
+            valid_identifier($check) && valid_profile($profile) &&
+            length($description) && length($description) <= 120 or die "invalid service record at line $.\n";
+        ($role eq '*' || $role eq 'baseline' || exists($roles->{$role})) or
+            die "unknown service role '$role'\n";
+        exists($checks->{$check}) or die "unknown service check '$check'\n";
+        my $check_role = $checks->{$check}->{role};
+        $check_role ne '*' && $check_role ne 'baseline' && $role ne $check_role and
+            die "service role does not match check '$check'\n";
+        exists $services{$service} and die "duplicate service: $service\n";
+        $services{$service} = { service=>$service, role=>$role, check=>$check,
+            profile=>$profile, description=>$description };
+    }
+    close($fh) or die "cannot close services: $!\n";
+    scalar(keys %services) or die "service model has no records\n";
+    return \%services;
+}
+
 sub applicable_checks {
     my ($host, $checks) = @_;
     return map { $_ } sort grep { $checks->{$_}->{role} eq '*' ||
@@ -287,6 +316,52 @@ sub validate_status {
     my ($host, $check, $color, $message) = @_;
     valid_host($host) && valid_identifier($check) && valid_color($color) or die "invalid status identifiers\n";
     defined($message) && length($message) <= 240 && $message !~ /[\x00-\x1f\x7f]/ or die "unsafe status message\n";
+}
+
+sub read_external_status {
+    my ($path, $product, $hosts, $checks) = @_;
+    $product =~ /\A(?:bigbrother|bigsister)\z/ or die "invalid external status product\n";
+    _real_file($path, 'external status');
+    open(my $fh, '<', $path) or die "cannot read external status: $!\n";
+    my (@records, %seen);
+    while (<$fh>) {
+        length($_) <= 4096 or die "external status line is too long\n";
+        chomp; s/\r\z//;
+        next if /^\s*$/ || /^\s*#/;
+        my ($prefix, $target, $color, $message);
+        if ($product eq 'bigsister') {
+            ($prefix, $target, $color, $message) = split(/\s+/, $_, 4);
+            $prefix eq 'status' or die "invalid Big Sister status record\n";
+        } else {
+            my @parts = split(/\s+/, $_, 4);
+            if (defined($parts[0]) && $parts[0] eq 'status') {
+                shift @parts;
+            }
+            ($target, $color, $message) = @parts;
+        }
+        defined($target) && defined($color) or die "invalid external status record\n";
+        $message = '' unless defined $message;
+        my $measurement = '';
+        if ($product eq 'bigsister' && $message =~ s/^\(([0-9]{1,15})\)\s+//) {
+            $measurement = $1;
+        }
+        $target =~ /\A(.+)\.([A-Za-z][A-Za-z0-9_-]{0,31})\z/ or die "invalid external status target\n";
+        my ($host, $check) = ($1, $2);
+        valid_host($host) && exists($hosts->{$host}) && exists($checks->{$check}) or
+            die "external status target is not in the shared model\n";
+        my $role = $checks->{$check}->{role};
+        $role eq '*' || $role eq 'baseline' || $role eq $hosts->{$host}->{role}
+            or die "external status check is not assigned to host\n";
+        valid_color($color) or die "unknown external status color\n";
+        validate_status($host, $check, $color, $message);
+        my $key = "$host\t$check";
+        exists($seen{$key}) and die "duplicate external status observation\n";
+        $seen{$key} = 1;
+        push @records, [$host, $check, $color, $message, $measurement];
+        @records <= 1000 or die "too many external status observations\n";
+    }
+    close($fh) or die "cannot close external status: $!\n";
+    return \@records;
 }
 
 sub now_seconds { return defined($_[0]) ? $_[0] : time(); }
