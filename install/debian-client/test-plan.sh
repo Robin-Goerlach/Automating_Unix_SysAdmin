@@ -41,7 +41,15 @@ printf '0040\t9999\tverified\n' >> "$copy/dependencies.tsv"; reject fixture
 cp "$tmp/good-deps" "$copy/dependencies.tsv"
 printf '0040\t0030\tcandidate\n' >> "$copy/dependencies.tsv"; reject fixture
 cp "$tmp/good-deps" "$copy/dependencies.tsv"
+# Test a non-renderable prerequisite using an isolated catalog mutation.
+# Task 0020 now renders a review policy; its real catalog must remain intact.
+cp "$copy/checklist.tsv" "$tmp/good-catalog"
+awk -F '\t' 'BEGIN{OFS="\t"} $1=="0020" {$4="review"; $5="-"} {print}' "$tmp/good-catalog" > "$copy/checklist.tsv"
 printf '0030\t0020\tcandidate\n' >> "$copy/dependencies.tsv"; reject fixture
+cp "$tmp/good-catalog" "$copy/checklist.tsv"
+# With the real catalog restored, the same edge is valid but waits on 0020.
+fixture > "$tmp/candidate-wait"
+awk -F '\t' '$1=="0030" && $4=="WAIT_CANDIDATE" {ok=1} END{exit !ok}' "$tmp/candidate-wait"
 cp "$tmp/good-deps" "$copy/dependencies.tsv"
 printf '0040\t0010\tverified\n' >> "$copy/dependencies.tsv"
 printf '0800\t0040\tcandidate\n' >> "$copy/dependencies.tsv"

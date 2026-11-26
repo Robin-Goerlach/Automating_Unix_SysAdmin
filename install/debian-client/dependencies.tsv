@@ -21,6 +21,7 @@ task	prerequisite	evidence
 0520	0510	verified
 0530	0200	verified
 0540	0200	verified
+0720	0020	verified
 0740	0730	verified
 0750	0730	verified
 0760	0730	verified
@@ -30,6 +31,8 @@ task	prerequisite	evidence
 0800	0030	candidate
 0820	0730	verified
 0840	0730	verified
+0860	0020	verified
+0870	0020	verified
 0890	0730	verified
 0900	0470	verified
 0920	0510	verified
@@ -40,6 +43,7 @@ task	prerequisite	evidence
 0960	0510	verified
 0960	0800	verified
 0970	0360	verified
+0980	0720	verified
 1000	0730	verified
 1030	0440	verified
 1040	1000	verified

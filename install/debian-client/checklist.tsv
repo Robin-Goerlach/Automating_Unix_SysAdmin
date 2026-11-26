@@ -70,7 +70,7 @@ id	original_line	task	state	handler
 0690	522	NVIDIA_Driver	manual	-
 0700	525	Display_Profile	manual	-
 0710	528	Services_Activate_Required	render	serviceon
-0720	531	NIS_Client	review	-
+0720	531	NIS_Client	render	nisreview
 0730	536	Packages_Stage_2	render	packages2
 0740	612	RNG_Tools	render	rngpolicy
 0750	617	Rkhunter_Configure	render	rkhunterpolicy
@@ -84,8 +84,8 @@ id	original_line	task	state	handler
 0830	657	Puppet_Agent	deferred	-
 0840	664	Monit_Configure	render	monitpolicy
 0850	670	USBGuard_Configure	review	-
-0860	676	LDAP_Client	review	-
-0870	678	Active_Directory_Client	review	-
+0860	676	LDAP_Client	render	ldapreview
+0870	678	Active_Directory_Client	render	adreview
 0880	680	ReaR_Configure	review	-
 0890	685	Big_Sister_Client	render	monitorenroll
 0900	688	Cron_CUPS_Cleanup	deferred	-
@@ -96,8 +96,8 @@ id	original_line	task	state	handler
 0950	712	Cron_Audit_Report	render	auditreport
 0960	716	Cron_Logwatch	render	logwatchschedule
 0970	720	NFS_Automounter	render	nfsautomount
-0980	726	NIS_User_Security	review	-
-0990	731	NSS_Configure	review	-
+0980	726	NIS_User_Security	render	nisusers
+0990	731	NSS_Configure	render	nssreview
 1000	734	AIDE_Initialize	render	aideinit
 1010	737	Inventory_Final	render	localinventory
 1020	746	Syslog_Replace_Rsyslog	review	-

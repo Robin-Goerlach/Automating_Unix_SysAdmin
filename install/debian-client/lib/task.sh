@@ -161,6 +161,11 @@ ROTATE
         aptpolicy) printf '%s\n' 'scope	policy' 'sources	REVIEW_RELEASE_PINNED_DEB822' 'archive-keyring	VERIFY_DISTRIBUTION_PACKAGE' 'existing-sources	KEEP_AND_REVIEW' 'third-party	EXPLICIT_REVIEW' ;;
         aptupdate) printf '%s\n' 'scope	policy' 'metadata	EXPLICIT_LAB_REFRESH' 'upgrade	REVIEW_SIMULATION_AND_REBOOT' 'removals	NO_AUTOMATIC_APPROVAL' ;;
         firewallfinal) printf '%s\n' 'scope	policy' 'rules	REVIEW_ROLE_AND_SERVICE_POLICY' 'management	VERIFY_EXISTING_ACCESS' 'activation	LAB_ACCEPTANCE_REQUIRED' 'persist	REVIEW_REBOOT_BEHAVIOR' ;;
+        nisreview) printf '%s\n' 'scope	policy' 'nis	ISOLATED_HISTORICAL_LAB_ONLY' 'domain,servers	EXPLICIT_SITE_REVIEW' 'broadcast	NO_AUTOMATIC_DISCOVERY' 'local-accounts	PRESERVE_AND_REVIEW' ;;
+        ldapreview) printf '%s\n' 'scope	policy' 'directory	EXPLICIT_BACKEND_AND_ENDPOINT' 'tls	VERIFY_CA_AND_SERVER_IDENTITY' 'bind-credentials	PRIVATE_OPERATOR_INPUT_ONLY' 'pam,nss	REVIEW_WITH_CONSOLE_RECOVERY' ;;
+        adreview) printf '%s\n' 'scope	policy' 'directory	CHOOSE_SSSD_OR_WINBIND' 'dns,time,kerberos	VERIFY_PREREQUISITES' 'domain-join	EXPLICIT_LAB_ACCEPTANCE' 'id-mapping	REVIEW_STABLE_UID_GID' ;;
+        nisusers) printf '%s\n' 'scope	policy' 'netgroups	EXPLICIT_SITE_REVIEW' 'local-accounts	PRESERVE_ADMIN_ACCESS' 'passwd,shadow	NO_AUTOMATIC_MAP_IMPORT' 'authorization	VERIFY_SEPARATELY_FROM_LOOKUP' ;;
+        nssreview) printf '%s\n' 'path	policy' '/etc/nsswitch.conf	PRESERVE_AND_REVIEW' 'passwd,group,shadow	REVIEW_LOCAL_FIRST' 'initgroups,netgroup	REVIEW_EFFECTIVE_POLICY' 'compat,actions	EXPLICIT_REVIEW' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;
