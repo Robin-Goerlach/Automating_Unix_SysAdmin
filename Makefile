@@ -36,13 +36,13 @@ syntax:
 	@for x in bin/sasd-host-facts bin/sasd-rrd-cycle bin/sasd-monitor-backup bin/sasd-monitor-restore bin/sasd-golden-capture bin/sasd-golden-restore bin/sasd-netboot-stage bin/sasd-postinstall install/install-monitoring-server.sh install/install-sasd-client.sh tests/smoke.sh tests/classic.sh tests/bb-hosts.sh tests/bigbrother.sh tests/bigsister.sh tests/r2-site.sh tests/cfengine1.sh tests/cfengine2.sh tests/m1-monitoring.sh tests/m2-enrollment.sh tests/m2-transport.sh tests/m2-ssh-integration.sh tests/m3-native.sh tests/m4-backup.sh tests/m4-operations.sh tests/m5-golden.sh tests/m6-netboot.sh tests/m6-kvm-preflight.sh tests/m7-postinstall.sh tests/deployment.sh examples/demo.sh examples/monitoring-lab.sh examples/m2-enrollment-lab.sh examples/m5-golden-lab.sh examples/m6-netboot-lab.sh examples/m7-install-to-monitoring.sh examples/sasd-provisioning-lab.sh examples/sasd-integrated-site-lab.sh release/package-1.0.sh release/package.sh; do sh -n $$x || exit 1; done
 
 release-test:
-	@set -eu; tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT HUP INT TERM; \
-	release/package.sh --version 1.1.0-dev --ref HEAD --out "$tmp" --test; \
-	release/package.sh --version 1.1.0-dev --ref HEAD --out "$tmp/second" --test; \
-	sha256sum -c "$tmp/SHA256SUMS"; sha256sum -c "$tmp/second/SHA256SUMS"; \
-	cmp "$tmp/sasd-1.1.0-dev-src.tar.gz" "$tmp/second/sasd-1.1.0-dev-src.tar.gz"; \
-	cmp "$tmp/MANIFEST-1.1.0-dev.txt" "$tmp/second/MANIFEST-1.1.0-dev.txt"; \
-	git ls-tree -r --name-only HEAD > "$tmp/expected"; \
-	cmp "$tmp/expected" "$tmp/MANIFEST-1.1.0-dev.txt"; \
+	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT HUP INT TERM; \
+	release/package.sh --version 1.1.0-dev --ref HEAD --out "$$tmp" --test; \
+	release/package.sh --version 1.1.0-dev --ref HEAD --out "$$tmp/second" --test; \
+	sha256sum -c "$$tmp/SHA256SUMS"; sha256sum -c "$$tmp/second/SHA256SUMS"; \
+	cmp "$$tmp/sasd-1.1.0-dev-src.tar.gz" "$$tmp/second/sasd-1.1.0-dev-src.tar.gz"; \
+	cmp "$$tmp/MANIFEST-1.1.0-dev.txt" "$$tmp/second/MANIFEST-1.1.0-dev.txt"; \
+	git ls-tree -r --name-only HEAD > "$$tmp/expected"; \
+	cmp "$$tmp/expected" "$$tmp/MANIFEST-1.1.0-dev.txt"; \
 	printf 'reproducible-distribution=PASS\n'; \
-	sha256sum "$tmp/sasd-1.1.0-dev-src.tar.gz" "$tmp/MANIFEST-1.1.0-dev.txt"
+	sha256sum "$$tmp/sasd-1.1.0-dev-src.tar.gz" "$$tmp/MANIFEST-1.1.0-dev.txt"
