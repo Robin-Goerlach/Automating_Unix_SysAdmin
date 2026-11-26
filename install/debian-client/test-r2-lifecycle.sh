@@ -84,5 +84,60 @@ with tempfile.TemporaryDirectory() as name:
     reject(lambda:native(pinned))
     m.command=original
     assert (root/'site.conf').read_text()=='dns1=192.0.2.53\nsearch=lab.invalid\n'
+    # Use real transaction primitives with the same guard as the native CLI.
+    # All state changes here are synthetic; never restore stale lifecycle in a VM.
+    put(state,enabled); pinned=expected()
+    hashes, result=native()
+    etc=root/'etc';store=root/'transactions';etc.mkdir();store.mkdir()
+    for name in m.NAMES: put(etc/name,'original '+name+'\n')
+    original=m.snapshot(etc,owner)
+    desired={n:{'data':('desired '+n+'\n').encode().hex(),'mode':v['mode']}
+             for n,v in original.items()}
+    ref={'inputs':hashes,'plan':m.digest(result),
+         'original':m.digest(m.encoded(original)),'desired':m.digest(m.encoded(desired))}
+    auth=root/'authorization.json'
+    auth.write_bytes(m.encoded(ref));auth.chmod(0o600)
+    def guard(): m.recheck_approval(root,owner,host,pinned,hashes,result,ref)
+    auth.chmod(0o644);reject(guard);auth.chmod(0o600)
+    auth.write_bytes(m.encoded(dict(ref,extra='changed')));reject(guard)
+    auth.write_bytes(m.encoded(ref))
+    guard()
+    atomic=m.atomic_write
+    def disable_after_write(path,data,mode,uid):
+        atomic(path,data,mode,uid)
+        if path==etc/'hostname':
+            put(state,host+'\tdisabled\tchanged during apply\n')
+    m.atomic_write=disable_after_write
+    reject(lambda:m.transition(etc,store,owner,ref,original,desired,lambda:True,guard=guard))
+    m.atomic_write=atomic
+    journal,=m.pending(store,owner)
+    partial=m.snapshot(etc,owner)
+    assert partial==dict(original,hostname=desired['hostname'])
+    assert m.load_journal(journal,owner)['state']=='APPLYING'
+    reject(lambda:m.recover(etc,store,owner,ref,journal,guard=guard))
+    assert m.snapshot(etc,owner)==partial and m.load_journal(journal,owner)['state']=='APPLYING'
+    # Reset this test-only simulated authority to exercise unchanged-context recovery.
+    put(state,enabled)
+    m.recover(etc,store,owner,ref,journal,guard=guard)
+    assert m.snapshot(etc,owner)==original
+    journal=m.transition(etc,store,owner,ref,original,desired,lambda:True,guard=guard)
+    assert m.load_journal(journal,owner)['state']=='COMMITTED_STATIC'
+    # An open rollback halted by revoked authorization remains open.
+    reverse=dict(ref,original=ref['desired'],desired=ref['original'])
+    auth.write_bytes(m.encoded(reverse))
+    def reverse_guard(): m.recheck_approval(root,owner,host,pinned,hashes,result,reverse)
+    reject(lambda:m.transition(etc,store,owner,reverse,desired,original,lambda:False,guard=reverse_guard))
+    journal,=m.pending(store,owner)
+    def revoke_after_write(path,data,mode,uid):
+        atomic(path,data,mode,uid)
+        if path==etc/'hostname': auth.unlink()
+    m.atomic_write=revoke_after_write
+    reject(lambda:m.recover(etc,store,owner,reverse,journal,guard=reverse_guard))
+    m.atomic_write=atomic
+    assert m.load_journal(journal,owner)['state']=='ROLLING_BACK'
+    assert m.snapshot(etc,owner)==dict(original,hostname=desired['hostname'])
+    auth.write_bytes(m.encoded(reverse));auth.chmod(0o600)
+    m.recover(etc,store,owner,reverse,journal,guard=reverse_guard)
+    assert m.snapshot(etc,owner)==desired and not m.pending(store,owner)
 print('R2 explicit lifecycle, versioned inventory and native context tests passed (fixture only)')
 PY

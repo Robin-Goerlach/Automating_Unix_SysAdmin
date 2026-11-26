@@ -163,7 +163,7 @@ def pending(store, owner):
     return result
 
 
-def transition(etc, store, owner, reference, original, desired, verify):
+def transition(etc, store, owner, reference, original, desired, verify, guard=None):
     require(not pending(store, owner), 'open transaction requires recovery')
     validate_snapshot(original); validate_snapshot(desired)
     require(snapshot(etc, owner) == original, 'source changed before apply')
@@ -172,32 +172,51 @@ def transition(etc, store, owner, reference, original, desired, verify):
     path = store / ('native.' + uuid.uuid4().hex + '.json')
     j = {'format': 'SASD-NATIVE-JOURNAL-1', 'reference': reference, 'original': original, 'desired': desired}
     # The durable original and desired snapshots precede any target replacement.
+    if guard is not None:
+        guard()
     journal_write(path, j, 'APPLYING', owner)
+    expected = dict(original)
     for name in NAMES:
+        if guard is not None:
+            guard()
         current = snapshot(etc, owner)
-        require(current[name] == original[name], 'target changed during apply')
+        require(current == expected, 'target changed during apply')
         if original[name] != desired[name]:
             atomic_write(etc / name, bytes.fromhex(desired[name]['data']), desired[name]['mode'], owner)
+        expected[name] = desired[name]
+    if guard is not None:
+        guard()
     require(snapshot(etc, owner) == desired and verify(), 'static verification failed; recover explicitly')
     sync_targets(etc, owner, desired)
+    if guard is not None:
+        guard()
     journal_write(path, j, 'COMMITTED_STATIC', owner)
     return path
 
 
-def recover(etc, store, owner, reference, path):
+def recover(etc, store, owner, reference, path, guard=None):
     require(pending(store, owner) == [path], 'requested journal is not the sole open transaction')
     j = load_journal(path, owner)
     require(j['reference'] == reference, 'journal belongs to another reference')
     current = snapshot(etc, owner)
     for name in NAMES:
         require(current[name] in (j['original'][name], j['desired'][name]), 'external target change; recovery refused')
+    if guard is not None:
+        guard()
     journal_write(path, j, 'ROLLING_BACK', owner)
+    expected = dict(current)
     for name in NAMES:
-        if current[name] != j['original'][name]:
+        if guard is not None:
+            guard()
+        require(snapshot(etc, owner) == expected, 'target changed during rollback')
+        if expected[name] != j['original'][name]:
             entry = j['original'][name]
             atomic_write(etc / name, bytes.fromhex(entry['data']), entry['mode'], owner)
+            expected[name] = entry
     require(snapshot(etc, owner) == j['original'], 'rollback verification failed')
     sync_targets(etc, owner, j['original'])
+    if guard is not None:
+        guard()
     journal_write(path, j, 'ROLLED_BACK', owner)
 
 
@@ -243,6 +262,20 @@ def approved_plan(approved, owner, host, expected_state):
 def match_approval(reference, context):
     require(isinstance(reference, dict) and all(reference.get(k) == v for k, v in context.items()),
             'approval context mismatch')
+
+
+def read_authorization(approved, owner):
+    raw, mode = read_file(approved / 'authorization.json', owner, 16384, target=True)
+    require(mode == 0o600, 'private authorization required')
+    return json.loads(raw, object_pairs_hook=unique_pairs)
+
+
+def recheck_approval(approved, owner, host, expected_state, hashes, plan, reference):
+    """Recheck the entire pinned local context and authorization at write boundaries."""
+    require(read_authorization(approved, owner) == reference, 'authorization changed')
+    require(approved_plan(approved, owner, host, expected_state) == (hashes, plan),
+            'approved context changed during transaction')
+    require(read_authorization(approved, owner) == reference, 'authorization changed')
 
 
 def render(root, host, site, original):
@@ -321,13 +354,16 @@ def main():
             context = {'format': 'SASD-NATIVE-REFERENCE-1', 'scope': 'STATIC_LAB_ONLY', 'hostname': a.hostname,
                        'identity': a.fingerprint, 'release': a.release, 'inputs': hashes, 'plan': digest(plan)}
             if not a.review:
-                reference = json.loads(read_file(approved / 'authorization.json', 0, 16384)[0], object_pairs_hook=unique_pairs)
+                reference = read_authorization(approved, 0)
                 match_approval(reference, context)
+                def guard():
+                    recheck_approval(approved, 0, a.hostname, a.host_state_sha256,
+                                     hashes, plan, reference)
             if a.recover:
                 require(re.fullmatch(r'native\.[0-9a-f]{32}\.json', a.recover), 'invalid journal name')
                 require(approved_plan(approved, 0, a.hostname, a.host_state_sha256) == (hashes, plan),
                         'approved context changed before recovery')
-                recover(etc, store, 0, reference, store / a.recover)
+                recover(etc, store, 0, reference, store / a.recover, guard=guard)
                 print('ROLLED_BACK_STATIC; runtime acceptance not performed'); return 0
             require(not pending(store, 0), 'open transaction requires recovery')
             require('resolver-owner-hint\tUNKNOWN_REGULAR\townership unproven' in pre and
@@ -347,7 +383,7 @@ def main():
                     'approved context changed before apply')
             # Operator confirmation additionally attests reviewed G0/G1/G2, static ownership and console/snapshot.
             path = transition(etc, store, 0, context, original, desired, lambda: bool(command(
-                '/bin/sh', str(HERE / 'verify-baseline.sh'), '--root=/', '--hostname=' + a.hostname, '--site=' + str(inputs['site.conf']))))
+                '/bin/sh', str(HERE / 'verify-baseline.sh'), '--root=/', '--hostname=' + a.hostname, '--site=' + str(inputs['site.conf']))), guard=guard)
             print('COMMITTED_STATIC ' + path.name + '; runtime hostname/DNS acceptance pending'); return 0
         finally:
             os.close(fd)

@@ -99,7 +99,7 @@ fi
 g2=REVIEW_REQUIRED
 if [ "$preflight_rc" -ne 0 ] || [ "$cap_rc" -ne 0 ] || [ "$rehearsal_rc" -ne 0 ]; then g2=BLOCKED; fi
 printf 'gate\tstatus\treason\n' > "$report/gates.tsv"
-printf 'G0\tOPEN\trepository-suite-and-release-trust\nG1\tOPEN\toperator-console-isolation-snapshot\nG2\t%s\tdiagnostics-and-resolver-ownership-review\nG3\tOPEN\tno-native-writer-or-authorization\nG4\tNOT_RUN\tno-native-apply\nG5\t%s\tNSS-and-direct-DNS-observations-only\nG6\tNOT_RUN\tno-native-recovery-or-reboot\n' "$g2" "$dns_status" >> "$report/gates.tsv"
+printf 'G0\tOPEN\trepository-suite-and-release-trust\nG1\tOPEN\toperator-console-isolation-snapshot\nG2\t%s\tdiagnostics-and-resolver-ownership-review\nG3\tOPEN\texperimental-writer-not-authorized\nG4\tNOT_RUN\tno-native-apply\nG5\t%s\tNSS-and-direct-DNS-observations-only\nG6\tNOT_RUN\tno-native-recovery-or-reboot\n' "$g2" "$dns_status" >> "$report/gates.tsv"
 printf 'baseline-exit\t%s\n' "$baseline_rc" > "$report/observations.tsv"
 printf 'COLLECTED_NOT_AUTHORIZED\n' > "$report/status.new"
 mv -fT -- "$report/status.new" "$report/status"
