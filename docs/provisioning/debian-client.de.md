@@ -378,3 +378,38 @@ REFERENCE muss neue private benutzereigene 0600-Datei außerhalb etc/transaction
 CI-Reparatur: vorheriger Lauf #49 (45767843153) kam nach R2-Paketreparatur über Planer- und Archivdispatchertests hinaus; Fehler im folgenden Fixture-Dispatchertest. Quellprüfung identifiziert zweites isoliertes Layout, das nur sasd-site-inventory ohne SASD::Monitor kopiert. Kanonisches Modul auch dort kopieren; Negativtest des Abhängigkeitsvertrags unverändert lassen. Vollständige CI muss Reparatur bestätigen. Quell-/Archivharness enthalten neues test-banner.sh (Matrixabdeckung, echte Zweidateien-Fixturetransaktion, geändertes Original, offenes Journal nach erster Dateimutation wiederherstellen, statische Verifikation, geschlossene Journale abweisen, Symlink/Hardlink/falscher Modus, veränderter Inventarkontext, Live-Root ablehnen). Vollständiger lokaler Checkout weiterhin nicht verfügbar (DNS-Fehler); neue Integrationstests ergänzt, nicht lokal als bestanden behauptet. Statische Git-Baumprüfung bestätigt Matrixabdeckung und Paket-/Release-Allowlistenerweiterungen. Erwartet 157 Archivdateien; 89 render, 39 inventargebunden staged unverändert. Keine nativen Systemänderungen oder VM-Abnahme.
 
 Nächster Schritt CI bestätigen, mögliche Integrationsfehler zuerst beheben. Danach begrenzte Fixturegruppen erweitern (z.B. Loggingkandidaten) oder bestehende native Baseline G0–G6 auf Wegwerf-VM mit Betreiberkonsole/Snapshot und separat geprüften Eingaben schließen. Policies nicht als installierte Tasks zählen.
+
+## M7-D.6b — gemeinsame Fixture-Transaktionen und Logging-Konfiguration
+
+CI #50 (45768807228) erfolgreich abgeschlossen, vorherige Banner-Fixture und R2-Reparatur im Repository-Testworkflow bestätigt. Vier weitere Task-IDs mit explizitem reinem Fixture-Apply-Backend: 0410 Rsyslog, 0420 Logrotate, 0790 Sysstat, 0800 Logwatch. Fähigkeitsmatrix: acht lokale Tasks mit Apply-Backends, drei davon mit gemeinsamer experimenteller nativer Baseline; keine native VM-Abnahme abgeschlossen. Katalog und inventargebundenes Staging unverändert (89 render, 39 staged). Erwartetes Transportarchiv: 159 Dateien.
+
+Vorhandene Banner-Transaktionssteuerung in fixture-config.py extrahiert. Banner-CLI, feste Ziele, Marker, Referenzformat und Statusausgaben erhalten, Release-Digest ändert sich jedoch. Beide Wrapper wählen feste Ziele im vertrauenswürdigen Code, nicht aus CLI-Pfaden. Gemeinsamer Runner nutzt vorhandene native-install.py-Transaktionsprimitive über frische auf Gruppe begrenzte Modulinstanz; nativer Baseline-Zielsatz unverändert. Kein generischer beliebiger Pfadschreiber oder native Aktivierung. Alte Releasereferenzen nicht still wiederverwenden. Offene ältere Fixture-Journale vor Releasewechsel mit unabhängig aufbewahrtem ursprünglichem geprüftem Release/Referenz wiederherstellen.
+
+Logging-Wrapper fixture-logging.py verlangt vorhandenes R2-Serverprofil, da dieses Rsyslog, Sysstat und Logwatch auswählt. Exakte geprüfte Ausgabe der vier bestehenden Taskrenderer wird verglichen. Dateien sind vollständige illustrative Fixture-Kopien, keine sicheren Ersetzungen von Distributionskonfiguration oder fremden vorhandenen Inhalten auf realem Host:
+
+| Task | Fester relativer Pfad unter Fixture-etc |
+| --- | --- |
+| 0410 | rsyslog.d/60-sasd-client.conf |
+| 0420 | logrotate.d/sasd-client |
+| 0790 | default/sysstat |
+| 0800 | logwatch/conf/logwatch.conf |
+
+Normaler Benutzer mit identischer realer/effektiver UID und effektiver GID. Direktes privates /tmp/sasd-logging-lab.<alphanumerisch-oder-Unterstrich>-Verzeichnis; vorhandene Root-, etc-, transactions- und sämtliche verschachtelten Verzeichnisse benutzereigen/-gruppe, 0700, gleicher Dateisystem-Device, keine Symlinks oder xattrs. Marker .sasd-logging-fixture Modus 0600 mit SASD-LOGGING-FIXTURE-1 und Newline. Alle vier Zieldateien müssen bereits als getrennte reguläre benutzereigene/-gruppe 0644-Dateien mit je einem Link existieren, keine xattrs/NUL, max. je 64 KiB. Alle Verzeichnisidentitäten in Referenz; kooperatives flock auf Store, Layout-Synchronisation inklusive verschachtelter Verzeichnisse vor Mutation, Journal vor Mutation, atomare Einzeldateiersetzung und Synchronisation, statischer Vergleich, explizite Wiederherstellung nur einziges offenes passendes Journal. Vertrauenswürdige stabile private Fixtures, keine feindliche Paralleländerungs- oder Stromausfallgarantie, kein Rollback abgeschlossener Journale. Keine Datei-/Verzeichniserstellung unter etc, kein globaler /etc-Schreibvorgang.
+
+Beispiel mit synthetischem Serverinventar und Rollen sowie neuer Referenzdatei außerhalb etc und transactions:
+
+    umask 077
+    ROOT=$(mktemp -d /tmp/sasd-logging-lab.XXXXXXXX)
+    mkdir -p "$ROOT/etc/rsyslog.d" "$ROOT/etc/logrotate.d" "$ROOT/etc/default" "$ROOT/etc/logwatch/conf" "$ROOT/transactions"
+    printf 'SASD-LOGGING-FIXTURE-1\n' > "$ROOT/.sasd-logging-fixture"
+    for name in rsyslog.d/60-sasd-client.conf logrotate.d/sasd-client default/sysstat logwatch/conf/logwatch.conf; do
+        printf '# synthetic original\n' > "$ROOT/etc/$name"
+        chmod 644 "$ROOT/etc/$name"
+    done
+    ./fixture-logging.py --review --root="$ROOT" --hostname="$HOST" --inventory="$HOSTS" --roles="$ROLES" > "$REFERENCE"
+
+Dieselben Argumente nach unabhängiger Prüfung mit --apply-fixture --reference="$REFERENCE", --verify --reference="$REFERENCE" für statischen Vergleich (0 gleich, 1 Drift, 2 ungültig/Konflikt) oder --recover=JOURNAL --reference="$REFERENCE" zur Wiederherstellung des einzigen offenen passenden Journals. Erfolgreiches Apply meldet COMMITTED_LOGGING_FIXTURE und Journalname. Referenz und Journal privat; Journal enthält Original-/Sollinhalte. Review-Hashes keine Autorisierung. Fixture-Apply erfüllt oder umgeht bewusst keine tatsächlichen Paket-, Identitäts-, DNS- oder Dienstverifikationsgates des Inventardispatchers. Kein Dienststart/Reload, Lognachricht, Rotation, Sysstat-Sammlung oder Logwatch-Mail. Local5-Regel kann vorhandene Routen duplizieren; Rsyslog-Logverzeichnis/Berechtigungen, Include-Priorität, Logrotate-Hilfsscriptpfad, wirksame Sysstat-Defaults/Timer, Logwatch-Konfigurationspriorität und Zustellung nativ prüfen.
+
+Separater lokaler Logrotate-3.22.0-Debug-Syntaxtest als nobody, Pfad und Besitzer/Gruppe der geprüften Stanza für synthetische Wegwerfdatei ersetzt: Exit 0, unveränderter Log-SHA-256, kein Postrotate ausgeführt. Keine native Konfigurationsvalidierung. Rsyslog-Binary lokal nicht verfügbar; Sysstat-/Logwatch-native Parser und wirksame Konfiguration nicht erprobt. Neues test-logging-fixture.sh in Quell-/Archivharness prüft Vierdateien-Apply, exakte Ausgabe, Erhalt fremder Datei, geänderte Originale, Recovery nach zwei echten Fixture-Mutationen mit konstruiertem offenen Journal, statisches Verify, geschlossene Recovery ablehnen, Serverprofilgate, verschachtelte/finale Symlinks und Live-Root ablehnen. Optionaler Logrotate-Debugtest (expliziter Skip falls Binary fehlt). Banner-Regressionsfall erhält alte Tests und aktualisiert Fähigkeitsabdeckung. Vollständiger Checkout weiterhin nicht verfügbar; neue Quell-/Archivtests und Refactoring warten auf CI, kein lokales End-to-End-PASS behauptet.
+
+Nächster Schritt: CI prüfen, danach Paketinstallationsbackend-Entwurf/kontrollierte Laborausführung oder G0–G6-Baseline-VM-Abnahme. Tatsächliche Dienstaktivierung getrennt von statischen Fixtures halten.
