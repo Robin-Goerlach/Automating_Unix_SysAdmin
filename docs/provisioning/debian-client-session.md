@@ -154,3 +154,8 @@ Base 9e514cc9497743c9d31da86b718d3c55e3e03488. Previous CI #50 45768807228 succe
 ## M7-D.6c — synthetic package-state transaction
 
 Base 8d130ed3e660bb7045f2368b47bd9094ca9eefd8, CI #51 45769421070 successful. Shared fixture runner accepts a bounded group-specific input binding; new fixture-packages.py models stages 0200/0730 from explicit synthetic APT actions, no real package mutation. Source/archive test added; ten apply-capable tasks, expected 160 archive files, 39 staged unchanged. Local clone DNS failure, no local full-suite claim. External operator logs unavailable. New CI pending. Next verify CI, then bounded service configuration fixtures or disposable VM gates. Main and original feature branch untouched. No native package or system upgrade, no merge.
+
+
+## M7-D.6d — service and schedule reuse fixture
+
+Base 31551843c5a9360f15876a40e0b3211b89fb727f; CI 45776928073 successful. New reference-bound service-state and schedule-selection fixture reuses profile policies; two apply-capable tasks, four schedule selection checks only. 12 apply-capable tasks total, expected archive 161, 39 staged unchanged. Package fixture preparation accepts hostname without semantic change. Source/archive regressions added, CI pending; local Git checkout DNS failure, no local test claim. Operator logs unavailable. Next verify CI, then NFS/filesystem/AutoFS block. No native service, schedule, package or access modifications. Main and feature branches unchanged, no merge.
