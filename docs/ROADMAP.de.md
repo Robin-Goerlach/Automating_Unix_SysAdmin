@@ -14,6 +14,15 @@ English: [English version](ROADMAP.md)
 
 Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität bezeichnet werden.
 
+## Checkpoint-Status — 26.11.2026
+
+- **A — Qualität und Sicherheit: im aktuellen WSL-Umfang umgesetzt.** Inventarmigrationsprüfung, gemeinsame Pfadprüfungen, kooperative Sperren, exklusive `0600`-Migrationssicherungen, Marker-Regressionen, Dokumentationspaarprüfung und Release-Paketierung sind offline abgedeckt. Crash-atomare Mehrdatei-Commits, Schutz gegen feindliche TOCTOU-Angriffe und historische Plattformnachweise bleiben offen.
+- **B — Integrierte Site-Verwaltung: schrittweise umgesetzt.** Versioniertes Inventar, ausdrückliche Rollen, Lebenszykluszustand, gemeinsamer Service-Parser, Hostverwaltung und kontrollierte Kandidatengenerierung sind verfügbar. Ein vollständiger Deploy-/Apply-Orchestrator und ein Ende-zu-Ende-Labor bleiben offen.
+- **C — Historische Produktintegrationen: teilweise/offline.** CFEngine 1/2, MRTG/RRDtool und getrennte Big-Brother-/Big-Sister-Kandidaten besitzen gemeinsames Inventar sowie Offline-Positiv-/Negativtests. Native Big-Brother-/Big-Sister-/CFEngine-Abnahmen und die übrigen NetSaint-/Nagios-/Ganglia-Integrationen bleiben offen.
+- **D — Datenbank-Monitoring: geplant.** In diesem Paket wurde kein Datenbankadapter begonnen.
+- **E — Infrastruktur- und Clientinstallation: teilweise/offline.** M5–M7-Staging, Postinstallation und Enrollment-Fixtures bleiben verfügbar; native Netzwerkboot- und historische Installerabnahmen bleiben offen.
+- **F — Integrierte Abnahme: teilweise.** Regression und Releaseprüfungen bestehen, aber das vollständige produktübergreifende Offline-Labor und eine spätere Administrationskonsole sind nicht fertig.
+
 ## R2 — Rollenverwaltung und CFEngine 1
 
 - [x] Dateibasiertes Rechner- und Rolleninventar.
@@ -22,7 +31,7 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 - [x] Ausdrückliche Hostoperationen mit `sasd-host-admin`, `--apply`-Schranke und getrenntem enabled/disabled/removed-Zustand.
 - [x] Deterministisches gemeinsames Host-/Service-Staging mit `sasd-site-config`, einschließlich Ausschluss deaktivierter Hosts und Schutz vor vorhandenen Ausgabeordnern.
 - [x] Geprüfte Host-Lebenszyklusereignisse über add/update/enable/disable/remove hinweg aufbewahren.
-- [ ] Weitere produktspezifische Generatoren, kontrolliertes Deploy/Apply und Migration/Versionierung.
+- [x] Erste produktspezifische Generatoren und Inventarmigration/-versionierung; kontrolliertes Deploy/Apply bleibt offen.
 - [ ] CFEngine-1.4-Syntax mit Originalprogramm und Wegwerf-VM prüfen.
 - [x] Eigenständige Konfigurationsprüfung ohne CFEngine.
 - [ ] Staging, Backup und ausdrückliches Apply mit Rollback.
@@ -88,7 +97,7 @@ Der begrenzte V1.0-Kern ist in [RELEASE-1.0.de.md](RELEASE-1.0.de.md) eingefrore
 - [ ] Quittierung, Wartungszustand, Drosselung und Eskalation.
 - [ ] Lesendes TUI oder CGI für Betreiber.
 - [ ] Eingangsdaemon erst nach Authentifizierung, begrenztem Protokoll und Isolation.
-- [ ] Separate Lizenz- und Protokollprüfung zu Big Brother/Xymon.
+- [ ] Separate Lizenz- und Protokollprüfung zu Big Brother/Xymon. Big Brother und Big Sister besitzen nun getrennte Offline-Kandidaten und Statusadapter; native Kompatibilität bleibt offen.
 
 ## R5 — Automatisierte Bereitstellung
 

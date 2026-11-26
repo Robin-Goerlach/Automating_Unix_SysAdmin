@@ -14,6 +14,15 @@ Deutsch: [Deutsche Fassung](ROADMAP.de.md)
 
 The repository must never mislabel a fixture-based test as live network or historical compatibility.
 
+## Checkpoint status — 2026-11-26
+
+- **A — Quality and Security: implemented for the current WSL scope.** Inventory migration validation, shared path checks, cooperative locking, exclusive `0600` migration backups, marker regression cases, documentation-pair checks and release packaging are covered offline. Crash-atomic multi-file commits, hostile TOCTOU resistance and historical-platform proof remain open.
+- **B — Integrated Site Management: implemented incrementally.** Versioned inventory, explicit roles, lifecycle state, shared service parsing, host administration and controlled candidate generation are available. A full deploy/apply orchestrator and end-to-end lab remain open.
+- **C — Historical Product Integrations: partial/offline.** CFEngine 1/2, MRTG/RRDtool and separate Big Brother/Big Sister candidates have shared inventory and offline positive/negative tests. Native Big Brother/Big Sister/CFEngine acceptance and the remaining NetSaint/Nagios/Ganglia integrations remain open.
+- **D — Database Monitoring: planned.** No database adapter was started in this package.
+- **E — Infrastructure and Client Installation: partial/offline.** M5–M7 staging, postinstall and enrollment fixtures remain available; native network boot and historical installer acceptance remain open.
+- **F — Integrated Acceptance: partial.** Regression and release checks pass, but the complete cross-product offline laboratory and later administration console are not complete.
+
 ## R0 — Independent baseline (implemented, contemporary CI)
 
 - [x] POSIX shell host facts.
@@ -49,7 +58,7 @@ The repository must never mislabel a fixture-based test as live network or histo
 - [x] Add explicit host inventory operations with `sasd-host-admin`, an `--apply` gate and separate enabled/disabled/removed state.
 - [x] Add deterministic shared host/service staging with `sasd-site-config`, including exclusion of disabled hosts and output-directory protection.
 - [x] Retain validated host lifecycle events across add/update/enable/disable/remove transitions.
-- [ ] Add more product-specific generators, controlled deploy/apply and migration/versioning.
+- [x] Add initial product-specific generators and inventory migration/versioning; controlled deploy/apply remains open.
 - Evaluate CFEngine 1.4 historical syntax using a disposable VM and actual binary.
 - CFEngine helper: policy inspection, syntax checking, role classification, status reporting; scripts may cooperate with a real cfagent but cannot claim its behavior by emulation.
 - Provide read-only, independent SASD config audit for systems without CFEngine.
@@ -109,7 +118,7 @@ The bounded V1.0 core is now frozen in [RELEASE-1.0.md](RELEASE-1.0.md): M2.1 tr
 - [ ] Alert throttling and escalation with documented false-positive behavior.
 - [ ] A read-only TUI or CGI static-file front end for Unix operators.
 - [ ] Optional inbound daemon **only after** authentication, bounded protocol, isolation and fail-safe analysis.
-- [ ] Separate licensed Big Brother/Xymon interoperability research. Default is no wire compatibility.
+- [ ] Separate licensed Big Brother/Xymon interoperability research. Default is no wire compatibility. Big Brother and Big Sister now have separate offline candidates and status adapters; native compatibility remains open.
 
 **Acceptance:** end-to-end status transitions (green→yellow→red→recovered), stale detection, immutable event evidence, safe HTML encoding and no unauthenticated public network listener.
 
