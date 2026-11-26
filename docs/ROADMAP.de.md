@@ -147,3 +147,5 @@ Priorität haben R0-Härtung und R1-Werkzeuge; R2–R4 können bei unabhängigen
 - [x] Wiederverwendung des bestehenden M2-Enrollment und authentifizierten M2.1-Imports ohne automatische Freigabe (Offline-Abnahme).
 - [x] Abnahme von Reinstallation, doppelter Identität, veraltetem Image und Ablehnung (Offline-Abnahme).
 - [ ] Native Postinstallation nach echter Netzwerkinstallation sowie automatisierter Schlüsselwechsel/-Recovery.
+
+Die kontrollierte Konfigurationsbereitstellung besitzt inzwischen einen separaten Offline-Regressionspfad; native Produktprüfung und vollständige Labororchestrierung bleiben offen.

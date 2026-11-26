@@ -14,10 +14,12 @@ mkdir "$model/bin"
 cp "$root/site/monitoring.conf" "$model/monitoring.conf"
 cp "$root/bin/sasd-mrtg-counter" "$model/bin/sasd-mrtg-counter"
 
-echo 'A site model: PASS'
 "$root/bin/sasd-site-inventory" --input "$model/hosts.tsv" --roles "$model/roles.tsv" --check > "$lab/inventory"
 "$root/bin/sasd-site-services" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --check > "$lab/services"
 "$root/bin/sasd-site-consistency" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --monitoring "$root/site/monitoring.conf" --check > "$lab/consistency"
+grep -q '^hosts=4 ' "$lab/inventory"
+grep -q '^hosts=4 ' "$lab/consistency"
+echo 'A site model validation: PASS'
 
 "$root/bin/sasd-host-admin" --input "$model/hosts.tsv" --roles "$model/roles.tsv" --operation add --host lab-web.lab.invalid --record 'lab-web.lab.invalid	192.0.2.50	unix	web	lab	web' --apply > "$lab/add"
 "$root/bin/sasd-host-admin" --input "$model/hosts.tsv" --roles "$model/roles.tsv" --operation update --host cfg.lab.invalid --record 'cfg.lab.invalid	192.0.2.42	unix	web	lab	web' --apply > "$lab/update"
@@ -33,21 +35,45 @@ echo 'A lifecycle add/update/disable/remove/history: PASS'
 "$root/bin/sasd-config-bigbrother" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/bb-hosts"
 "$root/bin/sasd-config-bigsister" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/bigsister.cfg"
 grep -q 'lab-web.lab.invalid' "$out/bb-hosts"
-! grep -q 'web.lab.invalid' "$out/bb-hosts"
-! grep -q 'mail.lab.invalid' "$out/bb-hosts"
+if awk '$2 == "web.lab.invalid" || $2 == "mail.lab.invalid" { found=1 } END { exit found ? 0 : 1 }' "$out/bb-hosts"; then
+    echo 'disabled or removed host emitted by Big Brother adapter' >&2; exit 1
+fi
 echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister): PASS'
+
+deploy_stage=$lab/deploy-stage
+deploy_target=$lab/deploy-target
+deploy_plan=$lab/deploy.plan
+"$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --prepare > "$lab/deploy-prepare"
+"$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --dry-run > "$lab/deploy-dry-run"
+grep -q 'changes=7 status=DRY-RUN' "$lab/deploy-dry-run"
+"$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --apply > "$lab/deploy-apply"
+"$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --dry-run > "$lab/deploy-repeat"
+grep -q 'changes=0 status=DRY-RUN' "$lab/deploy-repeat"
+test -f "$deploy_target/bigsister/bb-display.cfg"
+test -f "$deploy_target/bigsister/uxmon-net"
+echo 'B controlled staging, dry-run, apply and repeat: PASS'
 
 "$root/bin/sasd-monitor-mrtg" --config "$model/monitoring.conf" --host-state "$model/hosts.tsv.state" --out "$out/mrtg.cfg" --force > "$lab/mrtg"
 "$root/install/install-monitoring-server.sh" --prefix "$server" --config "$root/site/monitoring.conf" --apply > "$lab/install"
 cp "$model/hosts.tsv" "$model/roles.tsv" "$model/checks.tsv" "$server/etc/"
-sed -i 's#inventory=hosts.tsv#inventory=hosts.tsv#; s#roles=roles.tsv#roles=roles.tsv#; s#checks=checks.tsv#checks=checks.tsv#' "$server/etc/sasd-monitor.conf"
+cp "$model/hosts.tsv.state" "$server/etc/hosts.tsv.state"
 "$server/bin/sasd-monitor-config" --config "$server/etc/sasd-monitor.conf" --check > "$lab/monitor-config"
+grep -q 'web.lab.invalid.*disabled' "$server/etc/hosts.tsv.state"
+grep -q 'mail.lab.invalid.*removed' "$server/etc/hosts.tsv.state"
 echo 'B/C SASD monitoring candidate and disposable server: PASS'
 
 printf 'lab-web.lab.invalid\tdisk\tgreen\tinitial healthy\n' > "$lab/green.tsv"
 "$server/bin/sasd-monitor-import" --config "$server/etc/sasd-monitor.conf" --input "$lab/green.tsv" --received-at 1000 --source sasd > "$lab/import-green"
 "$server/bin/sasd-monitor-cycle" --config "$server/etc/sasd-monitor.conf" --now 1001 > "$lab/cycle-green"
 grep -q 'lab-web.lab.invalid.*disk.*green' "$server/var/status/state.tsv"
+printf 'lab-web.lab.invalid\tdisk\tyellow\tdegraded\n' > "$lab/disk-yellow.tsv"
+"$server/bin/sasd-monitor-import" --config "$server/etc/sasd-monitor.conf" --input "$lab/disk-yellow.tsv" --received-at 1005 --source sasd > "$lab/import-disk-yellow"
+"$server/bin/sasd-monitor-cycle" --config "$server/etc/sasd-monitor.conf" --now 1006 > "$lab/cycle-disk-yellow"
+grep -q 'lab-web.lab.invalid.*disk.*yellow' "$server/var/status/state.tsv"
+printf 'lab-web.lab.invalid\tdisk\tred\tfull\n' > "$lab/disk-red.tsv"
+"$server/bin/sasd-monitor-import" --config "$server/etc/sasd-monitor.conf" --input "$lab/disk-red.tsv" --received-at 1010 --source sasd > "$lab/import-disk-red"
+"$server/bin/sasd-monitor-cycle" --config "$server/etc/sasd-monitor.conf" --now 1011 > "$lab/cycle-disk-red"
+grep -q 'lab-web.lab.invalid.*disk.*red' "$server/var/status/state.tsv"
 
 printf 'status lab-web.lab.invalid.http yellow (1010) slow response\n' > "$lab/bb-input"
 "$root/bin/sasd-status-import-bigbrother" --input "$lab/bb-input" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" > "$lab/bb-status"
@@ -77,7 +103,7 @@ if printf 'unknown.lab.invalid\tdisk\tgreen\tbad\n' | "$server/bin/sasd-monitor-
 fi
 "$server/bin/sasd-monitor-report" --config "$server/etc/sasd-monitor.conf" --out "$lab/report.html"
 grep -q 'lab-web.lab.invalid' "$lab/report.html"
-echo 'C monitoring normal/warning/critical/missing/recovery/conflict/unknown: PASS'
+echo 'C monitoring green/yellow/red/missing/recovery/conflict/unknown: PASS'
 echo 'D static administrator report: PASS'
 echo 'E native product daemons, network boot, and production deployment: SKIPPED'
 echo "artifacts=$out report=$lab/report.html"

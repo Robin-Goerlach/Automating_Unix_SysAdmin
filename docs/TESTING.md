@@ -53,6 +53,8 @@ Checkpoint B's `site-test` target exercises inventory and service selection. The
 
 R2 categories are separate: offline `make test` is required; an optional integration run may use an explicitly selected `cfagent` in a disposable directory; historical acceptance remains open until CFEngine 1 is exercised on a documented period OS with provenance, checksum, command, output and cleanup evidence.
 
+`tests/deployment.sh` exercises controlled multi-product staging, split Big Sister outputs, manifest/checksum validation, dry-run, explicit apply, unchanged repeat, tampered staging rejection and simulated partial-failure rollback. The integrated laboratory runs the same sequence in its shared lifecycle model. Native daemons and network distribution remain `SKIPPED`.
+
 ## Compatibility matrix
 
 The current evidence is deliberately narrow. The WSL development host runs Perl 5.36.0 and a contemporary POSIX shell; `make test` is the CI-style offline evidence for that environment. The source uses post-5.004 Perl syntax in some utilities (including defined-or and substitution-return forms), so Perl 5.004 is not a supported claim. No historical Unix or alternate Perl release is claimed until a named binary and operating-system run is archived.

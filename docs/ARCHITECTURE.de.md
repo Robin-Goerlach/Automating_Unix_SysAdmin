@@ -78,3 +78,5 @@ Es gibt keinen Listener und keinen beliebigen Remote-Befehl. M2 verwendet `ssh-k
 Die klassische Installation kann später `/usr/local/sasd` verwenden; der aktuelle Installer schreibt nur in ein ausdrücklich angegebenes Laborpräfix und nicht nach `/etc` oder `/usr/local`.
 
 M5 ergänzt einen unabhängig nutzbaren Dateisystem-Archivpfad: `golden-audit` untersucht einen ausgewählten Referenzbaum; `golden-capture` erzeugt `archives/`, `manifests/` und `checksums/`; `golden-catalog --verify` prüft das aufgezeichnete Artefakt; und `golden-restore` extrahiert nur in ein neues Wegwerfverzeichnis. Das Archiv ist weder Raw-Datenträgerabbild noch bootfähige Installation. Private Identitäten, temporäre Laufzeitbäume und Pseudodateisysteme werden ausgeschlossen; Blockgeräte und Mountpoints gehören nicht zur Schnittstelle.
+
+`sasd-config-deploy` ergänzt einen begrenzten Manifest-/Plan-/Apply-Ablauf für Review-Kandidaten in einem Wegwerfpräfix. Es ist weder ein nativer Produktparser noch ein Netzwerkverteiler.

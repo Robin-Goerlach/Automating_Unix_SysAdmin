@@ -8,7 +8,7 @@ use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_roles read_host_records read_host_state read_checks read_services
     atomic_write ensure_dir paths_conflict);
 
-my ($hosts, $roles, $checks, $services, $state, $out, $force) = ('','','','','','',0);
+my ($hosts, $roles, $checks, $services, $state, $out, $display_out, $network_out, $force) = ('','','','','','','','',0);
 my $state_explicit = 0;
 while (@ARGV) {
     my $a = shift @ARGV;
@@ -18,9 +18,11 @@ while (@ARGV) {
     elsif ($a eq '--services') { $services = shift @ARGV; }
     elsif ($a eq '--state') { $state = shift @ARGV; $state_explicit = 1; }
     elsif ($a eq '--out') { $out = shift @ARGV; }
+    elsif ($a eq '--display-out') { $display_out = shift @ARGV; }
+    elsif ($a eq '--network-out') { $network_out = shift @ARGV; }
     elsif ($a eq '--force') { $force = 1; }
     elsif ($a eq '--help') {
-        print "usage: sasd-config-bigsister --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--out FILE --force]\n";
+        print "usage: sasd-config-bigsister --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--out FILE | --display-out FILE --network-out FILE --force]\n";
         exit 0;
     } else { die "unknown argument: $a\n"; }
 }
@@ -60,6 +62,24 @@ $display .= "%Page sasd SASD\n%table ALL\n";
 $network =~ s/\n\z//;
 my $text = $display . "\n" . $network . "\n";
 
+if ($out ne '' && ($display_out ne '' || $network_out ne '')) {
+    die "--out cannot be combined with split outputs\n";
+}
+if ($display_out ne '' || $network_out ne '') {
+    $display_out ne '' && $network_out ne '' or die "both split Big Sister outputs are required\n";
+    my %outputs = ($display_out => $display, $network_out => $network);
+    for my $path (keys %outputs) {
+        -e $path && !$force and die "output exists; use --force explicitly\n";
+        for my $input ($hosts, $roles, $checks, $services, $state) {
+            paths_conflict($path, $input) and die "output path overlaps an input file\n";
+        }
+        my (undef, $directory) = File::Spec->splitpath($path);
+        ensure_dir($directory, 0750) if length $directory;
+        atomic_write($path, $outputs{$path}, 0640);
+    }
+    print "display=$display_out network=$network_out hosts=", scalar(keys %$host_records), " status=APPLIED\n";
+    exit 0;
+}
 if ($out eq '') { print $text; exit 0; }
 -e $out && !$force and die "output exists; use --force explicitly\n";
 for my $input ($hosts, $roles, $checks, $services, $state) {
