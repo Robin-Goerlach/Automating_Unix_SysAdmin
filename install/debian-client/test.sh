@@ -74,5 +74,6 @@ sh "$here/test-network.sh"
 sh "$here/test-directory.sh"
 sh "$here/test-recovery-plan.sh"
 sh "$here/test-operations.sh"
+sh "$here/test-banner.sh"
 sh "$here/test-archive.sh"
 echo 'Offline Debian candidate tests passed'

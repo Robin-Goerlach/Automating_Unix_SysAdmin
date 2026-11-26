@@ -38,6 +38,8 @@ rc=0; run --dryrun > "$aux/out" 2>&1 || rc=$?; [ "$rc" -eq 2 ]
 mkdir -p "$aux/copy/install" "$aux/copy/bin"
 cp -R "$here" "$aux/copy/install/debian-client"
 cp "$here/../../bin/sasd-site-inventory" "$aux/copy/bin/"
+mkdir -p "$aux/copy/lib/SASD"
+cp "$here/../../lib/SASD/Monitor.pm" "$aux/copy/lib/SASD/"
 printf '0040\t0010\tverified\n' >> "$aux/copy/install/debian-client/dependencies.tsv"
 rc=0; "$aux/copy/install/debian-client/install-client.sh" --fixture-apply --root="$root" --hostname=node.lab.invalid --site="$aux/site" --inventory="$aux/hosts" --roles="$aux/roles" > "$aux/out" 2>&1 || rc=$?
 [ "$rc" -eq 2 ]; grep -q 'baseline dependency contract changed' "$aux/out"
