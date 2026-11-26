@@ -150,6 +150,17 @@ ROTATE
         snmppolicy) printf '%s\n' 'scope	policy' 'agent	KEEP_DISABLED_UNLESS_APPROVED' 'transport	REVIEW_SNMPV3_AUTHPRIV' 'credentials	EXTERNAL_PRIVATE_CONFIGURATION' 'access	EXPLICIT_MANAGER_SCOPE' ;;
         monitpolicy) printf '%s\n' 'scope	policy' 'configuration	KEEP_AND_REVIEW' 'checks	OBSERVE_ONLY_INITIAL_POLICY' 'restart	NO_AUTOMATIC_REMEDIATION' 'listener	NO_NEW_LISTENER' ;;
         monitorenroll) printf '%s\n' 'scope	policy' 'big-sister	NO_UNREVIEWED_LEGACY_AGENT' 'sasd-monitoring	REUSE_M2_ENROLLMENT' 'identity	UNIQUE_OPERATOR_APPROVED' 'transport	SEPARATE_AUTHENTICATED_ACCEPTANCE' ;;
+        dnsverify) printf '%s\n' 'check	policy' 'direct-dns	USE_VERIFY_DNS_PER_SERVER' 'nss	VERIFY_EXPECTED_ADDRESS' 'result	NO_SYNTHETIC_VERIFICATION' ;;
+        essentialhosts) printf '%s\n' 'path	policy' '/etc/hosts	PRESERVE_AND_REVIEW' 'additional-hosts	EXPLICIT_SITE_RECORDS_REQUIRED' 'aliases	REVIEW_CONFLICTS' ;;
+        proxypolicy) printf '%s\n' 'scope	policy' 'environment	KEEP_AND_REVIEW' 'apt-proxy	EXPLICIT_PRIVATE_SITE_POLICY' 'credentials	NEVER_STORE_IN_REPOSITORY' 'bypass	REVIEW_LOCAL_SERVICES' ;;
+        wlanpolicy) printf '%s\n' 'scope	policy' 'wlan	EXPLICIT_DEVICE_AND_BACKEND_REVIEW' 'credentials	PRIVATE_OPERATOR_INPUT_ONLY' 'network-manager	KEEP_EXISTING_OWNER' ;;
+        networkpolicy) printf '%s\n' 'scope	policy' 'address	R2_EXPECTED_IPV4' 'gateway	EXPLICIT_SITE_INPUT' 'backend	ONE_REVIEWED_NETWORK_OWNER' 'ipv6	KEEP_AND_REVIEW' ;;
+        networkactivate) printf '%s\n' 'gate	policy' 'console	VERIFIED_OUT_OF_BAND_ACCESS' 'rollback	VERIFIED_LAB_SNAPSHOT' 'activation	EXPLICIT_OPERATOR_LAB_TEST' ;;
+        firewallfirst) printf '%s\n' 'scope	policy' 'backend	ONE_REVIEWED_FIREWALL_OWNER' 'inbound	REVIEW_DEFAULT_DENY' 'outbound	REVIEW_REQUIRED_SERVICES' 'management	PRESERVE_VERIFIED_ACCESS' 'ipv6	REVIEW_SEPARATELY' ;;
+        firewallverify) printf '%s\n' 'check	policy' 'effective-rules	OPERATOR_LAB_CAPTURE' 'management	POSITIVE_ACCESS_TEST' 'denied-traffic	NEGATIVE_LAB_TEST' 'rollback	REHEARSE_BEFORE_ACTIVATION' ;;
+        aptpolicy) printf '%s\n' 'scope	policy' 'sources	REVIEW_RELEASE_PINNED_DEB822' 'archive-keyring	VERIFY_DISTRIBUTION_PACKAGE' 'existing-sources	KEEP_AND_REVIEW' 'third-party	EXPLICIT_REVIEW' ;;
+        aptupdate) printf '%s\n' 'scope	policy' 'metadata	EXPLICIT_LAB_REFRESH' 'upgrade	REVIEW_SIMULATION_AND_REBOOT' 'removals	NO_AUTOMATIC_APPROVAL' ;;
+        firewallfinal) printf '%s\n' 'scope	policy' 'rules	REVIEW_ROLE_AND_SERVICE_POLICY' 'management	VERIFY_EXISTING_ACCESS' 'activation	LAB_ACCEPTANCE_REQUIRED' 'persist	REVIEW_REBOOT_BEHAVIOR' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;

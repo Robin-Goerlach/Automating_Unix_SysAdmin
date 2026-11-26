@@ -1,12 +1,15 @@
 task	prerequisite	evidence
 0020	0010	verified
 0040	0030	candidate
+0050	0040	candidate
 0240	0230	verified
+0250	0240	verified
 0260	0250	verified
 0280	0270	verified
 0330	0320	verified
 0360	0200	verified
 0360	0350	verified
+0370	0020	verified
 0390	0190	verified
 0400	0250	verified
 0410	0200	verified
