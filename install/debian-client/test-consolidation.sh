@@ -11,8 +11,8 @@ m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 rows=m.coverage()
 assert len(rows)==116
 assert collections.Counter(r[4] for r in rows)=={
-    'EXPERIMENTAL_BASELINE':3,'CONFIG_FIXTURE':22,'STATE_MODEL':4,'POLICY_RECORD':3,
-    'VERIFY_ONLY':15,'CANDIDATE_ONLY':42,'CENTRAL':11,'MANUAL':16}
+    'EXPERIMENTAL_BASELINE':3,'CONFIG_FIXTURE':23,'STATE_MODEL':4,'POLICY_RECORD':4,
+    'VERIFY_ONLY':16,'CANDIDATE_ONLY':39,'CENTRAL':11,'MANUAL':16}
 assert all(r[-1]=='NOT_CERTIFIED' for r in rows)
 assert sum(e.endswith(':verified') for r in rows for e in r[-2].split(','))==54
 assert sum(e.endswith(':candidate') for r in rows for e in r[-2].split(','))==3

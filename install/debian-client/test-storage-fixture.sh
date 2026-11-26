@@ -16,7 +16,9 @@ stages=pkg.select_profile(pkg.candidates(here/'package-policy.tsv'),here/'packag
 base='# distribution comment\nUUID=root / ext4 defaults 0 1\nUUID=home\t/home ext4 defaults  0 2\nUUID=var /var ext4 defaults 0 2\n/swap none swap sw 0 0\n'
 shares='name\tserver\texport\tmode\nprojects\tfiles.lab.invalid\t/export/projects\tmanual\ninstall\tfiles.lab.invalid\t/export/install\ton-demand\n'
 value={'fstab':base,'mountinfo':'1 0 8:1 / / rw - ext4 /dev/fake rw\n',
-       'autofs_targets':['/net'],'harden':['/home','/var'],'shares':shares}
+       'autofs_targets':['/net'],'harden':['/home','/var'],'shares':shares,
+       'mountpoints':{p:{'kind':'directory','uid':0,'gid':0,'mode':0o755,'empty':p.count('/')==3}
+                      for p in ('/mnt','/mnt/sasd','/mnt/sasd/projects','/mnt/sasd/install')}}
 desired=m.model(value,stages,planner)
 assert b'UUID=home\t/home ext4 defaults,nodev,nosuid,noexec  0 2\n' in desired
 assert b'UUID=var /var ext4 defaults,nodev,nosuid 0 2\n' in desired
@@ -46,6 +48,11 @@ reject(lambda v:v['autofs_targets'].append('/mnt/sasd'))
 reject(lambda v:v['autofs_targets'].append('/home/child'))
 reject(lambda v:v.update(shares=shares.replace('manual','rw')))
 reject(lambda v:None,{'1':[],'2':[]})
+reject(lambda v:v['mountpoints'].pop('/mnt/sasd/projects'))
+reject(lambda v:v['mountpoints']['/mnt/sasd/projects'].update(empty=False))
+reject(lambda v:v['mountpoints']['/mnt/sasd'].update(kind='symlink'))
+reject(lambda v:v['mountpoints']['/mnt'].update(uid=1000))
+reject(lambda v:v['mountpoints']['/mnt/sasd/install'].update(mode=0o777))
 repeat=dict(value,fstab=desired.decode('ascii'))
 assert m.model(repeat,stages,planner)==desired
 with tempfile.TemporaryDirectory(prefix=m.PREFIX+'.',dir='/tmp') as name, tempfile.TemporaryDirectory() as aux:

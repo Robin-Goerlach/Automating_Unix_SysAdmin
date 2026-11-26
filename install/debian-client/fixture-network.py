@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import tempfile
 
 HERE = Path(__file__).resolve().parent
 FORMAT = 'SASD-NETWORK-FIXTURE-1'
@@ -17,7 +18,7 @@ LABEL = 'NETWORK'
 DIRECTORIES = ('apt', 'apt/sources.list.d', 'apt/apt.conf.d', 'sasd-network')
 PROFILES = ('baseline', 'workstation', 'laptop', 'server')
 NAMES = ('hosts', 'apt/sources.list.d/sasd-debian.sources',
-         'apt/apt.conf.d/60-sasd-proxy', 'sasd-network/firewall-policy.json')
+         'apt/apt.conf.d/60-sasd-proxy', 'sasd-network/firewall-policy.json', 'resolv.conf')
 
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('fixture_config', HERE / 'fixture-config.py')
@@ -156,8 +157,77 @@ def firewall(original, choice, profile, packages, network, expected, tx):
     return output
 
 
+def resolver(original, choice, host, tx):
+    """Reuse task 0370 and the baseline site renderer; no resolver activation."""
+    if choice is None:
+        return original
+    if (not isinstance(choice, dict) or set(choice) != {'owners','dns1','dns2','search'} or
+            choice['owners'] != ['static'] or
+            any(not isinstance(choice[k], str) for k in ('dns1','search')) or
+            (choice['dns2'] is not None and not isinstance(choice['dns2'], str))):
+        raise ValueError('explicit static resolver ownership required')
+    servers = [choice['dns1']] + ([choice['dns2']] if choice['dns2'] is not None else [])
+    if len(set(servers)) != len(servers):
+        raise ValueError('duplicate DNS servers')
+    for server in servers:
+        ip = ipaddress.IPv4Address(server)
+        if (str(ip) != server or ip.is_unspecified or ip.is_loopback or ip.is_multicast or
+                ip.is_link_local or ip == ipaddress.IPv4Address('255.255.255.255')):
+            raise ValueError('unsupported DNS address')
+    domain = choice['search']
+    if not re.fullmatch(r'[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])?', domain):
+        raise ValueError('invalid search domain')
+    # The canonical renderer also validates labels, length and site syntax.
+    with tempfile.TemporaryDirectory(prefix='sasd-resolver-site.') as tmp:
+        site = Path(tmp) / 'site.conf'
+        site.write_text('dns1='+servers[0]+'\n'+
+                        ('dns2='+servers[1]+'\n' if len(servers)==2 else '')+
+                        'search='+domain+'\n', encoding='ascii')
+        rendered = tx.command('/bin/sh', str(HERE/'tasks/0370_DNS_Resolver_Final'),
+                              '--hostname='+host, '--site='+str(site), '--render').decode('ascii')
+    expected = ''.join('nameserver '+ip+'\n' for ip in servers)+'search '+domain+'\n'
+    if rendered != expected:
+        raise ValueError('unexpected final resolver renderer')
+    # Preserve comments, blank lines and the narrow reviewed options subset.
+    # Reject ambiguous original directives rather than normalize an unknown file.
+    keep = []
+    seen = set()
+    search_seen = False
+    options_seen = False
+    for line in original.splitlines(keepends=True):
+        body = line.strip()
+        if not body or body.startswith('#') or body.startswith(';'):
+            keep.append(line)
+            continue
+        fields = body.split()
+        if fields[0] == 'nameserver':
+            if len(fields)!=2:
+                raise ValueError('unsupported original nameserver')
+            ip = str(ipaddress.ip_address(fields[1]))
+            if ip in seen:
+                raise ValueError('duplicate original nameserver')
+            seen.add(ip)
+        elif fields[0] in ('search','domain'):
+            if search_seen or len(fields)<2 or (fields[0]=='domain' and len(fields)!=2):
+                raise ValueError('ambiguous original search policy')
+            if any(not re.fullmatch(r'[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?', d)
+                   for d in fields[1:]):
+                raise ValueError('unsupported original domain')
+            search_seen = True
+        elif fields[0]=='options':
+            if (options_seen or len(fields)<2 or len(set(fields[1:]))!=len(fields[1:]) or
+                    any(not re.fullmatch(r'rotate|edns0|trust-ad|timeout:[1-9][0-9]?|attempts:[1-9][0-9]?|ndots:[0-9]{1,2}', v)
+                        for v in fields[1:])):
+                raise ValueError('unsupported original resolver options')
+            options_seen = True
+            keep.append(line)
+        else:
+            raise ValueError('unreviewed original resolver directive')
+    return ''.join(keep)+rendered
+
+
 def model(request, host, profile, stages, context, network, comms, tx):
-    keys = {'original', 'hosts', 'apt', 'proxy', 'firewall'}
+    keys = {'original', 'hosts', 'apt', 'proxy', 'firewall', 'resolver'}
     if not isinstance(request, dict) or set(request) != keys:
         raise ValueError('invalid network request')
     original = request['original']
@@ -171,8 +241,9 @@ def model(request, host, profile, stages, context, network, comms, tx):
         NAMES[1]: apt_source(original[NAMES[1]], request['apt'], network),
         NAMES[2]: apt_proxy(original[NAMES[2]], request['proxy'], comms),
         NAMES[3]: firewall(original[NAMES[3]], request['firewall'], profile, packages, network, expected, tx),
+        NAMES[4]: resolver(original[NAMES[4]], request['resolver'], host, tx),
     }
-    if not request['hosts'] and all(request[k] is None for k in ('apt', 'proxy', 'firewall')):
+    if not request['hosts'] and all(request[k] is None for k in ('apt', 'proxy', 'firewall', 'resolver')):
         raise ValueError('no explicit network operation')
     return {name: text(value).encode('ascii') for name, value in result.items()}
 

@@ -22,7 +22,7 @@ GROUPS = {
     'monitoring': ('MONITORING_HANDOFF_FIXTURE',),
 }
 # These are records, not actual firewall rules or active monitoring.
-RECORDS = {'0250', '0400', '0890'}
+RECORDS = {'0250', '0400', '0890', '0900'}
 MODELS = {'0200', '0300', '0710', '0730'}
 IDS = tuple('%04d' % n for n in range(10, 1161, 10))
 

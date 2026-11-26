@@ -206,3 +206,7 @@ Base 10e540518223083994de6d808d22b319b4fcf06a; CI #63 success. Read-only canonic
 ## M7-D.7d — checkpoint and restart review
 
 Base 263839d15a2b09c5ffbc18488addea15e501c488, CI #64 success. Immutable private checkpoint save and digest-bound resume; selected committed group journals and evidence rechecked, open/blocked/drift/context states, no automatic recovery or execution. Expected 171 archive files, CI pending. No native reboot proof, no independent local suite. Main and feature unchanged, PR #4 dirty, no merge. Next CI then safe backend completion and offline workflow integration.
+
+## M7-D.7e — bounded backend completion
+
+Base 875edb985c532659c703f069089af15e2b592657; CI #65 success. Extend network final resolver 0370 via canonical renderer, storage modeled mountpoint metadata 0350, services reviewed CUPS maintenance schedule record 0900. 34 apply IDs, 16 verify-only, 39 candidate-only, 55 local without apply; 171 archive files expected, 57 edges unchanged. Network/storage request changes require new fixtures; retain old release for recovery. No native execution or dependency promotion. CI pending; main and feature unchanged, PR #4 dirty, no merge. Next CI then further safe coverage or D.7f offline workflow.

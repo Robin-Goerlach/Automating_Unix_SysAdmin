@@ -206,3 +206,7 @@ Basis 10e540518223083994de6d808d22b319b4fcf06a; CI #63 erfolgreich. Nur-Lese-R2-
 ## M7-D.7d — Checkpoint und Wiederanlaufreview
 
 Basis 263839d15a2b09c5ffbc18488addea15e501c488, CI #64 erfolgreich. Unveränderliches privates Checkpoint-Save und digestgebundener Resume; ausgewählte abgeschlossene Gruppenjournale/Evidenz erneut geprüft, offene/blockierte/Drift-/Kontextzustände, keine automatische Recovery/Ausführung. Erwartet 171 Archivdateien, CI ausstehend. Kein nativer Rebootnachweis, kein unabhängiger Gesamttest. main und Feature unverändert, PR #4 dirty, kein Merge. Nächster Schritt CI, dann sichere Backendvervollständigung und Offline-Ablaufintegration.
+
+## M7-D.7e — begrenzte Backendvervollständigung
+
+Basis 875edb985c532659c703f069089af15e2b592657; CI #65 erfolgreich. Netzwerk finaler Resolver 0370 über kanonischen Renderer, Storage modellierte Mountpoint-Metadaten 0350, Services geprüfter CUPS-Wartungszeitplan-Datensatz 0900 ergänzt. 34 Apply-IDs, 16 Verify-only, 39 Candidate-only, 55 lokale ohne Apply; erwartet 171 Archivdateien, 57 Kanten unverändert. Netzwerk-/Storage-Requeständerungen verlangen neue Fixtures; altes Release für Recovery behalten. Keine native Ausführung/Promotion. CI ausstehend; main und Feature unverändert, PR #4 dirty, kein Merge. Nächster Schritt CI, dann weitere sichere Abdeckung oder D.7f Offline-Ablauf.

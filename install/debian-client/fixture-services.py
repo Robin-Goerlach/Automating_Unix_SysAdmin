@@ -17,7 +17,7 @@ DIRECTORIES = ()
 PROFILES = ('baseline', 'workstation', 'laptop', 'server')
 NAMES = ('service-state.json', 'schedule-selection.json')
 REUSE = {'aide': 'aide', 'rkhunter': 'rkhunter', 'chkrootkit': 'chkrootkit',
-         'logwatch': 'logwatch'}
+         'logwatch': 'logwatch', 'cups-cleanup': 'cups'}
 UNIT = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,120}\.service')
 JOB = re.compile(r'[a-z][a-z0-9-]{0,63}')
 SOURCE = re.compile(r'(?:cron|timer):[A-Za-z0-9][A-Za-z0-9_.-]{0,120}')
@@ -57,7 +57,7 @@ def checked_list(value, pattern, limit=128):
 def model(value, profile, policy):
     """Apply only explicit synthetic transitions; adopt only existing active schedules."""
     keys = {'installed', 'units', 'actions', 'schedules', 'selection', 'adopt'}
-    if not isinstance(value, dict) or set(value) != keys:
+    if not isinstance(value, dict) or set(value) not in (keys, keys | {'cups_maintenance'}):
         raise ValueError('invalid service fixture fields')
     installed = checked_list(value['installed'], re.compile(r'[a-z0-9][a-z0-9+.-]{1,127}'), 256)
     units = value['units']
@@ -106,6 +106,16 @@ def model(value, profile, policy):
     if not isinstance(previous, dict) or len(previous) > len(REUSE):
         raise ValueError('invalid previous selection')
     selected = dict(previous)
+    cups = value.get('cups_maintenance')
+    if ('cups-cleanup' in set(previous) | adopt) != (cups is not None):
+        raise ValueError('explicit CUPS maintenance review required')
+    if cups is not None:
+        if (not isinstance(cups, dict) or set(cups) != {'source','distribution_reviewed','pending_jobs_preserved','retention_reviewed'} or
+                not isinstance(cups['source'], str) or not SOURCE.fullmatch(cups['source']) or
+                any(cups[k] is not True for k in ('distribution_reviewed','pending_jobs_preserved','retention_reviewed')) or
+                profile not in ('workstation','laptop') or desired.get('cups.service') != ['loaded','active','enabled'] or
+                active_sources.get('cups-cleanup') != cups['source']):
+            raise ValueError('unsupported CUPS maintenance observation')
     for job in set(previous) | adopt:
         if (job not in REUSE or REUSE[job] not in installed or
                 (job == 'logwatch' and profile != 'server') or job not in active_sources):

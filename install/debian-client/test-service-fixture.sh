@@ -47,6 +47,24 @@ def missing_cron(v):
 reject(missing_cron)
 reject(lambda v:None,'laptop',m.policies(host,'laptop',tx))
 reject(lambda v:None,'workstation',m.policies(host,'workstation',tx))
+printing={'installed':['cups','cron'],'units':{'cups.service':on,'cron.service':on},'actions':{},
+          'schedules':[['cups-cleanup','timer:reviewed-cups.timer',True]],'selection':{},'adopt':['cups-cleanup'],
+          'cups_maintenance':{'source':'timer:reviewed-cups.timer','distribution_reviewed':True,
+                              'pending_jobs_preserved':True,'retention_reviewed':True}}
+assert m.model(printing,'workstation',m.policies(host,'workstation',tx))[1]=={'cups-cleanup':'timer:reviewed-cups.timer'}
+for change in (lambda v:v.pop('cups_maintenance'),
+               lambda v:v['cups_maintenance'].update(pending_jobs_preserved=False),
+               lambda v:v['cups_maintenance'].update(source='timer:other.timer'),
+               lambda v:v['units'].update({'cups.service':off}),
+               lambda v:v['installed'].remove('cups'),
+               lambda v:v['schedules'].append(['cups-cleanup','cron:duplicate',True])):
+    bad=deepcopy(printing);change(bad)
+    try: m.model(bad,'workstation',m.policies(host,'workstation',tx))
+    except ValueError: pass
+    else: raise AssertionError('unsafe CUPS maintenance accepted')
+try: m.model(printing,'server',policy)
+except ValueError: pass
+else: raise AssertionError('server CUPS maintenance accepted')
 with tempfile.TemporaryDirectory(prefix=m.PREFIX+'.',dir='/tmp') as name, tempfile.TemporaryDirectory() as aux:
     root=pathlib.Path(name); p=pathlib.Path(aux); etc=root/'etc'; store=root/'transactions'
     etc.mkdir(mode=0o700); store.mkdir(mode=0o700)
@@ -99,5 +117,30 @@ with tempfile.TemporaryDirectory(prefix=m.PREFIX+'.',dir='/tmp') as name, tempfi
     request.unlink(); request.symlink_to(keep)
     assert run('--review').returncode==2
     assert subprocess.run([*cmd,'--root=/','--review'],capture_output=True).returncode==2
+with tempfile.TemporaryDirectory(prefix=m.PREFIX+'.',dir='/tmp') as name, tempfile.TemporaryDirectory() as aux:
+    root=pathlib.Path(name);p=pathlib.Path(aux);etc=root/'etc';store=root/'transactions'
+    etc.mkdir(mode=0o700);store.mkdir(mode=0o700)
+    mark=root/m.MARKER;mark.write_text(m.FORMAT+'\n');mark.chmod(0o600)
+    for n,state in zip(m.NAMES,(printing['units'],printing['selection'])):
+        (etc/n).write_bytes(tx.encoded(state));(etc/n).chmod(0o644)
+    spool=etc/'pending-jobs';spool.write_text('synthetic pending job\n')
+    request=root/'request.json';request.write_bytes(tx.encoded(printing));request.chmod(0o600)
+    inv=p/'hosts';roles=p/'roles';ref=p/'reference'
+    inv.write_text(host+'\t192.0.2.40\tdebian\tworkstation\t\tworkstation\n')
+    roles.write_text('workstation\tsite_workstation\tmodern\troles/workstation.tsv\n')
+    cmd=['/bin/sh',str(here/'install-client.sh'),'--fixture-group=services','--root='+name,
+         '--hostname='+host,'--inventory='+str(inv),'--roles='+str(roles)]
+    r=subprocess.run([*cmd,'--review'],capture_output=True);assert r.returncode==0,r.stderr
+    ref.write_bytes(r.stdout);ref.chmod(0o600)
+    opt='--reference='+str(ref)
+    r=subprocess.run([*cmd,'--apply-fixture',opt],capture_output=True);assert r.returncode==0,r.stderr
+    assert json.loads((etc/m.NAMES[1]).read_bytes())=={'cups-cleanup':'timer:reviewed-cups.timer'}
+    assert spool.read_text()=='synthetic pending job\n'
+    journal=next(store.iterdir())
+    r=subprocess.run([str(here/'fixture-services.py'), '--root='+name,'--hostname='+host,
+                      '--inventory='+str(inv),'--roles='+str(roles),opt,'--evidence='+journal.name],
+                     capture_output=True)
+    assert r.returncode==0,r.stderr
+    assert json.loads(r.stdout)['native-verification']=='NOT_VERIFIED'
 print('Service fixture transitions, schedule reuse and recovery tests passed')
 PY

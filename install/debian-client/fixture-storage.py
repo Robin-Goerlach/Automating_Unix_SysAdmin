@@ -55,13 +55,27 @@ def path_key(path):
     return path
 
 
+def mountpoint_review(shares, capture):
+    """Model explicit root-owned, safe directories; never create or inspect live mounts."""
+    expected = {'/mnt', '/mnt/sasd'} | {'/mnt/sasd/'+row[0] for row in shares} if shares else set()
+    if not isinstance(capture, dict) or set(capture) != expected:
+        raise ValueError('complete mountpoint metadata capture required')
+    for path, info in capture.items():
+        if (not isinstance(info, dict) or set(info) != {'kind','uid','gid','mode','empty'} or
+                info['kind'] != 'directory' or type(info['uid']) is not int or info['uid'] != 0 or
+                type(info['gid']) is not int or info['gid'] != 0 or
+                type(info['mode']) is not int or info['mode'] not in (0o755,0o555) or
+                type(info['empty']) is not bool or (path.count('/')==3 and not info['empty'])):
+            raise ValueError('unsafe modeled mountpoint metadata')
+
+
 def model(request, stages, planner):
     """Preserve original lines; append only explicit reviewed safe candidates.
 
     Captures are synthetic and must be complete for this model. No runtime
     observation, filesystem probing, native mount parsing or authorization.
     """
-    fields = {'fstab', 'mountinfo', 'autofs_targets', 'harden', 'shares'}
+    fields = {'fstab', 'mountinfo', 'autofs_targets', 'harden', 'shares', 'mountpoints'}
     if not isinstance(request, dict) or set(request) != fields:
         raise ValueError('invalid storage request fields')
     original = checked_text(request['fstab'])
@@ -117,6 +131,7 @@ def model(request, stages, planner):
         output.append(line[:start] + ','.join(new) + line[end:])
     share_text = checked_text(request['shares'])
     shares = planner.share_rows(share_text) if share_text else []
+    mountpoint_review(shares, request['mountpoints'])
     if shares and not any('nfs-common' in names for names in stages.values()):
         raise ValueError('NFS not selected by package profile')
     for row in shares:
@@ -148,7 +163,8 @@ def prepare(root, host, profile, stages, tx, context):
     result = model(request, stages, engine.load('plan-storage'))
     original = {'fstab': {'data': request['fstab'].encode('ascii').hex(), 'mode': 0o644}}
     binding = {'request-sha256': hashlib.sha256(data).hexdigest(),
-               'harden-count': len(request['harden'])}
+               'harden-count': len(request['harden']),
+               'mountpoint-review-count': len(request['mountpoints'])}
     return binding, original, {'fstab': result}
 
 

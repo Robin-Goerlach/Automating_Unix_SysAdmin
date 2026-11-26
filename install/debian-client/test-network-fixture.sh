@@ -14,10 +14,12 @@ tx=m.engine.transaction(m.NAMES); network=m.engine.load('plan-network')
 comms=m.engine.load('plan-communications'); pkg=m.engine.load('plan-packages')
 host='node.lab.invalid'
 old={m.NAMES[0]:'# distribution\n127.0.0.1 localhost\n127.0.1.1 node.lab.invalid node\n::1 ip6-localhost\n',
-     m.NAMES[1]:'',m.NAMES[2]:'',m.NAMES[3]:''}
+     m.NAMES[1]:'',m.NAMES[2]:'',m.NAMES[3]:'',
+     m.NAMES[4]:'# preserve\nnameserver 192.0.2.53\noptions timeout:2\nsearch old.invalid\n'}
 value={'original':old,'hosts':[['files.lab.invalid','192.0.2.50']],
        'apt':{'release':'12','keyring_present':True,'other_sources':{'sources.list':'# disabled fixture\n'}},
        'proxy':{'host':'proxy.lab.invalid','port':3128},
+       'resolver':{'owners':['static'],'dns1':'192.0.2.54','dns2':'192.0.2.55','search':'lab.invalid'},
        'firewall':{'phase':'stage1','owners':['nftables'],'addresses':[{'ifname':'eth0','flags':['UP'],
        'addr_info':[{'family':'inet','local':'192.0.2.40','prefixlen':24,'scope':'global'}]}],
        'routes':[{'dst':'default','gateway':'192.0.2.1','dev':'eth0'}],
@@ -29,7 +31,7 @@ with tempfile.TemporaryDirectory(prefix=m.PREFIX+'.',dir='/tmp') as name, tempfi
     marker=root/m.MARKER; marker.write_text(m.FORMAT+'\n'); marker.chmod(0o600)
     for n,data in old.items():
         (etc/n).write_text(data); (etc/n).chmod(0o644)
-    keep={'resolv.conf':'nameserver 192.0.2.53\n','nftables.conf':'# existing firewall\n',
+    keep={'nftables.conf':'# existing firewall\n',
           'apt/sources.list':'# disabled fixture\n'}
     for n,data in keep.items(): (etc/n).write_text(data)
     inv=p/'hosts'; roles=p/'roles'; ref=p/'reference'
@@ -42,6 +44,7 @@ with tempfile.TemporaryDirectory(prefix=m.PREFIX+'.',dir='/tmp') as name, tempfi
     assert desired[m.NAMES[0]]==old[m.NAMES[0]].encode()+b'192.0.2.50\tfiles.lab.invalid\n'
     assert desired[m.NAMES[1]]==network.apt_candidate('12').encode()
     assert b'Acquire::https::Proxy "http://proxy.lab.invalid:3128/";' in desired[m.NAMES[2]]
+    assert desired[m.NAMES[4]]==b'# preserve\noptions timeout:2\nnameserver 192.0.2.54\nnameserver 192.0.2.55\nsearch lab.invalid\n'
     policy=json.loads(desired[m.NAMES[3]])
     assert policy['activation']=='NOT_AUTHORIZED' and policy['ipv6']=='KEEP_AND_REVIEW'
     assert policy['management_cidr']=='192.0.2.10/32'
@@ -66,6 +69,12 @@ with tempfile.TemporaryDirectory(prefix=m.PREFIX+'.',dir='/tmp') as name, tempfi
     reject(lambda v:None,'workstation')
     reject(lambda v:v['original'].update({m.NAMES[3]:'foreign policy\n'}))
     reject(lambda v:v['firewall'].update(phase='stage2'))
+    reject(lambda v:v['resolver'].update(owners=['static','systemd-resolved']))
+    reject(lambda v:v['resolver'].update(dns1='127.0.0.53'))
+    reject(lambda v:v['resolver'].update(dns2='192.0.2.54'))
+    reject(lambda v:v['resolver'].update(search='lab..invalid'))
+    reject(lambda v:v['original'].update({m.NAMES[4]:'include /tmp/unknown\n'}))
+    reject(lambda v:v['original'].update({m.NAMES[4]:'search old.invalid\ndomain other.invalid\n'}))
     repeat=dict(value,original={n:data.decode('ascii') for n,data in desired.items()})
     assert model(repeat)==desired
     stage2=deepcopy(repeat); stage2['firewall']['phase']='stage2'
@@ -95,7 +104,7 @@ with tempfile.TemporaryDirectory(prefix=m.PREFIX+'.',dir='/tmp') as name, tempfi
     journal=store/'native.1234567890abcdef1234567890abcdef.json'
     tx.journal_write(journal,{'format':'SASD-NATIVE-JOURNAL-1','reference':approved,
                              'original':original,'desired':target},'APPLYING',owner)
-    for n in m.NAMES[:2]: tx.atomic_write(etc/n,desired[n],0o644,owner)
+    for n in (m.NAMES[0],m.NAMES[4]): tx.atomic_write(etc/n,desired[n],0o644,owner)
     assert run('--apply-fixture',opt).returncode==2
     assert run('--recover='+journal.name,opt).returncode==0
     assert tx.snapshot(etc,owner)==original
