@@ -159,3 +159,8 @@ Basis 8d130ed3e660bb7045f2368b47bd9094ca9eefd8, CI #51 45769421070 erfolgreich. 
 ## M7-D.6d — Dienst- und Zeitplan-Wiederverwendungs-Fixture
 
 Basis 31551843c5a9360f15876a40e0b3211b89fb727f; CI 45776928073 erfolgreich. Neues referenzgebundenes Dienstzustands-/Zeitplan-Auswahl-Fixture nutzt Profilpolicies; zwei Apply-fähige Tasks, vier reine Zeitplan-Auswahlprüfungen. Insgesamt zwölf Apply-fähige Tasks, erwartet 161 Archivdateien, 39 staged unverändert. Paketfixture-Vorbereitung akzeptiert Hostnamen ohne Semantikänderung. Quell-/Archivregressionen ergänzt, CI ausstehend; lokaler Git-Checkout DNS-Fehler, kein lokaler Testnachweis. Betreiberlogs nicht erreichbar. Nächster Schritt CI prüfen, dann NFS/Dateisystem/AutoFS-Block. Keine nativen Dienst-, Zeitplan-, Paket- oder Zugriffsänderungen. main und Feature-Branch unverändert, kein Merge.
+
+
+## M7-D.6e — fstab- und NFS-Fixture
+
+Basis 8e47cf674da78e381aaa2ef3bdc7e5ecf2f7dcf8, CI #55 45779454508 erfolgreich. Neues fixture-storage.py nutzt Storage-Parser, NFS-Kandidatengenerator und gemeinsamen Runner; tatsächliche private fstab-Bearbeitung, explizite lokale Härtung und Read-only-NFS-Kandidateneinfügung, Mount-/AutoFS-Konfliktcapture. Zwei zusätzliche Apply-fähige Tasks (nur statische Konfiguration), zwei Review-Einträge; insgesamt 14 Apply, erwartet 162 Archivdateien, 39 staged unverändert. Bestehende AutoFS-Maps unverändert; keine Laufzeitmounts oder native Nachweise. Quell-/Archivregressionen ergänzt, neue CI ausstehend; kein unabhängiger lokaler Gesamttest. Externe Betreiberlogs nicht erreichbar. Nächster Schritt CI, dann SSH/SFTP/Mail-Konfiguration. main und ursprünglicher Feature-Branch unverändert; kein Merge.

@@ -14,7 +14,7 @@ catalog=rows('checklist.tsv'); matrix=rows('capabilities.tsv')
 assert len(matrix)==len(catalog)==116
 assert [(r['id'],r['task']) for r in matrix]==[(r['id'],r['task']) for r in catalog]
 assert Counter(r['artifact'] for r in matrix)=={'CONFIG_TEXT':16,'PACKAGE_LIST':2,'REVIEW_TSV':71,'CENTRAL':11,'MANUAL':16}
-assert [r['id'] for r in matrix if r['apply'] not in ('NOT_IMPLEMENTED','OPERATOR_REQUIRED')]==['0010','0030','0040','0200','0300','0410','0420','0460','0710','0730','0790','0800']
+assert [r['id'] for r in matrix if r['apply'] not in ('NOT_IMPLEMENTED','OPERATOR_REQUIRED')]==['0010','0030','0040','0200','0300','0330','0360','0410','0420','0460','0710','0730','0790','0800']
 if os.geteuid()==0:
     print('Capability coverage passed; fixture transaction SKIPPED: root')
     sys.exit(0)

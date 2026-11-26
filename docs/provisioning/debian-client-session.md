@@ -159,3 +159,8 @@ Base 8d130ed3e660bb7045f2368b47bd9094ca9eefd8, CI #51 45769421070 successful. Sh
 ## M7-D.6d — service and schedule reuse fixture
 
 Base 31551843c5a9360f15876a40e0b3211b89fb727f; CI 45776928073 successful. New reference-bound service-state and schedule-selection fixture reuses profile policies; two apply-capable tasks, four schedule selection checks only. 12 apply-capable tasks total, expected archive 161, 39 staged unchanged. Package fixture preparation accepts hostname without semantic change. Source/archive regressions added, CI pending; local Git checkout DNS failure, no local test claim. Operator logs unavailable. Next verify CI, then NFS/filesystem/AutoFS block. No native service, schedule, package or access modifications. Main and feature branches unchanged, no merge.
+
+
+## M7-D.6e — fstab and NFS fixture
+
+Base 8e47cf674da78e381aaa2ef3bdc7e5ecf2f7dcf8, CI #55 45779454508 success. New fixture-storage.py reuses storage parser, NFS candidate generator and common runner; actual private fstab edit, explicit local hardening and read-only NFS candidate insertion, mount/AutoFS conflict capture. Two additional apply-capable tasks (static configuration only), two review entries; 14 apply total, expected archive 162, 39 staged unchanged. Existing AutoFS maps unchanged; no runtime mounts or native evidence. Source/archive regression tests added, new CI pending; no independent local full-suite result. External operator logs unavailable. Next CI, then SSH/SFTP/mail configuration. Main and original feature branch unchanged; no merge.

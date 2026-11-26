@@ -78,5 +78,6 @@ sh "$here/test-banner.sh"
 sh "$here/test-logging-fixture.sh"
 sh "$here/test-package-fixture.sh"
 sh "$here/test-service-fixture.sh"
+sh "$here/test-storage-fixture.sh"
 sh "$here/test-archive.sh"
 echo 'Offline Debian candidate tests passed'
