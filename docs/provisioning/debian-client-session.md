@@ -164,3 +164,8 @@ Base 31551843c5a9360f15876a40e0b3211b89fb727f; CI 45776928073 successful. New re
 ## M7-D.6e — fstab and NFS fixture
 
 Base 8e47cf674da78e381aaa2ef3bdc7e5ecf2f7dcf8, CI #55 45779454508 success. New fixture-storage.py reuses storage parser, NFS candidate generator and common runner; actual private fstab edit, explicit local hardening and read-only NFS candidate insertion, mount/AutoFS conflict capture. Two additional apply-capable tasks (static configuration only), two review entries; 14 apply total, expected archive 162, 39 staged unchanged. Existing AutoFS maps unchanged; no runtime mounts or native evidence. Source/archive regression tests added, new CI pending; no independent local full-suite result. External operator logs unavailable. Next CI, then SSH/SFTP/mail configuration. Main and original feature branch unchanged; no merge.
+
+
+## M7-D.6f — SSH client and mail fixture
+
+Base 7da14d5b7e2b08dbf2bc6d52955521bfe330087c; CI #56 45781274687 successful. New fixture-communications.py binds literal Ed25519 pins and supplied fingerprints, X11 fragment, bounded alias/main.cf edits and optional SFTP capture. Five static fixture apply tasks, 19 total; SFTP capture only, no SSH server write. Expected archive 163, 39 staged unchanged. Source/archive tests added; CI pending. Local direct checkout DNS failure, no local full-suite result; external operator logs unavailable. Next verify CI, then user/shell environments. No native package, SSH, mail, authentication or service execution; no merge, main and original feature branch unchanged.
