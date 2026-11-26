@@ -23,10 +23,15 @@ task	prerequisite	evidence
 0790	0730	verified
 0800	0030	candidate
 0900	0470	verified
+0920	0510	verified
+0920	0730	verified
 0930	0750	verified
+0940	0730	verified
 0950	0780	verified
 0960	0510	verified
 0960	0800	verified
 0970	0360	verified
+1000	0730	verified
 1030	0440	verified
+1040	1000	verified
 1090	0880	verified

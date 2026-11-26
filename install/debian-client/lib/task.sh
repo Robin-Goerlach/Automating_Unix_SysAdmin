@@ -134,6 +134,16 @@ ROTATE
         hashreview) printf '%s\n' 'setting	policy' 'ENCRYPT_METHOD	REVIEW_YESCRYPT_IF_SUPPORTED' 'pam_unix	VERIFY_EFFECTIVE_PASSWORD_POLICY' 'existing-passwords	NO_REHASH_OR_RESET' ;;
         videoreview) printf '%s\n' 'group	policy' 'video	EXPLICIT_LEAST_PRIVILEGE_REVIEW' 'render	EXPLICIT_LEAST_PRIVILEGE_REVIEW' ;;
         sudoreview) printf '%s\n' 'path	policy' '/etc/sudoers	REVIEW_ROOT_OWNED_0440' '/etc/sudoers.d	PRESERVE_AND_REVIEW' 'visudo	OPERATOR_SYNTAX_AND_ACCESS_TEST' 'grants	NO_AUTOMATIC_PRIVILEGE_CHANGE' ;;
+        rkhunterpolicy) printf '%s\n' 'scope	policy' 'configuration	KEEP_AND_REVIEW' 'property-database	INDEPENDENT_BASELINE_REVIEW' 'updates	REVIEW_TRUSTED_SOURCE' 'warnings	REVIEW_LOCAL_REPORT' ;;
+        clamavpolicy) printf '%s\n' 'scope	policy' 'signature-database	REVIEW_FRESHNESS_AND_SOURCE' 'freshclam	REUSE_DISTRIBUTION_SERVICE' 'scanner	EXPLICIT_SCAN_SCOPE' 'detections	REPORT_ONLY_NO_AUTO_DELETE' ;;
+        lynispolicy) printf '%s\n' 'scope	policy' 'profiles	KEEP_AND_REVIEW' 'reports	PRIVATE_OPERATOR_REVIEW' 'remote-script	NEVER_IMPORT_OR_EXECUTE' ;;
+        auditdpolicy) printf '%s\n' 'path	policy' '/etc/audit/rules.d	KEEP_AND_REVIEW' '/var/log/audit	REVIEW_CAPACITY_AND_RETENTION' 'rule-load	EXPLICIT_LAB_REVIEW' ;;
+        aideschedule) printf '%s\n' 'scope	policy' 'aide	REUSE_DISTRIBUTION_SCHEDULE' 'baseline	APPROVED_INITIALIZATION_REQUIRED' ;;
+        rkhunterschedule) printf '%s\n' 'scope	policy' 'rkhunter	REUSE_DISTRIBUTION_SCHEDULE' 'property-update	NEVER_AUTOMATIC' ;;
+        chkrootkitschedule) printf '%s\n' 'scope	policy' 'chkrootkit	REUSE_DISTRIBUTION_SCHEDULE' 'findings	OPERATOR_REVIEW' ;;
+        auditreport) printf '%s\n' 'scope	policy' 'aureport	REVIEW_PRIVATE_BOUNDED_REPORT' 'retention	EXPLICIT_OPERATOR_POLICY' ;;
+        aideinit) printf '%s\n' 'scope	policy' 'initial-database	REVIEW_KNOWN_GOOD_SYSTEM' 'existing-database	KEEP_UNCHANGED' 'approval	INDEPENDENT_OPERATOR_REVIEW' ;;
+        aidefinal) printf '%s\n' 'scope	policy' 'database-promotion	EXPLICIT_REVIEW_AFTER_ACCEPTANCE' 'existing-database	KEEP_UNCHANGED' 'drift	REPORT_ONLY' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;
