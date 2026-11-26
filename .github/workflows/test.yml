@@ -1,7 +1,7 @@
 name: Offline UNIX regression checks
 on:
   push:
-    branches: [main]
+    branches: [main, integration/debian-client-checklist]
   pull_request:
 jobs:
   test:

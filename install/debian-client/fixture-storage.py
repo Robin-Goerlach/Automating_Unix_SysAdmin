@@ -140,7 +140,7 @@ def model(request, stages, planner):
     return result.encode('ascii')
 
 
-def prepare(root, host, profile, stages, tx):
+def prepare(root, host, profile, stages, tx, context):
     data, mode = tx.read_file(root / 'request.json', os.geteuid(), 65536, target=True)
     if mode != 0o600:
         raise ValueError('storage request must be private')

@@ -174,3 +174,8 @@ Basis 7da14d5b7e2b08dbf2bc6d52955521bfe330087c; CI #56 45781274687 erfolgreich. 
 ## M7-D.6g — Opt-in Shell-Fragmente
 
 Basis 0c05795870df639b5f452f4f5bd13222828c4fee; CI #57 45782296843 erfolgreich. Neues fixture-shell.py installiert fünf exakte Opt-in-Shell-Fragmente in privatem nicht automatisch eingelesenem etc/sasd-shell; keine Benutzer-/Konten-/Profilmutation. Fünf zusätzliche statische Fixture-Apply-Tasks, insgesamt 24, erwartet 164 Archivdateien, 39 staged unverändert. Quell-/Archivtests ergänzt; CI ausstehend. Kein unabhängiger lokaler Gesamttest oder native Abnahme, externe Betreiberlogs unerreichbar. main unabhängig auf a5dd317 mit CI #58 erfolgreich weiterentwickelt; kein Merge. Nächster Schritt CI prüfen, dann Security-/Härtungs-Fixtures mit expliziten Rechte-/Authentifizierungsgrenzen.
+
+
+## M7-D.6h — Sicherheitskonfiguration und Integritätsdatensatz
+
+Basis 27d32fbab47406826c25489b9cad4e0eeed38423, keine zugehörige CI zurückgegeben; PR #4 dirty/nicht mergebar, vorherige CI #57 erfolgreich. Exakter Integrations-Push-Trigger ohne Abschwächung von make test/PR-Prüfungen ergänzt; kein main-Merge. Neues fixture-security.py bearbeitet begrenzt login.defs und workload-nofile-Konfiguration, dokumentiert unabhängig freigegebenes synthetisches SASD-Manifest (nicht AIDE). Zwei zusätzliche Apply-fähige Tasks, insgesamt 26, zwei Integritätsreview-Zeilen; erwartet 165 Archivdateien, 39 staged unverändert. Gemeinsamer Kontext-Hook angepasst. Quell-/Archivtests ergänzt, CI für 6g/6h ausstehend. Lokaler direkter Git-DNS-Fehler; externe Logs nicht verfügbar. Nächster Schritt Branch-CI bestätigen, dann Netzwerk-/Firewall-Fixtures. Keine native Abnahme, keine Rechte-/Passwort-/Scanner-/Produktionsänderungen.

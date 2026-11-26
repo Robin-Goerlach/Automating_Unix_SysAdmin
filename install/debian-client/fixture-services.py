@@ -121,7 +121,7 @@ def model(value, profile, policy):
     return desired, selected
 
 
-def prepare(root, host, profile, stages, tx):
+def prepare(root, host, profile, stages, tx, context):
     data, mode = tx.read_file(root / 'request.json', os.geteuid(), 65536, target=True)
     if mode != 0o600:
         raise ValueError('service request must be private')

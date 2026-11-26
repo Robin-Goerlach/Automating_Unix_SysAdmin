@@ -174,3 +174,8 @@ Base 7da14d5b7e2b08dbf2bc6d52955521bfe330087c; CI #56 45781274687 successful. Ne
 ## M7-D.6g — opt-in shell fragments
 
 Base 0c05795870df639b5f452f4f5bd13222828c4fee; CI #57 45782296843 successful. New fixture-shell.py applies five exact opt-in shell fragments in private non-auto-sourced etc/sasd-shell; no user/account/profile mutation. Five additional static fixture apply tasks, 24 total, expected archive 164, 39 staged unchanged. Source/archive tests added; CI pending. No independent local full suite or native acceptance, external operator logs unavailable. Main independently advanced to a5dd317 with CI #58 success; no merge. Next verify CI, then security/hardening fixtures with explicit privilege and authentication boundaries.
+
+
+## M7-D.6h — security configuration and integrity record
+
+Base 27d32fbab47406826c25489b9cad4e0eeed38423, no associated CI returned; PR #4 dirty/nonmergeable, previous CI #57 success. Exact integration push trigger added without weakening make test or PR checks; no main merge. New fixture-security.py applies limited login.defs and workload nofile configuration, records independently approved synthetic SASD manifest (not AIDE). Two additional apply-capable tasks, 26 total, two integrity review rows; expected archive 165, 39 staged unchanged. Shared context hook updated. Source/archive tests added, CI pending for both 6g/6h. Local direct Git DNS failure; external logs unavailable. Next confirm branch CI, then network/firewall fixtures. No native acceptance, no privileges/passwords/scanners/production changes.

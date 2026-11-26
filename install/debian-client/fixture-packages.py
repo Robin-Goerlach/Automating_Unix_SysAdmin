@@ -86,7 +86,7 @@ def model(value, stages, planner):
     return desired, actions, held
 
 
-def prepare(root, host, profile, stages, tx):
+def prepare(root, host, profile, stages, tx, context):
     """Bind exact private synthetic input, original state and desired state."""
     data, mode = tx.read_file(root / 'simulation.json', os.geteuid(), 65536, target=True)
     if mode != 0o600:

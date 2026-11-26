@@ -154,7 +154,7 @@ def model(request, host, profile, stages, planner, x11=X11):
     return {name: text(value).encode('ascii') for name, value in result.items()}
 
 
-def prepare(root, host, profile, stages, tx):
+def prepare(root, host, profile, stages, tx, context):
     data, mode = tx.read_file(root / 'request.json', os.geteuid(), 65536, target=True)
     if mode != 0o600:
         raise ValueError('communications request must be private')

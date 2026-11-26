@@ -101,7 +101,7 @@ def run(group):
             if any(entry['mode'] != 0o644 for entry in original.values()):
                 raise ValueError('fixture configuration files must already have mode 0644')
             if hasattr(group, 'prepare'):
-                binding, expected_original, content = group.prepare(root, a.hostname, profile, stages, tx)
+                binding, expected_original, content = group.prepare(root, a.hostname, profile, stages, tx, context)
                 common['group-input'] = binding
                 if (a.review or a.apply_fixture) and original != expected_original:
                     raise ValueError('fixture state differs from reviewed group input')
@@ -133,7 +133,7 @@ def run(group):
             if fixture(root, owner, tx, group) != identities or load('lab-install').release_digest() != release:
                 raise ValueError('fixture or release changed')
             if hasattr(group, 'prepare'):
-                binding_after, expected_after, content_after = group.prepare(root, a.hostname, profile, stages, tx)
+                binding_after, expected_after, content_after = group.prepare(root, a.hostname, profile, stages, tx, context)
                 if binding_after != binding or expected_after != expected_original or content_after != content:
                     raise ValueError('fixture input changed during review')
             if a.apply_fixture:
