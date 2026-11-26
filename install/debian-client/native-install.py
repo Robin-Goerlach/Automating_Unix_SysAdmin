@@ -18,6 +18,7 @@ HERE = Path(__file__).absolute().parent
 NAMES = ('hostname', 'hosts', 'resolv.conf')
 ENV = {'PATH': '/usr/sbin:/usr/bin:/sbin:/bin', 'LC_ALL': 'C'}
 STATES = ('APPLYING', 'ROLLING_BACK', 'COMMITTED_STATIC', 'ROLLED_BACK')
+JOURNAL_LIMIT = 1024 * 1024
 
 
 def require(ok, reason):
@@ -96,6 +97,9 @@ def sync_targets(etc, owner, expected):
             os.fsync(fd)
         finally:
             os.close(fd)
+    for parent in sorted({(etc / name).parent for name in NAMES}, key=str):
+        if parent != etc:
+            sync_dir(parent)
     sync_dir(etc)
     require(snapshot(etc, owner) == expected, 'target changed during synchronization')
 
@@ -120,8 +124,13 @@ def atomic_write(path, data, mode, owner):
 
 def journal_write(path, journal, state, owner):
     journal['state'] = state
+    data = encoded(journal)
+    # Every persisted journal must remain readable by recovery. Reserve room
+    # for the longest terminal state before any initial target mutation.
+    require(all(len(encoded(dict(journal, state=s))) <= JOURNAL_LIMIT for s in STATES),
+            'journal exceeds recovery limit')
     try:
-        atomic_write(path, encoded(journal), 0o600, owner)
+        atomic_write(path, data, 0o600, owner)
     except (OSError, ValueError):
         # Best effort only: a storage failure can prevent persistence of quarantine.
         try:
@@ -132,7 +141,7 @@ def journal_write(path, journal, state, owner):
 
 
 def load_journal(path, owner):
-    data, mode = read_file(path, owner, 1024 * 1024)
+    data, mode = read_file(path, owner, JOURNAL_LIMIT)
     require(mode == 0o600, 'journal must be private')
     j = json.loads(data, object_pairs_hook=unique_pairs)
     require(isinstance(j, dict) and set(j) == {'format', 'reference', 'original', 'desired', 'state'} and

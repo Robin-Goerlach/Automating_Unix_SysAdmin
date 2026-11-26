@@ -189,3 +189,8 @@ Basis e86cc23446435a73c3cd8216db63a0f9c1dff066, Integrations-CI #59 45783906751 
 ## M7-D.6j — Monitoring-Übergabe und Hardware
 
 Basis 68d693c8df8317c19a55a51320fa6974a2d2d2d1, CI #60 45785320877 erfolgreich. Neues fixture-monitoring.py hinterlegt synthetisches Statuspreview und Übergabe, vorhandene plan-monitoring-Parser und kanonische SASD::Monitor-Katalog-/Rollen-/Statusvalidierung. Eine zusätzliche Apply-ID (nur Übergabe), insgesamt 32, drei Review-Zeilen, erwartet 167 Archivdateien, 39 staged unverändert. Kein Enrollment, Livechecks, Signatur oder Transfer; Standardkatalog ohne Hardwarechecknamen, explizites zentrales Review nötig. Quell-/Archivtests ergänzt; neue CI ausstehend. Kein unabhängiger lokaler Gesamttest, externe Betreiberlogs unerreichbar. PR #4 dirty, main a5dd317 unverändert, kein Merge. Nächster Schritt Branch-CI, verbleibende Checklisten-/Fixture-Abdeckung und native Gates bewerten; M7-D.6-Themenfolge keine native Fertigstellung.
+
+
+## M7-D.7a — Konsolidierung
+
+Basis 05fc32ebf11cb97b10d93c91b8019d14917cb202, CI #61 45785946650 erfolgreich. Alle 116 Originalmarker-Zeilennummern geprüft; 32 Apply (3 Baseline, 22 Konfig, 4 Modell, 3 Datensatz), 15 Verify-only, 42 Candidate-only, 11 zentral, 16 manuell. Coverage und expliziter Einzelgruppendispatch, Journalgrößenschutz und verschachteltes Sync; Quell-/Archivtests, erwartet 168 Dateien. Keine Abhängigkeits-Promotion oder native Abnahme. main a5dd317 unverändert, 6/46 divergierende Commits an Basis; überlappende Makefile und zweisprachige Roadmaps, PR #4 dirty, kein Merge. Lokaler DNS-Fehler; neue CI ausstehend, externe Logs unerreichbar. Nächster Schritt CI, dann inventargebundener gruppenübergreifender Evidenzentwurf und sichere Restabdeckung.

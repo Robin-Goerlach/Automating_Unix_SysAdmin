@@ -29,7 +29,7 @@ with tempfile.TemporaryDirectory(prefix='sasd-banner-lab.',dir='/tmp') as name, 
     inv=p/'hosts'; roles=p/'roles'; ref=p/'reference'
     inv.write_text('node.lab.invalid\t192.0.2.40\tdebian\tworkstation\t\tbaseline\n')
     roles.write_text('workstation\tsite_workstation\tmodern\troles/workstation.tsv\n')
-    cmd=[str(here/'fixture-banner.py'),'--root='+name,'--hostname=node.lab.invalid','--inventory='+str(inv),'--roles='+str(roles)]
+    cmd=['/bin/sh',str(here/'install-client.sh'),'--fixture-group=banner','--root='+name,'--hostname=node.lab.invalid','--inventory='+str(inv),'--roles='+str(roles)]
     def run(*args): return subprocess.run([*cmd,*args],capture_output=True,text=True)
     r=run('--review'); assert r.returncode==0,r.stderr
     ref.write_text(r.stdout); ref.chmod(0o600)

@@ -189,3 +189,8 @@ Base e86cc23446435a73c3cd8216db63a0f9c1dff066, integration CI #59 45783906751 su
 ## M7-D.6j — monitoring handoff and hardware
 
 Base 68d693c8df8317c19a55a51320fa6974a2d2d2d1, CI #60 45785320877 successful. New fixture-monitoring.py stages synthetic status preview and handoff, existing plan-monitoring parser and canonical SASD::Monitor catalog/role/status validation. One additional apply ID (handoff only), 32 total, three review rows, expected archive 167, 39 staged unchanged. No enrollment, live checks, signing or transfer; default catalog lacks hardware check names, explicit central review necessary. Source/archive tests added; new CI pending. No independent local full-suite, external operator logs unavailable. PR #4 dirty, main a5dd317 unchanged, no merge. Next verify branch CI, assess remaining checklist/fixture coverage and native gates; M7-D.6 topic sequence not native completion.
+
+
+## M7-D.7a — consolidation
+
+Base 05fc32ebf11cb97b10d93c91b8019d14917cb202, CI #61 45785946650 success. All 116 original marker line numbers verified; 32 apply (3 baseline, 22 config, 4 model, 3 record), 15 verify-only, 42 candidate-only, 11 central, 16 manual. Added coverage and explicit single-group dispatcher, journal size guard and nested sync; source/archive tests, expected 168 files. No dependency promotion or native acceptance. Main a5dd317 unchanged, 6/46 divergent commits at base; overlapping Makefile and bilingual roadmaps, PR #4 dirty, no merge. Local DNS failure; new CI pending, external logs unavailable. Next CI then inventory-bound cross-group evidence design and safe remaining coverage.

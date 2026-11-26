@@ -4,6 +4,10 @@ set -eu
 LC_ALL=C; export LC_ALL
 umask 077
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+# New explicit group route and read-only coverage, before legacy fixture routing.
+for arg do
+    case "$arg" in --coverage|--fixture-group=*) exec /usr/bin/python3 -I "$here/fixture-dispatch.py" "$@" ;; esac
+done
 # Route explicit fixture operation before the inventory candidate path, regardless of option order.
 for arg do
     case "$arg" in --fixture-apply) exec sh "$here/dispatch-fixture.sh" "$@" ;; esac
