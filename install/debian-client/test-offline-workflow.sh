@@ -92,7 +92,14 @@ with ExitStack() as stack:
         assert hash_bytes(path.read_bytes())==row['sha256']
 
     # Baseline has its own legacy contract, deliberately not in D.7b evidence.
-    baseline = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix='sasd-debian-lab.',dir='/tmp')))
+    # Legacy baseline accepts alphanumeric suffixes only; Python tempfile
+    # may generate underscores. Use the same mktemp contract as the shell tests.
+    baseline = Path(subprocess.check_output(
+        ['/usr/bin/mktemp','-d','/tmp/sasd-debian-lab.XXXXXXXX'],
+        env=env,text=True).strip())
+    assert re.fullmatch(r'/tmp/sasd-debian-lab\.[A-Za-z0-9]+',str(baseline))
+    assert baseline.resolve()==baseline and baseline.stat().st_uid==owner
+    stack.callback(shutil.rmtree,baseline)
     (baseline/'etc').mkdir(mode=0o700)
     put(baseline/'.sasd-fixture','SASD-DEBIAN-FIXTURE-1\n')
     put(baseline/'etc/hostname','old\n')
