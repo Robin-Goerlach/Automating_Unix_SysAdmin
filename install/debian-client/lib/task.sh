@@ -166,6 +166,12 @@ ROTATE
         adreview) printf '%s\n' 'scope	policy' 'directory	CHOOSE_SSSD_OR_WINBIND' 'dns,time,kerberos	VERIFY_PREREQUISITES' 'domain-join	EXPLICIT_LAB_ACCEPTANCE' 'id-mapping	REVIEW_STABLE_UID_GID' ;;
         nisusers) printf '%s\n' 'scope	policy' 'netgroups	EXPLICIT_SITE_REVIEW' 'local-accounts	PRESERVE_ADMIN_ACCESS' 'passwd,shadow	NO_AUTOMATIC_MAP_IMPORT' 'authorization	VERIFY_SEPARATELY_FROM_LOOKUP' ;;
         nssreview) printf '%s\n' 'path	policy' '/etc/nsswitch.conf	PRESERVE_AND_REVIEW' 'passwd,group,shadow	REVIEW_LOCAL_FIRST' 'initgroups,netgroup	REVIEW_EFFECTIVE_POLICY' 'compat,actions	EXPLICIT_REVIEW' ;;
+        grubprotect) printf '%s\n' 'scope	policy' 'bootloader	KEEP_EXISTING_CONFIGURATION' 'credentials	PRIVATE_OPERATOR_INPUT_ONLY' 'boot-edit-access	REVIEW_AUTHENTICATION_AND_RECOVERY' 'regenerate	EXPLICIT_DISPOSABLE_VM_TEST' ;;
+        ipv6boot) printf '%s\n' 'scope	policy' 'ipv6	PRESERVE_UNLESS_EXPLICITLY_REQUIRED' 'boot-parameters	REVIEW_RUNNING_KERNEL' 'network	VERIFY_IPV4_IPV6_AND_RECOVERY' ;;
+        modulepolicy) printf '%s\n' 'scope	policy' 'firewire_ohci,firewire_core	REVIEW_HARDWARE_REQUIREMENTS' 'usb_storage	PRESERVE_RECOVERY_ACCESS' 'modprobe.d	KEEP_AND_REVIEW' 'initramfs	REVIEW_BOOT_DEPENDENCIES' ;;
+        selinuxpolicy) printf '%s\n' 'scope	policy' 'lsm	OBSERVE_RUNNING_KERNEL' 'policy	REVIEW_DISTRIBUTION_SUPPORT_AND_LABELS' 'enforcement	EXPLICIT_LAB_ACCEPTANCE' 'existing-lsm	KEEP_AND_REVIEW' ;;
+        usbguardpolicy) printf '%s\n' 'scope	policy' 'rules	KEEP_AND_REVIEW' 'devices	EXPLICIT_APPROVED_DEVICE_POLICY' 'activation	VERIFY_CONSOLE_INPUT_AND_RECOVERY' 'generated-rules	NO_AUTOMATIC_TRUST' ;;
+        rearpolicy) printf '%s\n' 'scope	policy' 'backup	EXPLICIT_PRIVATE_DESTINATION' 'media	VERIFY_DEVICE_IDENTITY_AND_CONTENTS' 'existing-data	PRESERVE' 'restore	DISPOSABLE_VM_RESTORE_TEST' 'media-creation	SEPARATE_MANUAL_TASK_1090' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;

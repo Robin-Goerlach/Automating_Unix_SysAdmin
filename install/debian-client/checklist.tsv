@@ -15,8 +15,8 @@ id	original_line	task	state	handler
 0140	102	Installer_Bootstrap_DNS	manual	-
 0150	110	Installer_Check_Resolver	manual	-
 0160	113	Installer_Final_Reboot_Network	manual	-
-0170	119	GRUB_Protect_Bootloader	review	-
-0180	127	GRUB_Disable_IPv6	review	-
+0170	119	GRUB_Protect_Bootloader	render	grubprotect
+0180	127	GRUB_Disable_IPv6	render	ipv6boot
 0190	132	Root_Profile_Stage_1	render	rootprofile1
 0200	164	Packages_Stage_1	render	packages1
 0210	197	Proxy_Systemwide	render	proxypolicy
@@ -29,7 +29,7 @@ id	original_line	task	state	handler
 0280	307	APT_Update_System	render	aptupdate
 0290	312	Reboot_Checkpoint	manual	-
 0300	314	Services_Disable_Unneeded	render	serviceoff
-0310	318	Hardware_Blacklist	review	-
+0310	318	Hardware_Blacklist	render	modulepolicy
 0320	324	Fstab_Format	render	fstabformat
 0330	327	Fstab_Secure_Mountpoints	render	fstabsecure
 0340	334	USB_Disable_Automount	render	usbmount
@@ -79,14 +79,14 @@ id	original_line	task	state	handler
 0780	632	Auditd_Configure	render	auditdpolicy
 0790	638	Sysstat_Configure	render	sysstat
 0800	643	Logwatch_Configure	render	logwatch
-0810	650	SELinux_Configure	review	-
+0810	650	SELinux_Configure	render	selinuxpolicy
 0820	654	SNMP_Configure	render	snmppolicy
 0830	657	Puppet_Agent	deferred	-
 0840	664	Monit_Configure	render	monitpolicy
-0850	670	USBGuard_Configure	review	-
+0850	670	USBGuard_Configure	render	usbguardpolicy
 0860	676	LDAP_Client	render	ldapreview
 0870	678	Active_Directory_Client	render	adreview
-0880	680	ReaR_Configure	review	-
+0880	680	ReaR_Configure	render	rearpolicy
 0890	685	Big_Sister_Client	render	monitorenroll
 0900	688	Cron_CUPS_Cleanup	deferred	-
 0910	694	Cron_System_Update	review	-

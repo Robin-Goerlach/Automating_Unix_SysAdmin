@@ -1,6 +1,6 @@
 #!/bin/sh
-# Checklist source line 680; review.
+# Checklist source line 680; render candidate.
 set -eu
 here=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 . "$here/lib/task.sh"
-task_main 'review' '' "$@"
+task_main 'render' 'rearpolicy' "$@"
