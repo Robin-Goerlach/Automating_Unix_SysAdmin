@@ -210,3 +210,7 @@ Base 263839d15a2b09c5ffbc18488addea15e501c488, CI #64 success. Immutable private
 ## M7-D.7e — bounded backend completion
 
 Base 875edb985c532659c703f069089af15e2b592657; CI #65 success. Extend network final resolver 0370 via canonical renderer, storage modeled mountpoint metadata 0350, services reviewed CUPS maintenance schedule record 0900. 34 apply IDs, 16 verify-only, 39 candidate-only, 55 local without apply; 171 archive files expected, 57 edges unchanged. Network/storage request changes require new fixtures; retain old release for recovery. No native execution or dependency promotion. CI pending; main and feature unchanged, PR #4 dirty, no merge. Next CI then further safe coverage or D.7f offline workflow.
+
+## M7-D.7f — connected offline test
+
+Base bd648b94e5f7a079b13bb296d171c08f43aad480, CI #66 success. New test-offline-workflow.sh uses one R2 server plan, 39 candidate hashes, separate baseline, ten groups, evidence, orchestration and checkpoint, real child partial-write exit and explicit recovery, old checkpoint mismatch/new checkpoint match. Source/archive test only, 171 runtime files unchanged; no native proof. Main independently feeb68f, 51/7 divergence at base, same three overlaps, PR #4 dirty, no merge. New CI pending. Next CI then D.7g integration preparation without merge.

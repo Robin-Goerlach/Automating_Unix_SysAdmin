@@ -188,6 +188,9 @@ if [ -x /usr/bin/python3 ]; then
     cp "$here/test-checkpoint.sh" "$archive/test-checkpoint.sh"
     sh "$archive/test-checkpoint.sh"
     rm "$archive/test-checkpoint.sh"
+    cp "$here/test-offline-workflow.sh" "$archive/test-offline-workflow.sh"
+    sh "$archive/test-offline-workflow.sh"
+    rm "$archive/test-offline-workflow.sh"
     # Exercise native transaction primitives from packaged code, never the live path.
     cp "$here/test-native-install.sh" "$archive/test-native-install.sh"
     sh "$archive/test-native-install.sh"
