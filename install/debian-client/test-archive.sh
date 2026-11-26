@@ -24,7 +24,7 @@ tar --same-permissions -xzf "$tmp/release/sasd-debian-client.tar.gz" -C "$tmp/un
 archive=$tmp/unpack/debian-client
 # Independent expected file inventory. No local inventory, tests, reports or credentials.
 {
-    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py plan-services.py plan-communications.py plan-storage.py plan-shell.py plan-security.py plan-audits.py plan-monitoring.py plan-network.py plan-directory.py plan-recovery.py plan-operations.py fixture-config.py fixture-banner.py fixture-logging.py fixture-packages.py fixture-services.py fixture-storage.py fixture-communications.py fixture-shell.py fixture-security.py fixture-network.py capabilities.tsv dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh lib/sasd-site-inventory lib/SASD/Monitor.pm checklist.tsv site.example.conf package-policy.tsv package-profiles.tsv inventory-fields.tsv
+    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py plan-services.py plan-communications.py plan-storage.py plan-shell.py plan-security.py plan-audits.py plan-monitoring.py plan-network.py plan-directory.py plan-recovery.py plan-operations.py fixture-config.py fixture-banner.py fixture-logging.py fixture-packages.py fixture-services.py fixture-storage.py fixture-communications.py fixture-shell.py fixture-security.py fixture-network.py fixture-monitoring.py capabilities.tsv dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh lib/sasd-site-inventory lib/SASD/Monitor.pm checklist.tsv site.example.conf package-policy.tsv package-profiles.tsv inventory-fields.tsv
     awk -F '\t' 'NR>1 {print "tasks/" $1 "_" $3}' "$here/checklist.tsv"
 } | sort > "$tmp/expected"
 (cd "$archive" && find . -type f -printf '%P\n' | sort) > "$tmp/actual"
@@ -173,6 +173,9 @@ if [ -x /usr/bin/python3 ]; then
     cp "$here/test-network-fixture.sh" "$archive/test-network-fixture.sh"
     sh "$archive/test-network-fixture.sh"
     rm "$archive/test-network-fixture.sh"
+    cp "$here/test-monitoring-fixture.sh" "$archive/test-monitoring-fixture.sh"
+    sh "$archive/test-monitoring-fixture.sh"
+    rm "$archive/test-monitoring-fixture.sh"
     # Exercise native transaction primitives from packaged code, never the live path.
     cp "$here/test-native-install.sh" "$archive/test-native-install.sh"
     sh "$archive/test-native-install.sh"

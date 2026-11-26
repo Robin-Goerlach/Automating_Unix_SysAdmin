@@ -184,3 +184,8 @@ Basis 27d32fbab47406826c25489b9cad4e0eeed38423, keine zugehörige CI zurückgege
 ## M7-D.6i — Netzwerkkonfiguration und Firewall-Policy
 
 Basis e86cc23446435a73c3cd8216db63a0f9c1dff066, Integrations-CI #59 45783906751 erfolgreich (6g/6h). Neues fixture-network.py bearbeitet begrenzt hosts/APT-Quellen/APT-Proxy und rein synthetische Firewall-Policy; 5 zusätzliche Apply-IDs, insgesamt 31, erwartet 166 Archivdateien, 39 staged unverändert. Keine native Netzwerk-, DNS-, IPv6-, APT- oder Firewall-Ausführung. Quell-/Archivtests ergänzt, neue CI ausstehend. Kein unabhängiger lokaler Gesamttest; externe Betreiberlogs unerreichbar. PR #4 dirty, main a5dd317 unverändert; kein Merge. Nächster Schritt Branch-CI prüfen, dann Monitoring-/Hardware-Fixture.
+
+
+## M7-D.6j — Monitoring-Übergabe und Hardware
+
+Basis 68d693c8df8317c19a55a51320fa6974a2d2d2d1, CI #60 45785320877 erfolgreich. Neues fixture-monitoring.py hinterlegt synthetisches Statuspreview und Übergabe, vorhandene plan-monitoring-Parser und kanonische SASD::Monitor-Katalog-/Rollen-/Statusvalidierung. Eine zusätzliche Apply-ID (nur Übergabe), insgesamt 32, drei Review-Zeilen, erwartet 167 Archivdateien, 39 staged unverändert. Kein Enrollment, Livechecks, Signatur oder Transfer; Standardkatalog ohne Hardwarechecknamen, explizites zentrales Review nötig. Quell-/Archivtests ergänzt; neue CI ausstehend. Kein unabhängiger lokaler Gesamttest, externe Betreiberlogs unerreichbar. PR #4 dirty, main a5dd317 unverändert, kein Merge. Nächster Schritt Branch-CI, verbleibende Checklisten-/Fixture-Abdeckung und native Gates bewerten; M7-D.6-Themenfolge keine native Fertigstellung.

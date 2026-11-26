@@ -184,3 +184,8 @@ Base 27d32fbab47406826c25489b9cad4e0eeed38423, no associated CI returned; PR #4 
 ## M7-D.6i — network configuration and firewall policy
 
 Base e86cc23446435a73c3cd8216db63a0f9c1dff066, integration CI #59 45783906751 successful (6g/6h). New fixture-network.py applies bounded hosts/APT sources/APT proxy and synthetic firewall policy only; 5 additional apply IDs, 31 total, expected archive 166, 39 staged unchanged. No native network, DNS, IPv6, APT or firewall execution. Source/archive tests added, new CI pending. No independent local full-suite; external operator logs unavailable. PR #4 dirty, main a5dd317 unchanged; no merge. Next verify branch CI then monitoring/hardware fixture.
+
+
+## M7-D.6j — monitoring handoff and hardware
+
+Base 68d693c8df8317c19a55a51320fa6974a2d2d2d1, CI #60 45785320877 successful. New fixture-monitoring.py stages synthetic status preview and handoff, existing plan-monitoring parser and canonical SASD::Monitor catalog/role/status validation. One additional apply ID (handoff only), 32 total, three review rows, expected archive 167, 39 staged unchanged. No enrollment, live checks, signing or transfer; default catalog lacks hardware check names, explicit central review necessary. Source/archive tests added; new CI pending. No independent local full-suite, external operator logs unavailable. PR #4 dirty, main a5dd317 unchanged, no merge. Next verify branch CI, assess remaining checklist/fixture coverage and native gates; M7-D.6 topic sequence not native completion.
