@@ -3,7 +3,7 @@ use strict;
 use FindBin;
 use File::Spec;
 use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(read_config read_inventory read_host_state valid_identifier atomic_write ensure_dir);
+use SASD::Monitor qw(read_config read_inventory read_host_state valid_identifier atomic_write ensure_dir paths_conflict);
 
 my ($file,$out,$metric,$force,$host_state)=('','','interface','', '');
 my $state_explicit = 0;
@@ -39,9 +39,8 @@ if ($out eq '') {print $text}
 else {
     -e $out && !$force and die "output exists; use --force explicitly\n";
     my $output_path = File::Spec->canonpath(File::Spec->rel2abs($out));
-    for my $input_path ($file, $cfg->{inventory_path}, $cfg->{roles_path}) {
-        my $canonical_input = File::Spec->canonpath(File::Spec->rel2abs($input_path));
-        $output_path eq $canonical_input
+    for my $input_path ($file, $cfg->{inventory_path}, $cfg->{roles_path}, $host_state) {
+        paths_conflict($out, $input_path)
             and die "output path overlaps an input file\n";
     }
     my ($v,$d,$f)=File::Spec->splitpath($out); length $d && ensure_dir($d,0750);

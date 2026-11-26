@@ -10,6 +10,13 @@ Der Linter prüft eine kleine ASCII/IPv4-Teilmenge, gibt nur Hostnamen und Adres
 
 Für einen unabhängigen SASD-Statussammler dienen `bin/sasd-status-store` und `bin/sasd-status-board`; ihr TSV-Format ist nicht das BB-Drahtprotokoll.
 
+`bin/sasd-config-bigbrother` ist ein getrennter Offline-Adapter. Er liest das
+gemeinsame SASD-Inventar, die Dienste und den Lebenszykluszustand und erzeugt
+eine nur zu prüfende Big-Brother-artige Hostdatei. Deaktivierte und entfernte
+Rechner werden ausgelassen. Er führt keine Netzwerkaktion, Installation oder
+Dienstaktivierung aus; die Ausgabe ist kein Nachweis einer nativen Abnahme für
+eine Big-Brother-Version.
+
 Historischer Hintergrund:
 
 - https://linuxgazette.net/issue15/bb-info.html — Überblick von Ende 1996

@@ -6,7 +6,7 @@ use Fcntl qw(:DEFAULT :flock);
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_roles read_host_records read_host_state
-    valid_host valid_address valid_identifier valid_profile);
+    valid_host valid_address valid_identifier valid_profile paths_conflict inventory_header);
 
 my ($input, $roles_path, $state_path, $history_path) = ('', '', '', '');
 my ($operation, $host, $record, $apply, $help) = ('', '', '', 0, 0);
@@ -58,12 +58,6 @@ sub path_ok {
         ? "history file is a symlink\n"
         : "$label path is a symlink\n");
     return File::Spec->canonpath($absolute);
-}
-
-sub paths_overlap {
-    my ($left, $right) = map { File::Spec->canonpath(File::Spec->rel2abs($_)) } @_;
-    return $left eq $right || index($left, "$right/") == 0
-        || index($right, "$left/") == 0;
 }
 
 sub fields {
@@ -133,6 +127,10 @@ sub temporary_file {
 sub install_set {
     my ($items) = @_;
     my (@backups, @installed);
+    # Tests may inject one controlled rename failure; production callers leave this unset.
+    my $test_fail_after = $ENV{SASD_TEST_FAIL_AFTER_INSTALL};
+    defined($test_fail_after) && $test_fail_after !~ /\A[1-9][0-9]*\z/
+        and die "invalid test failure hook\n";
     eval {
         for my $item (@$items) {
             push @$item, temporary_file($item->[0], $item->[1], $item->[2]);
@@ -149,19 +147,24 @@ sub install_set {
             rename($item->[3], $item->[0])
                 or die "cannot install $item->[0]: $!\n";
             push @installed, $item->[0];
+            defined($test_fail_after) && @installed >= $test_fail_after
+                and die "controlled test install failure\n";
         }
         unlink $_->[1] for @backups;
         return 1;
     } or do {
         my $error = $@ || "multi-file install failed\n";
-        unlink $_ for @installed;
+        unlink(@installed);
         my $rollback_ok = 1;
         for my $backup (reverse @backups) {
-            $rollback_ok = 0 unless rename($backup->[1], $backup->[0]);
+            if (!rename($backup->[1], $backup->[0])) {
+                $rollback_ok = 0;
+            }
         }
         unlink $_->[3] for grep { defined($_->[3]) && -e $_->[3] } @$items;
-        die $error unless $rollback_ok;
-        die "multi-file install failed and rollback could not be verified\n";
+        die "multi-file install failed and rollback could not be verified\n"
+            unless $rollback_ok;
+        die $error;
     };
 }
 
@@ -169,10 +172,14 @@ my $inventory_path = path_ok($input, 'inventory');
 my $roles_file = path_ok($roles_path, 'roles');
 my $state_file = path_ok($state_path, 'state');
 my $history_file = path_ok($history_path, 'history');
-paths_overlap($inventory_path, $state_file)
-    || paths_overlap($inventory_path, $history_file)
-    || paths_overlap($state_file, $history_file)
-    and die "inventory, state and history paths overlap\n";
+my @managed_paths = ($inventory_path, $roles_file, $state_file, $history_file,
+    "$inventory_path.lock");
+for my $left (0 .. $#managed_paths) {
+    for my $right ($left + 1 .. $#managed_paths) {
+        paths_conflict($managed_paths[$left], $managed_paths[$right])
+            and die "inventory, roles, state, history and lock paths overlap\n";
+    }
+}
 -f $inventory_path && !-l $inventory_path && -f $roles_file && !-l $roles_file
     or die "inventory or roles file is invalid\n";
 
@@ -262,7 +269,8 @@ if ($operation eq 'add') {
 }
 
 push @history, join("\t", time(), $host, $operation, $from, $to, $reason) . "\n";
-my $inventory_text = join('', map { host_line($hosts{$_}) . "\n" } sort keys %hosts);
+my $inventory_text = inventory_header()
+    . join('', map { host_line($hosts{$_}) . "\n" } sort keys %hosts);
 my $state_text = join('', map { join("\t", $_, @{$states{$_}}) . "\n" } sort keys %states);
 my $history_text = join('', @history);
 install_set([

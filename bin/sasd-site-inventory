@@ -1,9 +1,11 @@
 #!/usr/bin/env perl
-# Validate and query the independent SASD site inventory.
-# hosts.tsv: hostname TAB address TAB os-family TAB role TAB groups TAB profile
+# Validate and query the shared SASD site inventory.
 use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_inventory valid_host valid_identifier);
 
-my ($input,$roles,$want_role,$want_host,$list,$check) = ('','','','','','');
+my ($input, $roles, $want_role, $want_host, $list, $check) = ('','','','','','');
 while (@ARGV) {
     my $a = shift @ARGV;
     if ($a eq '--input') { $input = shift @ARGV; }
@@ -15,54 +17,21 @@ while (@ARGV) {
     elsif ($a eq '--help') { print "usage: sasd-site-inventory --input hosts.tsv --roles roles.tsv [--list|--role ROLE|--host HOST|--check]\n"; exit 0; }
     else { die "unknown argument: $a\n"; }
 }
-$input && -f $input && !-l $input or die "invalid inventory file\n";
-$roles && -f $roles && !-l $roles or die "invalid roles file\n";
-($list || $check || $want_role || $want_host) or die "select --list, --role, --host or --check\n";
-
-sub safe { my ($s) = @_; return defined($s) && $s !~ /[\x00-\x1f\x7f]/; }
-sub ident { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/; }
-sub profile { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,31}\z/; }
-sub host { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/; }
-sub address {
-    my ($s) = @_; return 0 unless defined $s && $s =~ /\A(\d+)\.(\d+)\.(\d+)\.(\d+)\z/;
-    return $1 <= 255 && $2 <= 255 && $3 <= 255 && $4 <= 255;
+$input && $roles && ($list || $check || $want_role || $want_host)
+    or die "input, roles and a query are required\n";
+my ($hosts, $role_records) = read_inventory($input, $roles);
+if ($want_host) {
+    valid_host($want_host) && exists $hosts->{$want_host} or die "unknown host: $want_host\n";
+    print join("\t", @{$hosts->{$want_host}}{qw(host address os role groups profile)}), "\n";
+} elsif ($want_role) {
+    valid_identifier($want_role) && exists $role_records->{$want_role} or die "unknown role: $want_role\n";
+    for my $name (sort keys %$hosts) {
+        print join("\t", @{$hosts->{$name}}{qw(host address os role groups profile)}), "\n"
+            if $hosts->{$name}->{role} eq $want_role;
+    }
+} elsif ($list) {
+    for my $name (sort keys %$hosts) {
+        print join("\t", @{$hosts->{$name}}{qw(host address os role groups profile)}), "\n";
+    }
 }
-sub fields { my ($line,$n,$where) = @_; my @v = split /\t/, $line, -1; @v == $n or die "invalid $where record\n"; for (@v) { safe($_) or die "control character in $where record\n"; } return @v; }
-
-my %role;
-open(ROLES,"<$roles") or die "cannot read roles: $!\n";
-while (<ROLES>) {
-    chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
-    my ($name,$class,$profile,$manifest) = fields($_,4,'role');
-    ident($name) && ident($class) && profile($profile) or die "invalid role identifier at line $.\n";
-    $manifest =~ m!\A[A-Za-z0-9_./-]+\z! && $manifest !~ m!^/! && $manifest !~ m!(?:^|/)\.\.(?:/|$)! or die "unsafe role manifest at line $.\n";
-    exists $role{$name} and die "duplicate role: $name\n";
-    $role{$name} = 1;
-}
-close ROLES;
-
-my (%host,%address,%records);
-open(INPUT,"<$input") or die "cannot read inventory: $!\n";
-while (<INPUT>) {
-    chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
-    my ($name,$ip,$os,$role,$groups,$profile) = fields($_,6,'host');
-    host($name) && address($ip) && $os =~ /\A[A-Za-z0-9_.-]{1,31}\z/ && ident($role) && ident($profile)
-        or die "invalid host record at line $.\n";
-    exists $role{$role} or die "unknown role '$role' at line $.\n";
-    if ($groups ne '') { for my $g (split /,/, $groups) { ident($g) or die "invalid group at line $.\n"; } }
-    exists $host{$name} and die "duplicate hostname: $name\n";
-    exists $address{$ip} and die "address assigned to multiple hosts: $ip\n";
-    $host{$name}=1; $address{$ip}=1;
-    $records{$name}=[$name,$ip,$os,$role,$groups,$profile];
-}
-close INPUT;
-scalar(keys %records) or die "inventory has no host records\n";
-for my $name (sort keys %records) {
-    my $r = $records{$name};
-    if ($r->[5] ne 'baseline' && $r->[5] ne $r->[3]) { die "profile '$r->[5]' conflicts with role '$r->[3]' for $name\n"; }
-}
-if ($want_host) { exists $records{$want_host} or die "unknown host: $want_host\n"; print join("\t",@{$records{$want_host}}),"\n"; }
-elsif ($want_role) { exists $role{$want_role} or die "unknown role: $want_role\n"; for my $n (sort keys %records) { print join("\t",@{$records{$n}}),"\n" if $records{$n}->[3] eq $want_role; } }
-elsif ($list) { for my $n (sort keys %records) { print join("\t",@{$records{$n}}),"\n"; } }
-print "hosts=",scalar(keys %records)," roles=",scalar(keys %role)," status=OK\n" if $check;
-exit 0;
+print "hosts=", scalar(keys %$hosts), " roles=", scalar(keys %$role_records), " status=OK\n" if $check;

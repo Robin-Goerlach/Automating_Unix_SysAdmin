@@ -16,11 +16,12 @@ Checkpoint A umfasst reproduzierbare Offline-Härtung, Test- und Release-Prüfun
 
 Checkpoint B wird schrittweise umgesetzt:
 
-- `site/hosts.tsv`, `site/roles.tsv`, `site/checks.tsv` und `site/services.tsv` bilden das gemeinsame Textmodell.
+- `site/hosts.tsv`, `site/roles.tsv`, `site/checks.tsv` und `site/services.tsv` bilden das gemeinsame Textmodell. `hosts.tsv` akzeptiert den expliziten Marker `# SASD-SITE-INVENTORY-1`; unmarkierte Legacy-Dateien bleiben lesbar. `bin/sasd-site-migrate` führt eine Offline-Migration mit Sicherung und Wiederholbarkeit aus.
 - `bin/sasd-site-inventory`, `bin/sasd-site-services`, `bin/sasd-site-classes` und `bin/sasd-site-audit` prüfen und selektieren vorhandene Arbeiten.
 - `bin/sasd-host-admin` bietet lokale CRUD-Verwaltung mit `--apply` als Schreibschranke.
 - `bin/sasd-site-config` erzeugt eine deterministische Host-/Service-Auswahl im Staging und einen Konsistenzbericht; es behauptet nicht, native CFEngine-, MRTG-, Nagios-, DHCP- oder TFTP-Syntax zu erzeugen.
 - `bin/sasd-monitor-mrtg` ist der erste vorhandene Produktadapter, der dieselbe Host-Lebenszyklusprojektion nutzt und deaktivierte oder entfernte Rechner aus seiner Kandidatenausgabe auslässt.
+- `bin/sasd-config-bigbrother` ist ein unabhängiger Generator für eine nur zu prüfende Host-/Dienst-Kandidatenkonfiguration aus demselben Inventar und Lebenszykluszustand. Er ist kein Nachweis einer nativen Big-Brother-Abnahme.
 
 Weitere B-Schritte sind zusätzliche produktspezifische Generatoren, eine kontrollierte Deploy-/Apply-Grenze und ein vollständigeres Offline-Ende-zu-Ende-Labor. Die Aufbewahrung der Host-Lebenszyklusereignisse ist nun in `sasd-host-admin` umgesetzt. Deaktivierung oder Entfernung eines Hosts darf historische Monitoringdaten nicht löschen. Der aktuelle Hostzustand wird getrennt vom aktiven Inventar geführt.
 

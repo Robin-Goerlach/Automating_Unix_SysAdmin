@@ -11,6 +11,7 @@ our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read
     read_host_state validate_status atomic_write read_state read_latest html_escape ensure_dir
     valid_identifier valid_host valid_address valid_profile valid_color valid_path_value valid_epoch
     valid_fingerprint valid_public_key valid_os_value read_enrollment_record
+    paths_conflict inventory_format inventory_header
     enrollment_record_line append_event read_operations now_seconds);
 
 my %CONFIG_KEYS = map { $_ => 1 } qw(inventory roles checks status_dir history_file
@@ -19,7 +20,8 @@ my %CONFIG_KEYS = map { $_ => 1 } qw(inventory roles checks status_dir history_f
 
 sub _real_file {
     my ($path, $label) = @_;
-    -f $path && !-l $path or die "invalid $label file\n";
+    -l $path and die "invalid $label file\n";
+    -f $path or die "invalid $label file\n";
 }
 
 sub _regular_or_absent {
@@ -95,6 +97,41 @@ sub _fields {
     return @v;
 }
 
+sub paths_conflict {
+    my ($left, $right) = @_;
+    my ($a, $b) = map { File::Spec->canonpath(File::Spec->rel2abs($_)) } ($left, $right);
+    return 1 if $a eq $b || index($a, "$b/") == 0 || index($b, "$a/") == 0;
+    return 0 unless -e $a && -e $b;
+    my @sa = stat($a);
+    my @sb = stat($b);
+    return @sa && @sb && $sa[0] == $sb[0] && $sa[1] == $sb[1];
+}
+
+sub inventory_header { return "# SASD-SITE-INVENTORY-1\n"; }
+
+sub inventory_format {
+    my ($path) = @_;
+    _real_file($path, 'inventory');
+    open(my $fh, '<', $path) or die "cannot read inventory: $!\n";
+    my $format = 'legacy';
+    my $seen_data = 0;
+    while (<$fh>) {
+        chomp; s/\r\z//;
+        next if /^\s*$/;
+        if (!$seen_data && /^# SASD-SITE-INVENTORY-(\d+)\z/) {
+            $1 == 1 or die "unsupported inventory format version: $1\n";
+            $format = '1';
+            next;
+        }
+        /^#/ or $seen_data = 1;
+        if (!$seen_data && /^# SASD-SITE-INVENTORY-/) {
+            die "invalid inventory format header\n";
+        }
+    }
+    close($fh) or die "cannot close inventory: $!\n";
+    return $format;
+}
+
 sub _resolve {
     my ($base, $value) = @_;
     valid_path_value($value) or die "unsafe configured path: $value\n";
@@ -162,13 +199,15 @@ sub read_roles {
 sub read_host_records {
     my ($hosts_path, $roles, $allow_empty) = @_;
     _real_file($hosts_path, 'inventory');
+    inventory_format($hosts_path);
     open(my $hf, '<', $hosts_path) or die "cannot read inventory: $!\n";
     my (%hosts, %addresses);
     while (<$hf>) {
         chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
         my ($host, $address, $os, $role, $groups, $profile) = _fields($_, 6, 'host');
         valid_host($host) && valid_address($address) && $os =~ /\A[A-Za-z0-9_.-]{1,31}\z/ &&
-            valid_identifier($role) && valid_profile($profile) or die "invalid host record at line $.\n";
+            valid_identifier($role) && valid_profile($profile) &&
+            ($profile eq 'baseline' || $profile eq $role) or die "invalid host record at line $.\n";
         exists $roles->{$role} or die "unknown role '$role'\n";
         if (length $groups) { valid_identifier($_) or die "invalid host group\n" for split /,/, $groups; }
         exists $hosts{$host} and die "duplicate hostname: $host\n";
@@ -190,11 +229,12 @@ sub read_host_records {
 sub read_host_state {
     my ($path, $hosts, $allow_missing) = @_;
     defined($path) && length($path) or die "host state path is empty\n";
+    -l $path and die "invalid host state file\n";
     if (!-e $path) {
         $allow_missing or die "host state file is missing: $path\n";
         return {};
     }
-    -f $path && !-l $path or die "invalid host state file\n";
+    -f $path or die "invalid host state file\n";
 
     open(my $fh, '<', $path) or die "cannot read host state: $!\n";
     my %state;

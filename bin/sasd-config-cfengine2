@@ -5,7 +5,7 @@ use File::Spec;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_roles read_host_records read_host_state
-    valid_profile atomic_write ensure_dir);
+    valid_profile atomic_write ensure_dir paths_conflict);
 
 my ($hosts, $roles, $state, $out, $version) = ('', '', '', '', '2.0');
 my ($apply, $state_explicit) = (0, 0);
@@ -40,6 +40,7 @@ my ($host_records) = read_host_records($hosts, $role_records, 0);
 my $state_records = read_host_state($state, $host_records, !$state_explicit);
 my %disabled = map { $_ => 1 }
     grep { $state_records->{$_}->{state} ne 'enabled' } keys %$state_records;
+my %ids;
 
 my $text = "# SASD CFEngine 2 candidate; profile=$version; unverified until the selected cfagent is run.\n"
     . "# Warning-only markers; this file is not installed or executed by SASD.\n"
@@ -50,6 +51,9 @@ for my $host (sort keys %$host_records) {
     next if $disabled{$host};
     my $class = $host;
     $class =~ s/[^A-Za-z0-9_]/_/g;
+    $class = "host_$class";
+    exists $ids{$class} and die "hostnames produce duplicate CFEngine 2 class: $ids{$class} and $host\n";
+    $ids{$class} = $host;
     $text .= "    $class = ( $host )\n";
 }
 $text .= "\nfiles:\n    any::\n";
@@ -65,10 +69,8 @@ $text .= "\n# active_hosts=$active\n";
 
 if ($apply) {
     $out or die "--out is required with --apply\n";
-    my $output_path = File::Spec->canonpath(File::Spec->rel2abs($out));
     for my $input_path ($hosts, $roles, $state) {
-        my $canonical_input = File::Spec->canonpath(File::Spec->rel2abs($input_path));
-        $output_path eq $canonical_input
+        paths_conflict($out, $input_path)
             and die "output path overlaps an input file\n";
     }
     my (undef, $directory) = File::Spec->splitpath($out);

@@ -38,6 +38,11 @@ if ./bin/sasd-monitor-mrtg --config site/monitoring.conf --out site/hosts.tsv --
     echo "MRTG input overwrite was accepted" >&2; exit 1
 fi
 grep -q 'output path overlaps an input file' "$tmp/mrtg-input-overwrite"
+if ./bin/sasd-monitor-mrtg --config site/monitoring.conf --host-state "$tmp/host-state.tsv" --out "$tmp/host-state.tsv" --force > "$tmp/host-state-output-error" 2>&1; then
+    echo "MRTG host-state overwrite was accepted" >&2
+    exit 1
+fi
+grep -q 'output path overlaps an input file' "$tmp/host-state-output-error"
 
 prefix="$tmp/install"
 ./install/install-monitoring-server.sh --prefix "$prefix" --config site/monitoring.conf --dry-run > "$tmp/dry"

@@ -42,6 +42,24 @@ sed 's/$/\r/' site/hosts.tsv > "$tmp/crlf-hosts.tsv"
 ./bin/sasd-site-inventory --input "$tmp/crlf-hosts.tsv" --roles site/roles.tsv --check > "$tmp/crlf-check"
 grep -q 'status=OK' "$tmp/crlf-check"
 
+cp site/hosts.tsv "$tmp/legacy.tsv"
+./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --dry-run > "$tmp/migrate-dry"
+grep -q 'status=DRY-RUN' "$tmp/migrate-dry"
+./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --apply > "$tmp/migrate-apply"
+head -n 1 "$tmp/legacy.tsv" | grep -q '^# SASD-SITE-INVENTORY-1$'
+test -f "$tmp/legacy.tsv.pre-versioned"
+./bin/sasd-site-inventory --input "$tmp/legacy.tsv" --roles site/roles.tsv --check > "$tmp/versioned-check"
+grep -q 'status=OK' "$tmp/versioned-check"
+./bin/sasd-site-migrate --input "$tmp/legacy.tsv" --apply > "$tmp/migrate-repeat"
+grep -q 'ALREADY-MIGRATED' "$tmp/migrate-repeat"
+
+ln -s "$tmp/missing-state.tsv" "$tmp/dangling-state.tsv"
+if ./bin/sasd-site-config --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --state "$tmp/dangling-state.tsv" --check > "$tmp/dangling-state-error" 2>&1; then
+    echo "dangling state symlink accepted" >&2
+    exit 1
+fi
+grep -q 'invalid host state file' "$tmp/dangling-state-error"
+
 printf '# duplicate\nweb.lab.invalid\t192.0.2.20\tunix\tweb\tlab\tweb\n' > "$tmp/duplicate.tsv"
 cat site/hosts.tsv >> "$tmp/duplicate.tsv"
 if ./bin/sasd-site-inventory --input "$tmp/duplicate.tsv" --roles site/roles.tsv --check > "$tmp/error" 2>&1; then
@@ -119,6 +137,19 @@ grep -q 'requires --apply' "$tmp/admin-no-apply"
 test ! -e "$tmp/admin-hosts.tsv.lock"
 ./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv --operation disable --host web.lab.invalid --apply > "$tmp/admin-disable"
 grep -q 'status=APPLIED' "$tmp/admin-disable"
+cp "$tmp/admin-hosts.tsv" "$tmp/rollback-hosts.tsv"
+./bin/sasd-host-admin --input "$tmp/rollback-hosts.tsv" --roles site/roles.tsv --operation disable --host cfg.lab.invalid --apply >/dev/null
+before_inventory=$(cksum "$tmp/rollback-hosts.tsv" | awk '{print $1 ":" $2}')
+before_state=$(cksum "$tmp/rollback-hosts.tsv.state" | awk '{print $1 ":" $2}')
+before_history=$(cksum "$tmp/rollback-hosts.tsv.history.tsv" | awk '{print $1 ":" $2}')
+if SASD_TEST_FAIL_AFTER_INSTALL=1 ./bin/sasd-host-admin --input "$tmp/rollback-hosts.tsv" --roles site/roles.tsv --operation enable --host cfg.lab.invalid --apply > "$tmp/rollback-error" 2>&1; then
+    echo "controlled install failure unexpectedly succeeded" >&2
+    exit 1
+fi
+grep -q 'controlled test install failure' "$tmp/rollback-error"
+test "$(cksum "$tmp/rollback-hosts.tsv" | awk '{print $1 ":" $2}')" = "$before_inventory"
+test "$(cksum "$tmp/rollback-hosts.tsv.state" | awk '{print $1 ":" $2}')" = "$before_state"
+test "$(cksum "$tmp/rollback-hosts.tsv.history.tsv" | awk '{print $1 ":" $2}')" = "$before_history"
 ./bin/sasd-site-config --hosts "$tmp/admin-hosts.tsv" --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --check > "$tmp/site-config-check"
 grep -q 'hosts=3 selections=8 status=OK' "$tmp/site-config-check"
 ./bin/sasd-site-config --hosts "$tmp/admin-hosts.tsv" --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --out "$tmp/staged" --apply > "$tmp/site-config-stage"
@@ -160,6 +191,13 @@ if ./bin/sasd-host-admin --input "$tmp/bad-group.tsv" --roles site/roles.tsv --o
     exit 1
 fi
 grep -q 'invalid host group' "$tmp/bad-group-error"
+
+ln "$tmp/admin-hosts.tsv" "$tmp/roles.tsv"
+if ./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles "$tmp/roles.tsv" --operation validate > "$tmp/hardlink-error" 2>&1; then
+    echo "hardlinked inventory and roles accepted" >&2
+    exit 1
+fi
+grep -q 'paths overlap' "$tmp/hardlink-error"
 mkdir "$tmp/real-parent"
 ln -s "$tmp/real-parent" "$tmp/path-link"
 if ./bin/sasd-host-admin --input "$tmp/path-link/hosts.tsv" --roles site/roles.tsv --operation validate > "$tmp/ancestor-error" 2>&1; then

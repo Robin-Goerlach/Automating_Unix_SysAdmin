@@ -1,0 +1,78 @@
+#!/usr/bin/env perl
+# Generate an original, review-only Big Brother-style host file candidate.
+# This is not Big Brother source, a daemon configuration, or wire protocol.
+use strict;
+use FindBin;
+use File::Spec;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_host_state valid_identifier
+    valid_profile atomic_write ensure_dir paths_conflict);
+
+my ($hosts, $roles, $services, $state, $out, $force) = ('','','','','',0);
+my $state_explicit = 0;
+while (@ARGV) {
+    my $a = shift @ARGV;
+    if ($a eq '--hosts') { $hosts = shift @ARGV; }
+    elsif ($a eq '--roles') { $roles = shift @ARGV; }
+    elsif ($a eq '--services') { $services = shift @ARGV; }
+    elsif ($a eq '--state') { $state = shift @ARGV; $state_explicit = 1; }
+    elsif ($a eq '--out') { $out = shift @ARGV; }
+    elsif ($a eq '--force') { $force = 1; }
+    elsif ($a eq '--help') {
+        print "usage: sasd-config-bigbrother --hosts FILE --roles FILE --services FILE [--state FILE] [--out FILE --force]\n";
+        exit 0;
+    } else { die "unknown argument: $a\n"; }
+}
+$hosts && $roles && $services or die "hosts, roles and services are required\n";
+for my $path ($hosts, $roles, $services) {
+    -f $path && !-l $path or die "invalid Big Brother input file\n";
+}
+$state = "$hosts.state" if $state eq '';
+my $role_records = read_roles($roles);
+my ($host_records) = read_host_records($hosts, $role_records, 0);
+my $state_records = read_host_state($state, $host_records, !$state_explicit);
+my %state = map { $_ => $state_records->{$_}->{state} } keys %$state_records;
+
+my %services;
+open(my $sf, '<', $services) or die "cannot read services: $!\n";
+while (<$sf>) {
+    chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
+    my @v = split /\t/, $_, -1;
+    @v == 5 && valid_identifier($v[0]) &&
+        ($v[1] eq '*' || $v[1] eq 'baseline' || valid_identifier($v[1])) &&
+        valid_identifier($v[2]) && valid_profile($v[3]) &&
+        length($v[4]) && length($v[4]) <= 120 && $v[4] !~ /[\x00-\x1f\x7f]/
+        or die "invalid service record\n";
+    exists $services{$v[0]} and die "duplicate service: $v[0]\n";
+    $services{$v[0]} = \@v;
+}
+close($sf) or die "cannot close services: $!\n";
+
+my $text = "# SASD Big Brother-style candidate; review with the selected product version.\n"
+    . "# Generated from the shared inventory; no network activity is performed.\n";
+for my $host (sort keys %$host_records) {
+    next if exists($state{$host}) && $state{$host} ne 'enabled';
+    my $role = $host_records->{$host}->{role};
+    my @checks = ('conn');
+    for my $name (sort keys %services) {
+        my $service = $services{$name};
+        next unless $service->[1] eq '*' || $service->[1] eq 'baseline' || $service->[1] eq $role;
+        push @checks, $service->[2];
+    }
+    my %seen;
+    @checks = grep { !$seen{$_}++ } @checks;
+    $text .= $host_records->{$host}->{address} . " $host # " . join(' ', @checks) . "\n";
+}
+
+if ($out eq '') {
+    print $text;
+    exit 0;
+}
+-e $out && !$force and die "output exists; use --force explicitly\n";
+for my $input ($hosts, $roles, $services, $state) {
+    paths_conflict($out, $input) and die "output path overlaps an input file\n";
+}
+my (undef, $directory) = File::Spec->splitpath($out);
+ensure_dir($directory, 0750) if length $directory;
+atomic_write($out, $text, 0640);
+print "output=$out status=APPLIED\n";

@@ -10,6 +10,12 @@ The linter checks a small ASCII/IPv4 subset, prints only hostnames and addresses
 
 For an operational **independent SASD** status collector, use bin/sasd-status-store and bin/sasd-status-board; their TSV format is not the BB wire protocol.
 
+`bin/sasd-config-bigbrother` is a separate offline adapter. It reads the shared
+SASD inventory, services and lifecycle state and emits a review-only,
+Big-Brother-style host-file candidate. Disabled and removed hosts are omitted.
+It performs no network activity, installation or service activation; the result
+is not native acceptance evidence for a Big Brother release.
+
 Historical background:
 - https://linuxgazette.net/issue15/bb-info.html — late-1996 overview
 - https://linuxgazette.net/issue15/bbartlg.html — 1997 historical article about configuration and service checks

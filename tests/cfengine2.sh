@@ -29,4 +29,11 @@ if bin/sasd-config-cfengine2 --hosts site/hosts.tsv --roles site/roles.tsv --out
     echo "CFEngine 2 input overwrite was accepted" >&2; exit 1
 fi
 grep -q 'output path overlaps an input file' "$task_tmp/input-overwrite-error"
+cp site/hosts.tsv "$task_tmp/collision.tsv"
+printf 'web_lab.invalid\t192.0.2.40\tunix\tweb\tlab\tweb\n' >> "$task_tmp/collision.tsv"
+if bin/sasd-config-cfengine2 --hosts "$task_tmp/collision.tsv" --roles site/roles.tsv --dry-run > "$task_tmp/class-collision-error" 2>&1; then
+    echo "colliding CFEngine 2 classes accepted" >&2
+    exit 1
+fi
+grep -q 'duplicate CFEngine 2 class' "$task_tmp/class-collision-error"
 echo "CFEngine 2 candidate generation: PASS"
