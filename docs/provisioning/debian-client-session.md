@@ -198,3 +198,7 @@ Base 05fc32ebf11cb97b10d93c91b8019d14917cb202, CI #61 45785946650 success. All 1
 ## M7-D.7b — evidence collection
 
 Base f7ae4e8477f124aace927f1b2f195518869e8d60, CI #62 success. Read-only committed journal/current snapshot checks, explicit multi-group collection with R2/release binding; all 116 tasks NOT_CERTIFIED and all 57 dependencies waiting. No native promotion, baseline or bulk apply. Expected 169 archive files, CI pending. Main a5dd317 and feature unchanged; PR #4 dirty, no merge. Next verify CI then dependency-aware installation planning with distinct fixture/runtime gates.
+
+## M7-D.7c — orchestration plan
+
+Base 10e540518223083994de6d808d22b319b4fcf06a; CI #63 success. Read-only canonical R2 plan and selected prerequisite closure, optional fresh fixture evidence, group review/waiting lists; no candidate generation, dependency promotion or native execution. Expected 170 archive files, CI pending. Main and feature unchanged, PR #4 dirty, no merge. Next CI then restart/checkpoint management.

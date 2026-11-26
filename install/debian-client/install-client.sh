@@ -6,6 +6,9 @@ umask 077
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 # New explicit group route and read-only coverage, before legacy fixture routing.
 for arg do
+    case "$arg" in --orchestration-plan) exec /usr/bin/python3 -I "$here/orchestration-plan.py" "$@" ;; esac
+done
+for arg do
     case "$arg" in --evidence-report) exec /usr/bin/python3 -I "$here/fixture-evidence.py" "$@" ;; esac
 done
 for arg do

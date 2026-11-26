@@ -198,3 +198,7 @@ Basis 05fc32ebf11cb97b10d93c91b8019d14917cb202, CI #61 45785946650 erfolgreich. 
 ## M7-D.7b — Evidenzsammlung
 
 Basis f7ae4e8477f124aace927f1b2f195518869e8d60, CI #62 erfolgreich. Nur-Lese-Prüfung abgeschlossener Journale/aktueller Snapshots, explizite Mehrgruppensammlung mit R2-/Releasebindung; alle 116 Tasks NOT_CERTIFIED, alle 57 Abhängigkeiten wartend. Keine native Promotion, Baseline oder Bulk-Apply. Erwartet 169 Archivdateien, CI ausstehend. main a5dd317 und Feature unverändert; PR #4 dirty, kein Merge. Nächster Schritt CI, dann abhängigkeitssensitive Installationsplanung mit getrennten Fixture-/Runtime-Gates.
+
+## M7-D.7c — Installationsplanung
+
+Basis 10e540518223083994de6d808d22b319b4fcf06a; CI #63 erfolgreich. Nur-Lese-R2-Plan und ausgewählte Voraussetzungshülle, optional frische Fixture-Evidenz, Gruppenreview-/Wartelisten; keine Kandidatenerzeugung, Promotion oder native Ausführung. Erwartet 170 Archivdateien, CI ausstehend. main und Feature unverändert, PR #4 dirty, kein Merge. Nächster Schritt CI, dann Wiederanlauf/Checkpoints.

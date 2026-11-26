@@ -45,10 +45,20 @@ with tempfile.TemporaryDirectory() as aux, tempfile.TemporaryDirectory(prefix='s
     assert sum(x['status']=='WAIT_VERIFIED' for x in result['dependencies'])==54
     assert sum(x['status']=='WAIT_CANDIDATE' for x in result['dependencies'])==3
     assert all(x['status']=='STATIC_COMMITTED_MATCH' for x in result['groups'].values())
+    orchestration=['--orchestration-plan',*common,'--manifest='+str(manifest)]
+    planned=run(*orchestration);assert planned.returncode==0,planned.stderr
+    plan=json.loads(planned.stdout)
+    assert plan['groups']['logging']['observation']=='STATIC_COMMITTED_MATCH'
+    assert plan['groups']['banner']['observation']=='STATIC_COMMITTED_MATCH'
+    assert plan['evidence-report-sha256'] is not None
+    assert all(r['native-execution']=='NOT_AUTHORIZED' for r in plan['tasks'])
+    assert next(r for r in plan['tasks'] if r['id']=='0420')['next-action']=='WAIT_VERIFIED'
     assert bn not in r.stdout and ln not in r.stdout and 'Unauthorized access' not in r.stdout
     target=pathlib.Path(bn)/'etc/issue';old=target.read_bytes();target.write_text('drift\n')
     r=run(*cmd);assert r.returncode==3,r.stderr
     assert json.loads(r.stdout)['groups']['banner']['status']=='NOT_VERIFIED'
+    planned=run(*orchestration);assert planned.returncode==3,planned.stderr
+    assert json.loads(planned.stdout)['groups']['banner']['observation']=='NOT_VERIFIED'
     target.write_bytes(old)
     journal=pathlib.Path(bn)/'transactions'/groups['banner']['journal']
     saved=journal.read_bytes()
