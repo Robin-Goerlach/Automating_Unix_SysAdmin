@@ -17,11 +17,11 @@ The repository must never mislabel a fixture-based test as live network or histo
 ## Checkpoint status — 2026-11-26
 
 - **A — Quality and Security: implemented for the current WSL scope.** Inventory migration validation, shared path checks, cooperative locking, exclusive `0600` migration backups, marker regression cases, documentation-pair checks and release packaging are covered offline. Crash-atomic multi-file commits, hostile TOCTOU resistance and historical-platform proof remain open.
-- **B — Integrated Site Management: implemented incrementally.** Versioned inventory, explicit roles, lifecycle state, shared service parsing, host administration and controlled candidate generation are available. A full deploy/apply orchestrator and end-to-end lab remain open.
-- **C — Historical Product Integrations: partial/offline.** CFEngine 1/2, MRTG/RRDtool and separate Big Brother/Big Sister candidates have shared inventory and offline positive/negative tests. Native Big Brother/Big Sister/CFEngine acceptance and the remaining NetSaint/Nagios/Ganglia integrations remain open.
+- **B — Integrated Site Management: implemented incrementally.** Versioned inventory, explicit roles, lifecycle state, one shared service parser, host administration and controlled candidate generation are available. A full deploy/apply orchestrator remains open.
+- **C — Historical Product Integrations: partial/offline.** CFEngine 1/2, MRTG/RRDtool and separate Big Brother/Big Sister candidates have shared inventory and offline positive/negative tests. Their bounded status adapters now share measurement/freshness validation. Native product acceptance and the remaining NetSaint/Nagios/Ganglia integrations remain open.
 - **D — Database Monitoring: planned.** No database adapter was started in this package.
 - **E — Infrastructure and Client Installation: partial/offline.** M5–M7 staging, postinstall and enrollment fixtures remain available; native network boot and historical installer acceptance remain open.
-- **F — Integrated Acceptance: partial.** Regression and release checks pass, but the complete cross-product offline laboratory and later administration console are not complete.
+- **F — Integrated Acceptance: partial/offline laboratory implemented.** `examples/sasd-integrated-site-lab.sh` exercises shared lifecycle, candidate generation, SASD/Big Brother/Big Sister observations and a static report in a disposable tree. Native products, network boot, controlled deployment and a later administration console remain open.
 
 ## R0 — Independent baseline (implemented, contemporary CI)
 

@@ -23,3 +23,12 @@ Das R2-`sasd-site-audit` bleibt eine unabhängige lokale Prüfung. M1 importiert
 ## Big Sister
 
 Big Sister ist ein eigenes Produktprofil und kein Alias für die Big-Brother-Syntax. Die öffentliche Dokumentation beschreibt Prozent-Direktiven in `adm/bb-display.cfg` und Rechner-/Check-Regeln in `adm/uxmon-net`; `bin/sasd-config-bigsister` erzeugt aus dem gemeinsamen Inventar und Lebenszyklusmodell eine begrenzte Kandidatenausgabe für diese Schnittstellen. `bin/sasd-status-import-bigsister` wandelt synthetische Zeilen `status host.check color comment` in SASDs vierfeldrige Beobachtungseingabe um. Beide Werkzeuge arbeiten offline, lassen deaktivierte/entfernte Rechner aus, weisen doppelte Beobachtungen zurück und behaupten keine native Kompatibilität. Siehe [Big-Sister-Hinweise](../../bigsister/README.de.md).
+
+Die Big-Brother- und Big-Sister-Adapter verwenden einen gemeinsamen,
+begrenzten Parser für externe Statusdaten. Beide akzeptieren ein optionales
+`status`-Präfix und ein optionales Messzeitpräfix `(epoch)` nach der Farbe;
+der vollständige restliche Meldungstext bleibt erhalten. Der Produktname
+kennzeichnet nur den Adapter und umgeht weder M2/M2.1-Authentifizierung noch
+Enrollment. `examples/sasd-integrated-site-lab.sh` prüft Normal-, Warn-,
+Kritisch-, Fehlend-, Veraltet-/Recovery-, Duplikat- und unbekannte
+Rechnerfälle, ohne eines der Produkte zu starten.

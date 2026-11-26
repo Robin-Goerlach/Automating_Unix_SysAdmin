@@ -23,9 +23,18 @@ Latest files contain six tab-separated fields:
     receipt_epoch  host  check  observed_color  message  source
 
 External status adapters may add a fifth input field containing a validated
-measurement epoch after the message. `sasd-monitor-import` uses that value as
-the receipt/measurement time; ordinary four-field input continues to use its
-explicit `--received-at` value.
+measurement epoch after the message. This epoch is the observation ordering
+and freshness time stored in the existing `receipt_epoch` column; ordinary
+four-field input continues to use its explicit `--received-at` value. The
+actual file-arrival time is not persisted in this six-field format.
+
+An import rejects an observation more than 300 seconds ahead of its explicit
+arrival time, rejects duplicate keys inside one batch, and refuses to replace
+a newer stored observation. Equal-epoch conflicting observations are rejected;
+repeating the identical observation is safe. A cycle treats a future-dated
+record as `purple`, so a manipulated clock cannot keep a failed host healthy
+forever. `source` identifies the adapter for audit text only; it is not an
+authentication or enrollment decision.
 
 Derived state contains eight fields:
 
@@ -35,4 +44,4 @@ History contains seven fields:
 
     cycle_epoch  host  check  previous_state  new_state  source  message
 
-Epoch values are UTC epoch seconds. The supplied `--received-at` and `--now` options make tests deterministic. Repeating a cycle without a state change does not append another event.
+Epoch values are UTC epoch seconds. The supplied `--received-at` and `--now` options make tests deterministic. Repeating a cycle without a state change does not append another event. Disabled inventory hosts remain visible as `purple`; removed hosts are excluded from active selection while their lifecycle and monitoring history remain on disk.

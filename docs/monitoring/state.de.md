@@ -23,9 +23,20 @@ Letzte Meldungen:
     receipt_epoch  host  check  observed_color  message  source
 
 Externe Statusadapter dürfen nach der Nachricht ein fünftes Eingabefeld mit
-einem geprüften Messzeitpunkt ergänzen. `sasd-monitor-import` verwendet diesen
-Wert als Empfangs-/Messzeitpunkt; gewöhnliche Vierfeld-Eingaben verwenden
-weiterhin den ausdrücklichen Wert von `--received-at`.
+einem geprüften Messzeitpunkt ergänzen. Dieser Zeitpunkt dient in der
+unveränderten sechsfeldrigen Datei als Sortier- und Frischezeitpunkt in der
+Spalte `receipt_epoch`; Vierfeld-Eingaben verwenden weiterhin den
+ausdrücklichen Wert von `--received-at`. Die tatsächliche Eingangszeit wird in
+diesem Format nicht dauerhaft gespeichert.
+
+Ein Import weist Beobachtungen mehr als 300 Sekunden in der Zukunft gegenüber
+der ausdrücklichen Eingangszeit, doppelte Schlüssel im Batch und das Ersetzen
+einer neueren gespeicherten Beobachtung zurück. Widersprüchliche Meldungen mit
+demselben Zeitpunkt werden abgewiesen; die identische Wiederholung ist sicher.
+Ein Zyklus behandelt einen zukünftigen Datensatz als `purple`, damit eine
+manipulierte Uhr einen ausgefallenen Rechner nicht unbegrenzt gesund hält.
+`source` beschreibt nur den Adapter für die Audit-Ausgabe und ist kein
+Authentifizierungs- oder Enrollment-Nachweis.
 
 Abgeleiteter Zustand:
 
@@ -35,4 +46,4 @@ Historie:
 
     cycle_epoch  host  check  previous_state  new_state  source  message
 
-Epochwerte sind UTC-Epochensekunden. `--received-at` und `--now` machen Tests deterministisch. Ein Zyklus ohne Zustandswechsel erzeugt kein neues Ereignis.
+Epochwerte sind UTC-Epochensekunden. `--received-at` und `--now` machen Tests deterministisch. Ein Zyklus ohne Zustandswechsel erzeugt kein neues Ereignis. Deaktivierte Inventarrechner bleiben als `purple` sichtbar; entfernte Rechner werden aus der aktiven Auswahl ausgeschlossen, ihre Lifecycle- und Monitoringhistorie bleibt jedoch erhalten.

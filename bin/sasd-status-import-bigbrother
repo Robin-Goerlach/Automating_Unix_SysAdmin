@@ -21,8 +21,6 @@ my ($host_records) = read_host_records($hosts, $role_records, 0);
 my $check_records = read_checks($checks);
 my $records = read_external_status($input, 'bigbrother', $host_records, $check_records);
 for my $record (@$records) {
-    my @output = @$record;
-    pop @output;
-    print join("\t", @output), "\n";
+    print join("\t", @$record), "\n";
 }
 print STDERR "product=bigbrother imported=", scalar(@$records), " status=OK\n";

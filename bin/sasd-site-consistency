@@ -3,7 +3,7 @@
 use strict;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(read_roles read_host_records read_checks read_host_state);
+use SASD::Monitor qw(read_roles read_host_records read_checks read_services read_host_state);
 
 my ($hosts,$roles,$checks,$services,$monitoring,$state,$check) = ('','','','','','',0);
 my $state_explicit = 0;
@@ -23,12 +23,6 @@ $hosts && $roles && $checks && $services && $monitoring && $check or die "all in
 for ($hosts,$roles,$checks,$services,$monitoring) { -f $_ && !-l $_ or die "invalid input file\n"; }
 $state = "$hosts.state" if $state eq '';
 
-sub safe { my ($s) = @_; return defined($s) && $s !~ /[\x00-\x1f\x7f]/; }
-sub ident { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/; }
-sub profile { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,31}\z/; }
-sub host_name { my ($s) = @_; return defined($s) && $s =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/; }
-sub address { my ($s) = @_; return defined($s) && $s =~ /\A(\d+)\.(\d+)\.(\d+)\.(\d+)\z/ && $1 <= 255 && $2 <= 255 && $3 <= 255 && $4 <= 255; }
-sub fields { my ($line,$count) = @_; my @v = split /\t/, $line, -1; @v == $count or die "invalid TSV record\n"; safe($_) or die "control character in record\n" for @v; return @v; }
 sub read_lines {
     my ($path,$callback) = @_;
     open(my $fh, '<', $path) or die "cannot read $path: $!\n";
@@ -46,12 +40,8 @@ my $check_records = read_checks($checks);
     keys %$host_records;
 my $state_ref = read_host_state($state, \%host, !$state_explicit);
 %state = map { $_ => $state_ref->{$_}->{state} } keys %$state_ref;
-read_lines($services, sub {
-    my @v = fields($_[0],5);
-    ident($v[0]) && ($v[1] eq '*' || $v[1] eq 'baseline' || ident($v[1])) && exists($check_def{$v[2]}) && profile($v[3]) && length($v[4]) <= 120 or die "invalid service record\n";
-    exists($service{$v[0]}) and die "duplicate service: $v[0]\n";
-    $service{$v[0]} = \@v;
-});
+my $service_records = read_services($services, $role_records, $check_records);
+%service = map { $_ => [ $service_records->{$_}->{service}, $service_records->{$_}->{role}, $service_records->{$_}->{check}, $service_records->{$_}->{profile}, $service_records->{$_}->{description} ] } keys %$service_records;
 read_lines($monitoring, sub {
     my ($key,$value) = $_[0] =~ /\A([^=]+)=(.*)\z/ or die "invalid monitoring setting\n";
     $key =~ /\A[A-Za-z][A-Za-z0-9_]*\z/ && length($value) <= 240 or die "invalid monitoring setting\n";

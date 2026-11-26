@@ -17,11 +17,11 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 ## Checkpoint-Status — 26.11.2026
 
 - **A — Qualität und Sicherheit: im aktuellen WSL-Umfang umgesetzt.** Inventarmigrationsprüfung, gemeinsame Pfadprüfungen, kooperative Sperren, exklusive `0600`-Migrationssicherungen, Marker-Regressionen, Dokumentationspaarprüfung und Release-Paketierung sind offline abgedeckt. Crash-atomare Mehrdatei-Commits, Schutz gegen feindliche TOCTOU-Angriffe und historische Plattformnachweise bleiben offen.
-- **B — Integrierte Site-Verwaltung: schrittweise umgesetzt.** Versioniertes Inventar, ausdrückliche Rollen, Lebenszykluszustand, gemeinsamer Service-Parser, Hostverwaltung und kontrollierte Kandidatengenerierung sind verfügbar. Ein vollständiger Deploy-/Apply-Orchestrator und ein Ende-zu-Ende-Labor bleiben offen.
-- **C — Historische Produktintegrationen: teilweise/offline.** CFEngine 1/2, MRTG/RRDtool und getrennte Big-Brother-/Big-Sister-Kandidaten besitzen gemeinsames Inventar sowie Offline-Positiv-/Negativtests. Native Big-Brother-/Big-Sister-/CFEngine-Abnahmen und die übrigen NetSaint-/Nagios-/Ganglia-Integrationen bleiben offen.
+- **B — Integrierte Site-Verwaltung: schrittweise umgesetzt.** Versioniertes Inventar, ausdrückliche Rollen, Lebenszykluszustand, ein gemeinsamer Service-Parser, Hostverwaltung und kontrollierte Kandidatengenerierung sind verfügbar. Ein vollständiger Deploy-/Apply-Orchestrator bleibt offen.
+- **C — Historische Produktintegrationen: teilweise/offline.** CFEngine 1/2, MRTG/RRDtool und getrennte Big-Brother-/Big-Sister-Kandidaten besitzen gemeinsames Inventar sowie Offline-Positiv-/Negativtests. Ihre begrenzten Statusadapter teilen nun Messzeit-/Frischevalidierung. Native Produktabnahmen sowie die übrigen NetSaint-/Nagios-/Ganglia-Integrationen bleiben offen.
 - **D — Datenbank-Monitoring: geplant.** In diesem Paket wurde kein Datenbankadapter begonnen.
 - **E — Infrastruktur- und Clientinstallation: teilweise/offline.** M5–M7-Staging, Postinstallation und Enrollment-Fixtures bleiben verfügbar; native Netzwerkboot- und historische Installerabnahmen bleiben offen.
-- **F — Integrierte Abnahme: teilweise.** Regression und Releaseprüfungen bestehen, aber das vollständige produktübergreifende Offline-Labor und eine spätere Administrationskonsole sind nicht fertig.
+- **F — Integrierte Abnahme: teilweise/offline-Labor umgesetzt.** `examples/sasd-integrated-site-lab.sh` prüft gemeinsamen Lifecycle, Kandidatengenerierung, SASD-/Big-Brother-/Big-Sister-Beobachtungen und einen statischen Bericht in einem Wegwerfbaum. Native Produkte, Netzwerkboot, kontrolliertes Deployment und eine spätere Administrationskonsole bleiben offen.
 
 ## R2 — Rollenverwaltung und CFEngine 1
 

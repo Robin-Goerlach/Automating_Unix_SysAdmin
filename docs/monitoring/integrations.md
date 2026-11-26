@@ -23,3 +23,11 @@ The R2 `sasd-site-audit` remains an independent local configuration check. M1 im
 ## Big Sister
 
 Big Sister is a separate product profile, not a Big Brother syntax alias. Public documentation describes percent-directive `adm/bb-display.cfg` and host/check rules in `adm/uxmon-net`; `bin/sasd-config-bigsister` emits a bounded candidate for those interfaces from the shared inventory and lifecycle model. `bin/sasd-status-import-bigsister` converts synthetic `status host.check color comment` lines to SASD's four-column observation input. Both tools are offline, omit disabled/removed hosts, reject duplicate observations and make no native compatibility claim. See [the Big Sister notes](../../bigsister/README.md).
+
+The Big Brother and Big Sister adapters share one bounded external-status
+parser. Both accept an optional `status` prefix and an optional `(epoch)`
+measurement prefix after the color; the complete remaining message is kept.
+The product name identifies the adapter only and does not bypass M2/M2.1
+authentication or enrollment. `examples/sasd-integrated-site-lab.sh` exercises
+normal, warning, critical, missing, stale/recovery, duplicate and unknown-host
+cases without starting either product.

@@ -342,9 +342,13 @@ sub read_external_status {
         defined($target) && defined($color) or die "invalid external status record\n";
         $message = '' unless defined $message;
         my $measurement = '';
-        if ($product eq 'bigsister' && $message =~ s/^\(([0-9]{1,15})\)\s+//) {
-            $measurement = $1;
+        if ($message =~ /^\(([^)]*)\)(?:\s+|\z)/) {
+            my $candidate = $1;
+            $message =~ s/^\(([^)]*)\)\s*//;
+            $candidate =~ /\A[0-9]{1,15}\z/ or die "invalid external measurement epoch\n";
+            $measurement = $candidate;
         }
+        $message =~ /^\(/ and die "ambiguous external measurement prefix\n";
         $target =~ /\A(.+)\.([A-Za-z][A-Za-z0-9_-]{0,31})\z/ or die "invalid external status target\n";
         my ($host, $check) = ($1, $2);
         valid_host($host) && exists($hosts->{$host}) && exists($checks->{$check}) or
