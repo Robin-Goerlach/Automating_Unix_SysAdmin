@@ -36,7 +36,7 @@ id	original_line	task	state	handler
 0350	338	NFS_Create_Mountpoints	render	nfspoints
 0360	346	NFS_Mount_Network_Drives	render	nfsshares
 0370	349	DNS_Resolver_Final	render	resolver
-0380	352	Printing_Configure	deferred	-
+0380	352	Printing_Configure	render	printpolicy
 0390	357	Root_Profile_Stage_2	render	rootprofile2
 0400	385	Firewall_Stage_2	render	firewallfinal
 0410	389	Syslog_Configure	render	syslog
@@ -45,7 +45,7 @@ id	original_line	task	state	handler
 0440	400	SSH_Configure_Server_Client	render	sshpolicy
 0450	406	SSH_X11_Configure	render	sshx11
 0460	409	Login_Banner	render	banner
-0470	416	Printing_Subsystem	deferred	-
+0470	416	Printing_Subsystem	render	cupspolicy
 0480	419	Mail_Aliases	render	aliases
 0490	424	Postfix_Null_Client	render	postfix
 0500	428	SMTP_Banner	render	smtp
@@ -81,15 +81,15 @@ id	original_line	task	state	handler
 0800	643	Logwatch_Configure	render	logwatch
 0810	650	SELinux_Configure	render	selinuxpolicy
 0820	654	SNMP_Configure	render	snmppolicy
-0830	657	Puppet_Agent	deferred	-
+0830	657	Puppet_Agent	render	puppetpolicy
 0840	664	Monit_Configure	render	monitpolicy
 0850	670	USBGuard_Configure	render	usbguardpolicy
 0860	676	LDAP_Client	render	ldapreview
 0870	678	Active_Directory_Client	render	adreview
 0880	680	ReaR_Configure	render	rearpolicy
 0890	685	Big_Sister_Client	render	monitorenroll
-0900	688	Cron_CUPS_Cleanup	deferred	-
-0910	694	Cron_System_Update	review	-
+0900	688	Cron_CUPS_Cleanup	render	printmaintenance
+0910	694	Cron_System_Update	render	updatepolicy
 0920	700	Cron_AIDE	render	aideschedule
 0930	704	Cron_Rkhunter	render	rkhunterschedule
 0940	708	Cron_Chkrootkit	render	chkrootkitschedule
@@ -100,7 +100,7 @@ id	original_line	task	state	handler
 0990	731	NSS_Configure	render	nssreview
 1000	734	AIDE_Initialize	render	aideinit
 1010	737	Inventory_Final	render	localinventory
-1020	746	Syslog_Replace_Rsyslog	review	-
+1020	746	Syslog_Replace_Rsyslog	render	syslogmigration
 1030	748	SSH_Verify_SFTP	render	sftpcheck
 1040	750	AIDE_Final_Configure	render	aidefinal
 1050	754	Central_Approve_SSH_Host_Key	central	-

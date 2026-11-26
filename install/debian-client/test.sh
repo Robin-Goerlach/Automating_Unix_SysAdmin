@@ -27,7 +27,9 @@ rc=0
 cp -R "$here" "$tmp/package-source"
 printf '%s\n' 'fixture-only' > "$tmp/package-source/tasks/private.fixture"
 # package.sh expects its source directory to be called debian-client.
-mkdir "$tmp/build" "$tmp/bin"; cp "$here/../../bin/sasd-site-inventory" "$tmp/bin/"; mv "$tmp/package-source" "$tmp/build/debian-client"
+mkdir "$tmp/build" "$tmp/bin"; mkdir -p "$tmp/lib/SASD"
+cp "$here/../../lib/SASD/Monitor.pm" "$tmp/lib/SASD/"
+cp "$here/../../bin/sasd-site-inventory" "$tmp/bin/"; mv "$tmp/package-source" "$tmp/build/debian-client"
 "$tmp/build/debian-client/package.sh" "$tmp/release"
 if tar -tzf "$tmp/release/sasd-debian-client.tar.gz" | grep -q 'private.fixture'; then exit 1; fi
 if [ "$(id -u)" -ne 0 ]; then
@@ -37,7 +39,7 @@ if [ "$(id -u)" -ne 0 ]; then
     candidate=$(sed -n 's/^Candidate directory: //p' "$tmp/staged-report")
     case "$candidate" in /tmp/sasd-debian-stage.*) ;; *) exit 1 ;; esac
     grep -qx 'nameserver 192.0.2.53' "$candidate/0010_DNS_Client_Set_Name_Server.candidate"
-    grep -q 'staged=83 pending=33 failed=0' "$tmp/staged-report"
+    grep -q 'staged=89 pending=27 failed=0' "$tmp/staged-report"
     rm -rf -- "$candidate"
 fi
 (cd "$tmp/release" && sha256sum -c sasd-debian-client.tar.gz.sha256)
@@ -71,5 +73,6 @@ sh "$here/test-monitoring.sh"
 sh "$here/test-network.sh"
 sh "$here/test-directory.sh"
 sh "$here/test-recovery-plan.sh"
+sh "$here/test-operations.sh"
 sh "$here/test-archive.sh"
 echo 'Offline Debian candidate tests passed'

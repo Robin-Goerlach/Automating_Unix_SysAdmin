@@ -10,12 +10,14 @@ task	prerequisite	evidence
 0360	0200	verified
 0360	0350	verified
 0370	0020	verified
+0380	0200	verified
 0390	0190	verified
 0400	0250	verified
 0410	0200	verified
 0420	0410	verified
 0440	0430	verified
 0450	0440	verified
+0470	0200	verified
 0490	0480	verified
 0500	0490	verified
 0520	0510	verified
@@ -31,6 +33,7 @@ task	prerequisite	evidence
 0800	0030	candidate
 0810	0730	verified
 0820	0730	verified
+0830	0730	verified
 0840	0730	verified
 0850	0730	verified
 0860	0020	verified
@@ -38,6 +41,7 @@ task	prerequisite	evidence
 0880	0730	verified
 0890	0730	verified
 0900	0470	verified
+0910	0280	verified
 0920	0510	verified
 0920	0730	verified
 0930	0750	verified
@@ -48,6 +52,7 @@ task	prerequisite	evidence
 0970	0360	verified
 0980	0720	verified
 1000	0730	verified
+1020	0410	verified
 1030	0440	verified
 1040	1000	verified
 1090	0880	verified

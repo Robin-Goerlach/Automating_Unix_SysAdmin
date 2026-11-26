@@ -10,7 +10,7 @@ here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 catalog="$here/checklist.tsv"
 [ -f "$catalog" ] && [ ! -L "$catalog" ] || exit 2
 names=$(awk -F '\t' 'NR==1 {next} NF!=5 || $1 !~ /^[0-9][0-9][0-9][0-9]$/ || $3 !~ /^[A-Za-z0-9_]+$/ || seen[$1]++ {bad=1; next} {print $1 "_" $3} END{if(bad || NR<2) exit 1}' "$catalog") || exit 2
-set -- "$1" debian-client/install-client.sh debian-client/dispatch-planned.sh debian-client/dispatch-fixture.sh debian-client/plan-client.pl debian-client/native-preflight.pl debian-client/native-capabilities.py debian-client/native-identity.py debian-client/prepare-native.sh debian-client/collect-native.sh debian-client/verify-dns.pl debian-client/lab-install.py debian-client/native-install.py debian-client/plan-packages.py debian-client/plan-services.py debian-client/plan-communications.py debian-client/plan-storage.py debian-client/plan-shell.py debian-client/plan-security.py debian-client/plan-audits.py debian-client/plan-monitoring.py debian-client/plan-network.py debian-client/plan-directory.py debian-client/plan-recovery.py debian-client/dependencies.tsv debian-client/verify-baseline.sh debian-client/apply-baseline.sh debian-client/recover-baseline.sh debian-client/lib/transaction.sh debian-client/lib/task.sh debian-client/lib/policy.sh debian-client/lib/baseline-render.sh debian-client/checklist.tsv debian-client/site.example.conf debian-client/package-policy.tsv debian-client/package-profiles.tsv debian-client/inventory-fields.tsv
+set -- "$1" debian-client/install-client.sh debian-client/dispatch-planned.sh debian-client/dispatch-fixture.sh debian-client/plan-client.pl debian-client/native-preflight.pl debian-client/native-capabilities.py debian-client/native-identity.py debian-client/prepare-native.sh debian-client/collect-native.sh debian-client/verify-dns.pl debian-client/lab-install.py debian-client/native-install.py debian-client/plan-packages.py debian-client/plan-services.py debian-client/plan-communications.py debian-client/plan-storage.py debian-client/plan-shell.py debian-client/plan-security.py debian-client/plan-audits.py debian-client/plan-monitoring.py debian-client/plan-network.py debian-client/plan-directory.py debian-client/plan-recovery.py debian-client/plan-operations.py debian-client/dependencies.tsv debian-client/verify-baseline.sh debian-client/apply-baseline.sh debian-client/recover-baseline.sh debian-client/lib/transaction.sh debian-client/lib/task.sh debian-client/lib/policy.sh debian-client/lib/baseline-render.sh debian-client/checklist.tsv debian-client/site.example.conf debian-client/package-policy.tsv debian-client/package-profiles.tsv debian-client/inventory-fields.tsv
 for name in $names; do set -- "$@" "debian-client/tasks/$name"; done
 destination=$1; shift
 for file do
@@ -18,11 +18,15 @@ for file do
 done
 validator="$here/../../bin/sasd-site-inventory"
 [ -f "$validator" ] && [ ! -L "$validator" ] || { echo 'Canonical R2 validator missing' >&2; exit 2; }
+monitor="$here/../../lib/SASD/Monitor.pm"
+[ -f "$monitor" ] && [ ! -L "$monitor" ] || { echo 'Canonical R2 module missing' >&2; exit 2; }
 bundle=$(mktemp -d)
 trap 'rm -rf -- "$bundle"' EXIT
 trap 'exit 1' HUP INT TERM
 (cd "$here/.." && cp -p --parents -- "$@" "$bundle")
 cp -p -- "$validator" "$bundle/debian-client/lib/sasd-site-inventory"
+mkdir "$bundle/debian-client/lib/SASD"
+cp -p -- "$monitor" "$bundle/debian-client/lib/SASD/Monitor.pm"
 mkdir -- "$destination"
 out=$(CDPATH= cd -- "$destination" && pwd)
 tar -C "$bundle" -czf "$out/sasd-debian-client.tar.gz" -- debian-client

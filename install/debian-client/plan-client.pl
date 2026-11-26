@@ -38,11 +38,14 @@ sub fqdn {
 fqdn($host) or fail('expected lowercase R2 FQDN (max 63 characters)');
 !exists($arg{only}) || $arg{only} =~ /\A[0-9]{4}\z/ or fail('invalid task number');
 my $validator = "$RealBin/../../bin/sasd-site-inventory";
+my $monitor = "$RealBin/../../lib/SASD/Monitor.pm";
 # Distribution archives carry a byte-for-byte copy of the canonical validator.
 if (-e "$RealBin/lib/sasd-site-inventory" || -l "$RealBin/lib/sasd-site-inventory") {
     $validator = "$RealBin/lib/sasd-site-inventory";
+    $monitor = "$RealBin/lib/SASD/Monitor.pm";
 }
 regular($validator) or fail('R2 inventory validator unavailable');
+regular($monitor) or fail('R2 inventory module unavailable');
 for (qw(inventory roles)) {
     $arg{$_} = File::Spec->rel2abs($arg{$_});
     regular($arg{$_}) or fail("invalid $_ file");

@@ -30,10 +30,17 @@ cp "$tmp/good-hosts" "$tmp/hosts.tsv"
 # Copy only the planner and its trusted dependencies to an isolated repository layout.
 mkdir -p "$tmp/copy/install/debian-client" "$tmp/copy/bin"
 cp "$repo/bin/sasd-site-inventory" "$tmp/copy/bin/"
+mkdir -p "$tmp/copy/lib/SASD"
+cp "$repo/lib/SASD/Monitor.pm" "$tmp/copy/lib/SASD/"
 copy="$tmp/copy/install/debian-client"
 cp "$here/plan-client.pl" "$here/checklist.tsv" "$here/dependencies.tsv" "$copy/"
 cp -R "$here/tasks" "$copy/"
 fixture(){ perl "$copy/plan-client.pl" --inventory="$tmp/hosts.tsv" --roles="$tmp/roles.tsv" --hostname=node.lab.invalid; }
+fixture > /dev/null
+mv "$tmp/copy/lib/SASD/Monitor.pm" "$tmp/saved-monitor"
+reject fixture
+grep -q 'R2 inventory module unavailable' "$tmp/rejected"
+mv "$tmp/saved-monitor" "$tmp/copy/lib/SASD/Monitor.pm"
 cp "$copy/dependencies.tsv" "$tmp/good-deps"
 printf '0030\t0040\tcandidate\n' >> "$copy/dependencies.tsv"; reject fixture
 cp "$tmp/good-deps" "$copy/dependencies.tsv"

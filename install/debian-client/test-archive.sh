@@ -24,7 +24,7 @@ tar --same-permissions -xzf "$tmp/release/sasd-debian-client.tar.gz" -C "$tmp/un
 archive=$tmp/unpack/debian-client
 # Independent expected file inventory. No local inventory, tests, reports or credentials.
 {
-    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py plan-services.py plan-communications.py plan-storage.py plan-shell.py plan-security.py plan-audits.py plan-monitoring.py plan-network.py plan-directory.py plan-recovery.py dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh lib/sasd-site-inventory checklist.tsv site.example.conf package-policy.tsv package-profiles.tsv inventory-fields.tsv
+    printf '%s\n' install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py plan-services.py plan-communications.py plan-storage.py plan-shell.py plan-security.py plan-audits.py plan-monitoring.py plan-network.py plan-directory.py plan-recovery.py plan-operations.py dependencies.tsv verify-baseline.sh apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh lib/sasd-site-inventory lib/SASD/Monitor.pm checklist.tsv site.example.conf package-policy.tsv package-profiles.tsv inventory-fields.tsv
     awk -F '\t' 'NR>1 {print "tasks/" $1 "_" $3}' "$here/checklist.tsv"
 } | sort > "$tmp/expected"
 (cd "$archive" && find . -type f -printf '%P\n' | sort) > "$tmp/actual"
@@ -33,6 +33,7 @@ cmp "$tmp/expected" "$tmp/actual"
 while IFS= read -r name; do
     source=$here/$name
     [ "$name" != lib/sasd-site-inventory ] || source=$here/../../bin/sasd-site-inventory
+    [ "$name" != lib/SASD/Monitor.pm ] || source=$here/../../lib/SASD/Monitor.pm
     cmp "$source" "$archive/$name"
     [ "$(stat -c %a "$source")" = "$(stat -c %a "$archive/$name")" ]
 done < "$tmp/expected"
@@ -142,6 +143,9 @@ if [ -x /usr/bin/python3 ]; then
     cp "$here/test-recovery-plan.sh" "$archive/test-recovery-plan.sh"
     sh "$archive/test-recovery-plan.sh"
     rm "$archive/test-recovery-plan.sh"
+    cp "$here/test-operations.sh" "$archive/test-operations.sh"
+    sh "$archive/test-operations.sh"
+    rm "$archive/test-operations.sh"
     # Exercise native transaction primitives from packaged code, never the live path.
     cp "$here/test-native-install.sh" "$archive/test-native-install.sh"
     sh "$archive/test-native-install.sh"

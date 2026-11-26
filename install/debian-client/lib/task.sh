@@ -172,6 +172,12 @@ ROTATE
         selinuxpolicy) printf '%s\n' 'scope	policy' 'lsm	OBSERVE_RUNNING_KERNEL' 'policy	REVIEW_DISTRIBUTION_SUPPORT_AND_LABELS' 'enforcement	EXPLICIT_LAB_ACCEPTANCE' 'existing-lsm	KEEP_AND_REVIEW' ;;
         usbguardpolicy) printf '%s\n' 'scope	policy' 'rules	KEEP_AND_REVIEW' 'devices	EXPLICIT_APPROVED_DEVICE_POLICY' 'activation	VERIFY_CONSOLE_INPUT_AND_RECOVERY' 'generated-rules	NO_AUTOMATIC_TRUST' ;;
         rearpolicy) printf '%s\n' 'scope	policy' 'backup	EXPLICIT_PRIVATE_DESTINATION' 'media	VERIFY_DEVICE_IDENTITY_AND_CONTENTS' 'existing-data	PRESERVE' 'restore	DISPOSABLE_VM_RESTORE_TEST' 'media-creation	SEPARATE_MANUAL_TASK_1090' ;;
+        printpolicy) printf '%s\n' 'scope	policy' 'queues	EXPLICIT_PRIVATE_SITE_INPUT' 'driver	REVIEW_DRIVERLESS_IPP_SUPPORT' 'existing-queues	KEEP_UNCHANGED' ;;
+        cupspolicy) printf '%s\n' 'scope	policy' 'cups	PROFILE_AND_PACKAGE_REVIEW' 'listener	NO_NEW_REMOTE_LISTENER' 'administration	PRESERVE_ACCESS_POLICY' ;;
+        puppetpolicy) printf '%s\n' 'scope	policy' 'server,environment	EXPLICIT_PRIVATE_SITE_INPUT' 'certificate	VERIFY_CA_AND_NODE_IDENTITY' 'catalog	REVIEW_BEFORE_AGENT_RUN' 'existing-agent	KEEP_UNCHANGED' ;;
+        printmaintenance) printf '%s\n' 'scope	policy' 'spool	KEEP_PENDING_JOBS' 'history	REVIEW_CUPS_RETENTION' 'schedule	REUSE_DISTRIBUTION_MECHANISM' ;;
+        updatepolicy) printf '%s\n' 'scope	policy' 'apt-timers	REVIEW_EXISTING_SCHEDULE' 'unattended-upgrades	EXPLICIT_APPROVAL_AND_ORIGIN_REVIEW' 'reboot	EXPLICIT_MAINTENANCE_WINDOW' ;;
+        syslogmigration) printf '%s\n' 'scope	policy' 'rsyslog	KEEP_SELECTED_BACKEND' 'syslog-ng	EXPLICIT_MIGRATION_REVIEW' 'routes	VERIFY_DELIVERY_AND_ROTATION' 'coexistence	REVIEW_NO_AUTOMATIC_REPLACEMENT' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;

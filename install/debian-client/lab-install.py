@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 NAMES = ('hostname', 'hosts', 'resolv.conf')
 RUNTIME = ('install-client.sh dispatch-planned.sh dispatch-fixture.sh plan-client.pl '
            'native-preflight.pl native-capabilities.py native-identity.py prepare-native.sh '
-           'collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py plan-services.py plan-communications.py plan-storage.py plan-shell.py plan-security.py plan-audits.py plan-monitoring.py plan-network.py plan-directory.py plan-recovery.py dependencies.tsv verify-baseline.sh '
+           'collect-native.sh verify-dns.pl lab-install.py native-install.py plan-packages.py plan-services.py plan-communications.py plan-storage.py plan-shell.py plan-security.py plan-audits.py plan-monitoring.py plan-network.py plan-directory.py plan-recovery.py plan-operations.py dependencies.tsv verify-baseline.sh '
            'apply-baseline.sh recover-baseline.sh lib/transaction.sh lib/task.sh lib/policy.sh lib/baseline-render.sh '
            'checklist.tsv site.example.conf package-policy.tsv package-profiles.tsv inventory-fields.tsv').split()
 
@@ -41,9 +41,12 @@ def release_digest():
     validator = HERE / 'lib/sasd-site-inventory'
     if not validator.exists() and not validator.is_symlink():
         validator = HERE / '../../bin/sasd-site-inventory'
+    monitor = (HERE / 'lib/SASD/Monitor.pm' if validator == HERE / 'lib/sasd-site-inventory'
+               else HERE / '../../lib/SASD/Monitor.pm')
+    special = {'lib/sasd-site-inventory': validator, 'lib/SASD/Monitor.pm': monitor}
     rows = []
-    for name in sorted(paths + ['lib/sasd-site-inventory']):
-        path = validator if name == 'lib/sasd-site-inventory' else HERE / name
+    for name in sorted(paths + list(special)):
+        path = special.get(name, HERE / name)
         rows.append([name, stat.S_IMODE(path.lstat().st_mode), digest(read_file(path))])
     return digest(json.dumps(rows, separators=(',', ':')).encode('ascii'))
 
