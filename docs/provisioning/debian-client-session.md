@@ -218,3 +218,7 @@ Base bd648b94e5f7a079b13bb296d171c08f43aad480, CI #66 success. New test-offline-
 ## M7-D.7g — branch integration preparation
 
 Base f9ff5530614eaa58153b83e9b8e8aead07987a66; CI #68 success with two actual workflow PASS markers and archive verification; main feeb68f CI #67 separate success. Complete three-tree comparison, 55/231 changes, three overlap paths, no deletions; precise text edit review and semantic contract review. New bilingual integration plan, I0 PASS for pinned inputs, I1–I5 and G0–G6 open. Documentation only, no runtime or canonical roadmap/Makefile change, no merge/rebase. New CI pending. External logs unavailable. Next D.7h native lab review/decision packet; no native writes or branch integration without approval.
+
+## M7-D.7h — native lab preparation
+
+CI #69 failure job 139827130484: source PASS, archive fixture-apply exit 2; likely underscore in random legacy root. Fix 278656ece5aa68300f85c21496fa729f13e7f21f test only, CI #70 pending. Added bilingual decision packet, refreshed runbook/acceptance, G0–G6 all open, lifecycle guard mandatory before native, I1–I5 open. Main feeb68f and feature unchanged; PR #4 dirty. No merge/rebase/native execution; no local combined suite or external logs. Next verify CI and request explicit I1 only.

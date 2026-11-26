@@ -605,3 +605,7 @@ Main advanced independently from a5dd317 to feeb68f8fcd26835ae570b38c5f4ce68b4b8
 ## M7-D.7g — branch integration preparation
 
 CI #68 (45793947395) passed at f9ff553; job log confirms the connected workflow PASS twice and 171 exact archive files, with M3 native and tcsh checks skipped. Main feeb68f CI #67 passed separately; seven main and 52 integration commits at the pinned comparison, 55/231 changed paths, three overlaps, no deletions. [Integration and acceptance plan](debian-client-integration-plan.md) records exact pins, line-level edit analysis, proposed Makefile/roadmap reconciliation, shared R2/lifecycle/monitoring/release risks and I0–I5 combined acceptance gates. I0 prepared; I1–I5 and native G0–G6 open. No merge, rebase, candidate tree, combined test or native execution. Next D.7h prepare lab review/decision packet only.
+
+## M7-D.7h — native lab decision preparation
+
+CI #69 failed in extracted workflow at legacy fixture guard; likely random underscore suffix, test-only fix 278656e and CI #70 pending. [Lab decision packet](debian-client-lab-decision.md) consolidates G0–G6, proposes Debian 13 amd64 KVM/ext4 baseline and explicit staged approvals. R2 lifecycle guard remains a hard pre-native blocker; combined I1–I5 open. Updated runbook and acceptance interpretation; no native execution, merge or rebase. Next obtain I1 approval after correction CI and prepare isolated reconciliation candidate.

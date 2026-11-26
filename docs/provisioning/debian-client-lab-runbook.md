@@ -6,7 +6,7 @@ Status: **initial collection only; no native write authorization**. See the [acc
 
 ## 1. Build and record the reviewed candidate (G0)
 
-On a trusted development machine, use a separate checkout of feature/debian-client-checklist at the reviewed full commit SHA, not the concurrently developed main branch. Run as an ordinary user. Do not copy real site files into the repository.
+On a trusted development machine, use a separate checkout of the explicitly reviewed full commit SHA from the current integration candidate, not the obsolete original feature branch or an unreviewed main head. Before any native write, satisfy the combined branch gates and lifecycle requirements in the [integration plan](debian-client-integration-plan.md). The [lab decision packet](debian-client-lab-decision.md) defines the staged authorization boundaries. Run as an ordinary user. Do not copy real site files into the repository.
 
     git status --short
     git rev-parse HEAD

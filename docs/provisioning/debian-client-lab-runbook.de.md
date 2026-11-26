@@ -6,7 +6,7 @@ Status: **nur erste Bestandsaufnahme; keine native Schreibfreigabe**. Siehe [Abn
 
 ## 1. Geprüften Kandidaten bauen und dokumentieren (G0)
 
-Auf vertrauenswürdigem Entwicklungsrechner getrennten Checkout von feature/debian-client-checklist auf geprüftem vollständigem Commit-SHA verwenden, nicht den parallel entwickelten main-Branch. Als normaler Benutzer ausführen. Echte Standortdateien nicht ins Repository kopieren.
+Auf vertrauenswürdigem Entwicklungsrechner getrennten Checkout des ausdrücklich geprüften vollständigen Commit-SHA des aktuellen Integrationskandidaten verwenden, nicht den ursprünglichen veralteten Feature-Branch oder ungeprüften main-Head. Vor nativen Writes gemeinsame Branchgates und Lifecycle-Anforderungen im [Integrationsplan](debian-client-integration-plan.de.md) erfüllen. Die [Laborentscheidungsvorlage](debian-client-lab-decision.de.md) definiert gestufte Freigabegrenzen. Als normaler Benutzer ausführen. Echte Standortdateien nicht ins Repository kopieren.
 
     git status --short
     git rev-parse HEAD

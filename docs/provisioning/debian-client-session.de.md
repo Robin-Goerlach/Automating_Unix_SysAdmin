@@ -218,3 +218,7 @@ Basis bd648b94e5f7a079b13bb296d171c08f43aad480, CI #66 erfolgreich. Neues test-o
 ## M7-D.7g — Branch-Integrationsvorbereitung
 
 Basis f9ff5530614eaa58153b83e9b8e8aead07987a66; CI #68 erfolgreich mit zwei tatsächlichen Workflow-PASS-Markern und Archivprüfung; main feeb68f CI #67 separat erfolgreich. Vollständiger Drei-Tree-Vergleich, 55/231 Änderungen, drei Überlappungen, keine Löschungen; präzise Texteditier- und semantische Vertragsprüfung. Neuer zweisprachiger Integrationsplan, I0 PASS für fixierte Inputs, I1–I5 und G0–G6 offen. Nur Dokumentation, keine Runtime-/kanonische Roadmap-/Makefileänderung, kein Merge/Rebase. Neue CI ausstehend. Externe Logs unerreichbar. Nächster D.7h Laborreview/Entscheidungsvorlage; keine nativen Writes/Branchintegration ohne Freigabe.
+
+## M7-D.7h — native Laborvorbereitung
+
+CI #69 Fehler Job 139827130484: Quell-PASS, Archiv fixture-apply Exit 2; wahrscheinlich Unterstrich im zufälligen Legacy-Root. Fix 278656ece5aa68300f85c21496fa729f13e7f21f nur Test, CI #70 ausstehend. Zweisprachige Entscheidungsvorlage, Laboranleitung/Abnahme aktualisiert, G0–G6 alle offen, Lifecycle-Guard vor nativ zwingend, I1–I5 offen. main feeb68f und Feature unverändert; PR #4 dirty. Kein Merge/Rebase/native Ausführung, kein lokaler kombinierter Gesamttest/externe Logs. Nächster Schritt CI prüfen und nur I1 ausdrücklich freigeben lassen.

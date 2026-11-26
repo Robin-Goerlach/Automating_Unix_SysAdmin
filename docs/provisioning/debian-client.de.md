@@ -605,3 +605,7 @@ main unabhängig von a5dd317 auf feeb68f8fcd26835ae570b38c5f4ce68b4b8a54d fortge
 ## M7-D.7g — Branch-Integrationsvorbereitung
 
 CI #68 (45793947395) für f9ff553 erfolgreich; Joblog bestätigt zusammenhängenden Workflow zweimal PASS und 171 exakte Archivdateien, M3 nativ und tcsh übersprungen. main feeb68f CI #67 separat erfolgreich; sieben Main- und 52 Integrationscommits im fixierten Vergleich, 55/231 geänderte Pfade, drei Überlappungen, keine Löschungen. [Integrations- und Abnahmeplan](debian-client-integration-plan.de.md) dokumentiert exakte Pins, zeilenbezogene Editieranalyse, Makefile-/Roadmap-Auflösungsvorschlag, gemeinsame R2-/Lifecycle-/Monitoring-/Releaserisiken und I0–I5-Abnahmegates. I0 vorbereitet; I1–I5 und native G0–G6 offen. Kein Merge, Rebase, Kandidatentree, kombinierter Test oder native Ausführung. Nächster D.7h nur Laborreview/Entscheidungsvorlage vorbereiten.
+
+## M7-D.7h — native Laborentscheidung vorbereiten
+
+CI #69 scheiterte im entpackten Workflow am Legacy-Fixtureguard; wahrscheinliches Zufallssuffix mit Unterstrich, reine Testkorrektur 278656e, CI #70 ausstehend. [Laborentscheidungsvorlage](debian-client-lab-decision.de.md) konsolidiert G0–G6, empfiehlt Debian 13 amd64 KVM/ext4-Baseline und gestufte Freigaben. R2-Lifecycle-Guard harter Blocker vor nativ, gemeinsame I1–I5 offen. Laboranleitung/Abnahmeauslegung aktualisiert; keine native Ausführung, Merge oder Rebase. Nächster Schritt I1-Freigabe nach Korrektur-CI, separaten Auflösungskandidaten vorbereiten.
