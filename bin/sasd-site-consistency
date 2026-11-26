@@ -1,8 +1,12 @@
 #!/usr/bin/env perl
 # Read-only cross-check of the shared site model and monitoring configuration.
 use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_checks read_host_state);
 
 my ($hosts,$roles,$checks,$services,$monitoring,$state,$check) = ('','','','','','',0);
+my $state_explicit = 0;
 while (@ARGV) {
     my $a = shift @ARGV;
     if ($a eq '--hosts') { $hosts = shift @ARGV; }
@@ -10,7 +14,7 @@ while (@ARGV) {
     elsif ($a eq '--checks') { $checks = shift @ARGV; }
     elsif ($a eq '--services') { $services = shift @ARGV; }
     elsif ($a eq '--monitoring') { $monitoring = shift @ARGV; }
-    elsif ($a eq '--state') { $state = shift @ARGV; }
+    elsif ($a eq '--state') { $state = shift @ARGV; $state_explicit = 1; }
     elsif ($a eq '--check') { $check = 1; }
     elsif ($a eq '--help') { print "usage: sasd-site-consistency --hosts hosts.tsv --roles roles.tsv --checks checks.tsv --services services.tsv --monitoring monitoring.conf [--state state.tsv] --check\n"; exit 0; }
     else { die "unknown argument: $a\n"; }
@@ -33,33 +37,15 @@ sub read_lines {
 }
 
 my (%role,%check_def,%host,%state,%setting,%service);
-read_lines($roles, sub {
-    my @v = fields($_[0],4);
-    ident($v[0]) && ident($v[1]) && profile($v[2]) && $v[3] =~ m!\A[A-Za-z0-9_./-]+\z! && $v[3] !~ m!^/! && $v[3] !~ m!(?:^|/)\.\.(?:/|$)! or die "invalid role record\n";
-    exists($role{$v[0]}) and die "duplicate role: $v[0]\n";
-    $role{$v[0]} = $v[2];
-});
-read_lines($checks, sub {
-    my @v = fields($_[0],3);
-    ident($v[0]) && ($v[1] eq '*' || ident($v[1])) && length($v[2]) <= 120 or die "invalid check record\n";
-    exists($check_def{$v[0]}) and die "duplicate check: $v[0]\n";
-    $check_def{$v[0]} = $v[1];
-});
-read_lines($hosts, sub {
-    my @v = fields($_[0],6);
-    host_name($v[0]) && address($v[1]) && $v[2] =~ /\A[A-Za-z0-9_.-]{1,31}\z/ && exists($role{$v[3]}) && profile($v[5]) or die "invalid host record\n";
-    exists($host{$v[0]}) and die "duplicate host: $v[0]\n";
-    $host{$v[0]} = \@v;
-});
-if (-e $state) {
-    -l $state and die "state file is a symlink\n";
-    read_lines($state, sub {
-        my @v = fields($_[0],3);
-        host_name($v[0]) && $v[1] =~ /\A(?:enabled|disabled|removed)\z/ or die "invalid host state\n";
-        $state{$v[0]} = $v[1];
-    });
-}
-for my $name (keys %state) { exists($host{$name}) || $state{$name} eq 'removed' or die "state refers to unknown host $name\n"; }
+my $role_records = read_roles($roles);
+my ($host_records) = read_host_records($hosts, $role_records, 0);
+my $check_records = read_checks($checks);
+%role = map { $_ => $role_records->{$_}->{profile} } keys %$role_records;
+%check_def = map { $_ => $check_records->{$_}->{role} } keys %$check_records;
+%host = map { $_ => [ @{$host_records->{$_}}{qw(host address os role groups profile)} ] }
+    keys %$host_records;
+my $state_ref = read_host_state($state, \%host, !$state_explicit);
+%state = map { $_ => $state_ref->{$_}->{state} } keys %$state_ref;
 read_lines($services, sub {
     my @v = fields($_[0],5);
     ident($v[0]) && ($v[1] eq '*' || $v[1] eq 'baseline' || ident($v[1])) && exists($check_def{$v[2]}) && profile($v[3]) && length($v[4]) <= 120 or die "invalid service record\n";

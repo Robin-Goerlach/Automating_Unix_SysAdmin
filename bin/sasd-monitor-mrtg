@@ -3,15 +3,16 @@ use strict;
 use FindBin;
 use File::Spec;
 use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(read_config read_inventory valid_identifier atomic_write ensure_dir);
+use SASD::Monitor qw(read_config read_inventory read_host_state valid_identifier atomic_write ensure_dir);
 
 my ($file,$out,$metric,$force,$host_state)=('','','interface','', '');
+my $state_explicit = 0;
 while (@ARGV) {
     my $a=shift @ARGV;
     if ($a eq '--config') {$file=shift @ARGV}
     elsif ($a eq '--out') {$out=shift @ARGV}
     elsif ($a eq '--metric') {$metric=shift @ARGV}
-    elsif ($a eq '--host-state') {$host_state=shift @ARGV}
+    elsif ($a eq '--host-state') {$host_state=shift @ARGV; $state_explicit = 1}
     elsif ($a eq '--force') {$force=1}
     elsif ($a eq '--help') {print "usage: sasd-monitor-mrtg --config FILE [--metric NAME] [--host-state FILE] [--out FILE [--force]]\n"; exit 0}
     else {die "unknown argument: $a\n"}
@@ -21,23 +22,8 @@ valid_identifier($metric) or die "invalid metric\n";
 my $cfg=read_config($file);
 my ($hosts,$roles)=read_inventory($cfg->{inventory_path},$cfg->{roles_path});
 $host_state ||= $cfg->{inventory_path}.'.state';
-my (%disabled,%seen_state);
-if (-l $host_state) {die "invalid host state file\n"}
-if (-e $host_state) {
-    -f $host_state or die "invalid host state file\n";
-    open(my $sf,'<',$host_state) or die "cannot read host state: $!\n";
-    while (<$sf>) {
-        chomp; s/\r$//; next if /^\s*$/ || /^\s*#/;
-        my @v=split /\t/,$_, -1;
-        @v==3 && $v[0]=~/\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/ &&
-            $v[1]=~/\A(?:enabled|disabled|removed)\z/ && $v[2]!~/[\x00-\x1f\x7f]/ or die "invalid host state record\n";
-        exists $seen_state{$v[0]} and die "duplicate host state record\n";
-        $seen_state{$v[0]}=1;
-        exists $hosts->{$v[0]} || $v[1] eq 'removed' or die "host state refers to unknown host\n";
-        $disabled{$v[0]}=1 if $v[1] ne 'enabled';
-    }
-    close $sf or die "cannot close host state: $!\n";
-}
+my $state = read_host_state($host_state, $hosts, !$state_explicit);
+my %disabled = map { $_ => 1 } grep { $state->{$_}->{state} ne 'enabled' } keys %$state;
 my $text="# SASD candidate MRTG configuration; review before enabling MRTG.\n# No SNMP credentials or network polling are embedded.\n";
 my %ids;
 for my $h (sort keys %$hosts) {
@@ -52,6 +38,12 @@ for my $h (sort keys %$hosts) {
 if ($out eq '') {print $text}
 else {
     -e $out && !$force and die "output exists; use --force explicitly\n";
+    my $output_path = File::Spec->canonpath(File::Spec->rel2abs($out));
+    for my $input_path ($file, $cfg->{inventory_path}, $cfg->{roles_path}) {
+        my $canonical_input = File::Spec->canonpath(File::Spec->rel2abs($input_path));
+        $output_path eq $canonical_input
+            and die "output path overlaps an input file\n";
+    }
     my ($v,$d,$f)=File::Spec->splitpath($out); length $d && ensure_dir($d,0750);
     atomic_write($out,$text,0640);
 }

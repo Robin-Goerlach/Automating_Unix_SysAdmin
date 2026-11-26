@@ -26,6 +26,7 @@ Das Hauptprofil ist 1999. Funktionen aus 2002–2009 benötigen ein klar gekennz
 - Administrative Änderungen benötigen eine ausdrückliche Operation und bleiben bis zu einer dokumentierten Abnahme auf Wegwerf-Testsysteme begrenzt.
 - Neue CFEngine-, MRTG- und RRD-Beispiele sind unbestätigte Vorlagen, bis die jeweilige Version getestet wurde. Version und Betriebssystem sind vor Kompatibilitätsaussagen zu erfassen.
 - Ein Test auf einem aktuellen CI-System beweist keine Funktion auf einem historischen Unix oder mit Perl 5.004.
+- Unix-Verwaltungsprogramme müssen für menschliche Administratoren verständlich bleiben: sinnvolle Einrückung und Namen, kleine Funktionen, soweit sinnvoll eine Anweisung pro Zeile sowie Kommentare zu Schnittstellen und nicht offensichtlichen Sicherheitsentscheidungen. Vermeide komprimierten Perl-/Shell-Code und großflächige rein kosmetische Überarbeitungen.
 
 ## Arbeitsablauf
 

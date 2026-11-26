@@ -27,6 +27,8 @@ The history fields are `epoch`, `hostname`, `operation`, `from-state`, `to-state
 
 `bin/sasd-site-config` reads the four inventory layers and emits deterministic `host-services.tsv` and `manifest.tsv` files into a new staging directory. It ignores disabled or removed hosts from the sibling state file. `--check` is read-only; `--apply` only creates the selected staging directory and does not deploy native product configuration.
 
+All five site and product adapters use `SASD::Monitor::read_host_state`. The parser rejects duplicate records, control characters, invalid states, unknown non-removed hosts, direct symlinks and explicitly missing state files. The default sibling state path may be absent and then means that inventory hosts are enabled; `--state` makes absence an error.
+
 `bin/sasd-site-consistency` is a read-only cross-check of the active host/service selection and `site/monitoring.conf`. It verifies that the monitoring model names the same inventory layers, that every active host receives at least one applicable service, and that service profiles match the monitoring profile. It prints the selected host, service, check and profile records followed by a summary; it does not contact hosts or parse a native product configuration.
 
 The existing `bin/sasd-monitor-mrtg` is the first product adapter consuming the lifecycle projection. Pass `--host-state site/hosts.tsv.state` (the default when omitted) to exclude disabled and removed hosts from its reviewable MRTG candidate. The output remains an unverified candidate until the corresponding MRTG version is run.

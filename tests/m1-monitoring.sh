@@ -34,6 +34,10 @@ grep -q 'duplicate MRTG target id' "$tmp/collision-error"
 if ./bin/sasd-monitor-mrtg --config site/monitoring.conf --out "$tmp/mrtg.cfg" > "$tmp/mrtg-error" 2>&1; then
     echo "MRTG output overwrite was not rejected" >&2; exit 1
 fi
+if ./bin/sasd-monitor-mrtg --config site/monitoring.conf --out site/hosts.tsv --force > "$tmp/mrtg-input-overwrite" 2>&1; then
+    echo "MRTG input overwrite was accepted" >&2; exit 1
+fi
+grep -q 'output path overlaps an input file' "$tmp/mrtg-input-overwrite"
 
 prefix="$tmp/install"
 ./install/install-monitoring-server.sh --prefix "$prefix" --config site/monitoring.conf --dry-run > "$tmp/dry"

@@ -1,0 +1,80 @@
+#!/usr/bin/env perl
+# Generate a CFEngine 2 candidate from the shared SASD site model.
+use strict;
+use File::Spec;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_host_state
+    valid_profile atomic_write ensure_dir);
+
+my ($hosts, $roles, $state, $out, $version) = ('', '', '', '', '2.0');
+my ($apply, $state_explicit) = (0, 0);
+
+while (@ARGV) {
+    my $argument = shift @ARGV;
+    if ($argument eq '--hosts') { $hosts = shift @ARGV; }
+    elsif ($argument eq '--roles') { $roles = shift @ARGV; }
+    elsif ($argument eq '--state') { $state = shift @ARGV; $state_explicit = 1; }
+    elsif ($argument eq '--out') { $out = shift @ARGV; }
+    elsif ($argument eq '--version') { $version = shift @ARGV; }
+    elsif ($argument eq '--apply') { $apply = 1; }
+    elsif ($argument eq '--dry-run') { $apply = 0; }
+    elsif ($argument eq '--help') {
+        print "usage: sasd-config-cfengine2 --hosts FILE --roles FILE "
+            . "[--state FILE] [--version 2.0|2.1] "
+            . "[--out FILE --apply|--dry-run]\n";
+        exit 0;
+    } else {
+        die "unknown argument: $argument\n";
+    }
+}
+
+$hosts && $roles or die "hosts and roles are required\n";
+$version =~ /\A2\.(?:0|1)\z/ or die "unsupported CFEngine 2 version profile\n";
+$state = "$hosts.state" if $state eq '';
+-f $hosts && !-l $hosts && -f $roles && !-l $roles
+    or die "invalid inventory or roles file\n";
+
+my $role_records = read_roles($roles);
+my ($host_records) = read_host_records($hosts, $role_records, 0);
+my $state_records = read_host_state($state, $host_records, !$state_explicit);
+my %disabled = map { $_ => 1 }
+    grep { $state_records->{$_}->{state} ne 'enabled' } keys %$state_records;
+
+my $text = "# SASD CFEngine 2 candidate; profile=$version; unverified until the selected cfagent is run.\n"
+    . "# Warning-only markers; this file is not installed or executed by SASD.\n"
+    . "control:\n"
+    . "    actionsequence = ( files )\n\n"
+    . "classes:\n";
+for my $host (sort keys %$host_records) {
+    next if $disabled{$host};
+    my $class = $host;
+    $class =~ s/[^A-Za-z0-9_]/_/g;
+    $text .= "    $class = ( $host )\n";
+}
+$text .= "\nfiles:\n    any::\n";
+my $active = 0;
+for my $host (sort keys %$host_records) {
+    next if $disabled{$host};
+    $active++;
+    my $role = $host_records->{$host}->{role};
+    my $marker = "/tmp/sasd-cfengine2-$host-$role-marker";
+    $text .= "        $marker mode=644 action=warn\n";
+}
+$text .= "\n# active_hosts=$active\n";
+
+if ($apply) {
+    $out or die "--out is required with --apply\n";
+    my $output_path = File::Spec->canonpath(File::Spec->rel2abs($out));
+    for my $input_path ($hosts, $roles, $state) {
+        my $canonical_input = File::Spec->canonpath(File::Spec->rel2abs($input_path));
+        $output_path eq $canonical_input
+            and die "output path overlaps an input file\n";
+    }
+    my (undef, $directory) = File::Spec->splitpath($out);
+    ensure_dir($directory, 0700) if length $directory;
+    atomic_write($out, $text, 0600);
+    print "output=$out version=$version hosts=$active status=APPLIED\n";
+} else {
+    print "profile=$version hosts=$active status=DRY-RUN\n";
+}

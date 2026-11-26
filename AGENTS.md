@@ -26,6 +26,7 @@ The primary target profile is 1999. Features from 2002–2009 require a clearly 
 - Administrative changes must require an explicit operation and be limited to disposable test systems until a separate acceptance gate is documented.
 - New CFEngine/MRTG/RRD examples are **unverified templates** until actually validated with the corresponding version. Record exact version/OS before claiming compatibility.
 - Testing on a modern CI runner does not prove operation on an original SunOS/Solaris/FreeBSD/AIX/HP-UX release or Perl 5.004.
+- Keep Unix administration programs readable for human operators: use meaningful indentation and names, small functions, one statement per line where practical, and comments for interfaces and non-obvious safety decisions. Avoid compressed Perl or shell and broad cosmetic rewrites.
 
 ## Workflow
 

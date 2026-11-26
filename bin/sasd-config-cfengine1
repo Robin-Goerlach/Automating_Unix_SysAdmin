@@ -1,11 +1,76 @@
 #!/usr/bin/env perl
 # Generate a CFEngine 1 candidate from the shared site model.
-use strict; use FindBin; use File::Spec; use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(read_roles read_host_records valid_host valid_identifier atomic_write ensure_dir);
-my($hosts,$roles,$state,$out,$apply,$profile)=('','','','','', '1999');
-while(@ARGV){my$a=shift@ARGV;if($a eq'--hosts'){$hosts=shift@ARGV}elsif($a eq'--roles'){$roles=shift@ARGV}elsif($a eq'--state'){$state=shift@ARGV}elsif($a eq'--out'){$out=shift@ARGV}elsif($a eq'--profile'){$profile=shift@ARGV}elsif($a eq'--apply'){$apply=1}elsif($a eq'--dry-run'){$apply=0}elsif($a eq'--help'){print"usage: sasd-config-cfengine1 --hosts FILE --roles FILE [--state FILE] [--profile 1999] [--out FILE --apply|--dry-run]\n";exit 0}else{die"unknown argument: $a\n"}}
-$hosts&&$roles or die"hosts and roles are required\n";$profile eq'1999' or die"CFEngine 1 profile is 1999\n";$state||="$hosts.state";-f$hosts&&! -l$hosts&&-f$roles&&! -l$roles or die"invalid inventory or roles file\n";
-my$rr=read_roles($roles);my($hr)=read_host_records($hosts,$rr,0);my%disabled;
-if(-e$state){-f$state&&! -l$state or die"invalid state file\n";open(my$f,'<',$state)or die"cannot read state: $!\n";while(<$f>){chomp;s/\r\z//;next if/^\s*$/||/^\s*#/;my@v=split/\t/,$_,-1;@v==3&&valid_host($v[0])&&$v[1]=~/\A(?:enabled|disabled|removed)\z/ or die"invalid state record\n";exists$disabled{$v[0]} and die"duplicate state record\n";$disabled{$v[0]}=1 if$v[1]ne'enabled'}close$f}
-my$text="# SASD CFEngine 1 candidate; profile=1999; unverified until cfengine-1.4 is run.\n# Generated from the shared SASD inventory. No service or network action is enabled.\ncontrol:\n    actionsequence = ( files )\n\nfiles:\n    any::\n";my$active=0;for my$h(sort keys%$hr){next if$disabled{$h};$active++;my$marker="/tmp/sasd-cfengine-$h-$hr->{$h}->{role}-marker";$text.="        $marker mode=644 action=warn\n"}$text.="\n# active_hosts=$active\n";
-if($apply){$out or die"--out is required with --apply\n";my($v,$d,$f)=File::Spec->splitpath($out);length$d&&ensure_dir($d,0700);atomic_write($out,$text,0600);print"output=$out hosts=$active status=APPLIED\n"}else{print"profile=1999 hosts=$active status=DRY-RUN\n"}
+use strict;
+use FindBin;
+use File::Spec;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_host_state atomic_write ensure_dir);
+
+my ($hosts, $roles, $state, $out) = ('', '', '', '');
+my ($apply, $profile) = (0, '1999');
+my $state_explicit = 0;
+
+while (@ARGV) {
+    my $argument = shift @ARGV;
+    if ($argument eq '--hosts') { $hosts = shift @ARGV; }
+    elsif ($argument eq '--roles') { $roles = shift @ARGV; }
+    elsif ($argument eq '--state') { $state = shift @ARGV; $state_explicit = 1; }
+    elsif ($argument eq '--out') { $out = shift @ARGV; }
+    elsif ($argument eq '--profile') { $profile = shift @ARGV; }
+    elsif ($argument eq '--apply') { $apply = 1; }
+    elsif ($argument eq '--dry-run') { $apply = 0; }
+    elsif ($argument eq '--help') {
+        print "usage: sasd-config-cfengine1 --hosts FILE --roles FILE "
+            . "[--state FILE] [--profile 1999] [--out FILE --apply|--dry-run]\n";
+        exit 0;
+    } else {
+        die "unknown argument: $argument\n";
+    }
+}
+
+$hosts && $roles or die "hosts and roles are required\n";
+$profile eq '1999' or die "CFEngine 1 profile is 1999\n";
+$state = "$hosts.state" if $state eq '';
+-f $hosts && !-l $hosts && -f $roles && !-l $roles
+    or die "invalid inventory or roles file\n";
+
+my $role_records = read_roles($roles);
+my ($host_records) = read_host_records($hosts, $role_records, 0);
+my $state_records = read_host_state($state, $host_records, !$state_explicit);
+my %disabled = map { $_ => 1 }
+    grep { $state_records->{$_}->{state} ne 'enabled' } keys %$state_records;
+
+my $text = <<'HEADER';
+# SASD CFEngine 1 candidate; profile=1999; unverified until cfengine-1.4 is run.
+# Generated from the shared SASD inventory. No service or network action is enabled.
+control:
+    actionsequence = ( files )
+
+files:
+    any::
+HEADER
+my $active = 0;
+for my $host (sort keys %$host_records) {
+    next if $disabled{$host};
+    $active++;
+    my $role = $host_records->{$host}->{role};
+    my $marker = "/tmp/sasd-cfengine-$host-$role-marker";
+    $text .= "        $marker mode=644 action=warn\n";
+}
+$text .= "\n# active_hosts=$active\n";
+
+if ($apply) {
+    $out or die "--out is required with --apply\n";
+    my $output_path = File::Spec->canonpath(File::Spec->rel2abs($out));
+    for my $input_path ($hosts, $roles, $state) {
+        my $canonical_input = File::Spec->canonpath(File::Spec->rel2abs($input_path));
+        $output_path eq $canonical_input
+            and die "output path overlaps an input file\n";
+    }
+    my (undef, $directory) = File::Spec->splitpath($out);
+    ensure_dir($directory, 0700) if length $directory;
+    atomic_write($out, $text, 0600);
+    print "output=$out hosts=$active status=APPLIED\n";
+} else {
+    print "profile=1999 hosts=$active status=DRY-RUN\n";
+}

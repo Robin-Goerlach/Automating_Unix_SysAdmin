@@ -167,4 +167,28 @@ if ./bin/sasd-host-admin --input "$tmp/path-link/hosts.tsv" --roles site/roles.t
     exit 1
 fi
 grep -q 'symlink ancestor' "$tmp/ancestor-error"
+
+printf 'cfg.lab.invalid\tenabled\toperator\ncfg.lab.invalid\tenabled\tduplicate\n' > "$tmp/duplicate-admin-state.tsv"
+if ./bin/sasd-host-admin --input "$tmp/admin-hosts.tsv" --roles site/roles.tsv --state "$tmp/duplicate-admin-state.tsv" --operation validate > "$tmp/duplicate-admin-state-error" 2>&1; then
+    echo "duplicate enabled state accepted by host admin" >&2
+    exit 1
+fi
+grep -q 'duplicate host state record' "$tmp/duplicate-admin-state-error"
+if ./bin/sasd-site-config --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --state "$tmp/missing-state.tsv" --check > "$tmp/missing-state-error" 2>&1; then
+    echo "explicitly missing state accepted by site config" >&2
+    exit 1
+fi
+grep -q 'host state file is missing' "$tmp/missing-state-error"
+printf 'unknown.lab.invalid\tenabled\toperator\n' > "$tmp/unknown-state.tsv"
+if ./bin/sasd-site-consistency --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --monitoring site/monitoring.conf --state "$tmp/unknown-state.tsv" --check > "$tmp/unknown-state-error" 2>&1; then
+    echo "unknown enabled state accepted by consistency check" >&2
+    exit 1
+fi
+grep -q 'host state refers to unknown host' "$tmp/unknown-state-error"
+printf 'web.lab.invalid\tdisabled\toperator\001bad\n' > "$tmp/control-state.tsv"
+if ./bin/sasd-config-cfengine1 --hosts site/hosts.tsv --roles site/roles.tsv --state "$tmp/control-state.tsv" --dry-run > "$tmp/control-state-error" 2>&1; then
+    echo "control character accepted by CFEngine adapter" >&2
+    exit 1
+fi
+grep -q 'unsafe host state reason' "$tmp/control-state-error"
 echo "R2 site inventory and audit: PASS"

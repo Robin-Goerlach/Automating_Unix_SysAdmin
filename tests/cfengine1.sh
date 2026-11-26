@@ -17,4 +17,8 @@ if bin/sasd-config-cfengine1 --hosts site/hosts.tsv --roles site/roles.tsv --pro
     echo "wrong CFEngine profile accepted" >&2; exit 1
 fi
 grep -q 'profile is 1999' "$task_tmp/profile-error"
+if bin/sasd-config-cfengine1 --hosts site/hosts.tsv --roles site/roles.tsv --out site/hosts.tsv --apply > "$task_tmp/input-overwrite-error" 2>&1; then
+    echo "CFEngine 1 input overwrite was accepted" >&2; exit 1
+fi
+grep -q 'output path overlaps an input file' "$task_tmp/input-overwrite-error"
 echo "CFEngine 1 candidate generation: PASS"

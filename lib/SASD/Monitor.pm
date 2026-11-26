@@ -8,7 +8,7 @@ use File::Spec;
 use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
 
 our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read_checks applicable_checks
-    validate_status atomic_write read_state read_latest html_escape ensure_dir
+    read_host_state validate_status atomic_write read_state read_latest html_escape ensure_dir
     valid_identifier valid_host valid_address valid_profile valid_color valid_path_value valid_epoch
     valid_fingerprint valid_public_key valid_os_value read_enrollment_record
     enrollment_record_line append_event read_operations now_seconds);
@@ -180,6 +180,43 @@ sub read_host_records {
     close $hf;
     scalar(keys %hosts) || $allow_empty or die "inventory has no host records\n";
     return (\%hosts, $roles);
+}
+
+# Read the lifecycle projection used by all site and monitoring adapters.
+# A missing default state file means that every inventory record is enabled;
+# an explicitly supplied path must exist so a typo cannot silently enable hosts.
+# A removed record may remain after its inventory row is gone.  Other unknown
+# hosts are rejected because they cannot be reconciled with the inventory.
+sub read_host_state {
+    my ($path, $hosts, $allow_missing) = @_;
+    defined($path) && length($path) or die "host state path is empty\n";
+    if (!-e $path) {
+        $allow_missing or die "host state file is missing: $path\n";
+        return {};
+    }
+    -f $path && !-l $path or die "invalid host state file\n";
+
+    open(my $fh, '<', $path) or die "cannot read host state: $!\n";
+    my %state;
+    while (<$fh>) {
+        chomp;
+        s/\r\z//;
+        next if /^\s*$/ || /^\s*#/;
+        my @fields = split /\t/, $_, -1;
+        @fields == 3 or die "invalid host state record\n";
+        my ($host, $value, $reason) = @fields;
+        _safe_line($host, 'host state host');
+        _safe_line($value, 'host state value');
+        _safe_line($reason, 'host state reason');
+        valid_host($host) && $value =~ /\A(?:enabled|disabled|removed)\z/ or
+            die "invalid host state record\n";
+        exists $state{$host} and die "duplicate host state record: $host\n";
+        exists($hosts->{$host}) || $value eq 'removed' or
+            die "host state refers to unknown host: $host\n";
+        $state{$host} = { host => $host, state => $value, reason => $reason };
+    }
+    close($fh) or die "cannot close host state: $!\n";
+    return \%state;
 }
 
 sub read_checks {

@@ -27,6 +27,8 @@ Die Historienfelder sind `epoch`, `hostname`, `operation`, `from-state`, `to-sta
 
 `bin/sasd-site-config` liest die vier Inventarschichten und erzeugt deterministische `host-services.tsv`- und `manifest.tsv`-Dateien in einem neuen Staging-Verzeichnis. Deaktivierte oder entfernte Hosts aus der benachbarten Zustandsdatei werden ausgelassen. `--check` ist lesend; `--apply` erzeugt nur das ausgewählte Staging-Verzeichnis und verteilt keine native Produktkonfiguration.
 
+Alle fünf Site- und Produktadapter verwenden `SASD::Monitor::read_host_state`. Der Parser weist doppelte Datensätze, Steuerzeichen, ungültige Zustände, unbekannte nicht entfernte Hosts, direkte Symlinks und ausdrücklich fehlende Zustandsdateien zurück. Die standardmäßige benachbarte Zustandsdatei darf fehlen und bedeutet dann, dass Inventarhosts aktiviert sind; mit `--state` wird das Fehlen zum Fehler.
+
 `bin/sasd-site-consistency` ist eine lesende Querverbindung zwischen aktiver Host-/Service-Auswahl und `site/monitoring.conf`. Es prüft, dass das Monitoringmodell dieselben Inventarschichten nennt, jeder aktive Host mindestens einen passenden Dienst erhält und Dienstprofile zum Monitoringprofil passen. Es gibt ausgewählte Host-, Dienst-, Check- und Profilzeilen sowie eine Zusammenfassung aus; Rechner werden nicht kontaktiert und native Produktkonfigurationen nicht geparst.
 
 Das vorhandene `bin/sasd-monitor-mrtg` ist der erste Produktadapter für diese Lebenszyklusprojektion. Mit `--host-state site/hosts.tsv.state` (Standard bei fehlender Option) werden deaktivierte und entfernte Rechner aus der prüfbaren MRTG-Kandidatenkonfiguration ausgelassen. Die Ausgabe bleibt bis zu einem Lauf mit der passenden MRTG-Version eine unbestätigte Vorlage.
