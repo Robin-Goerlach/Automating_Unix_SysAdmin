@@ -144,6 +144,12 @@ ROTATE
         auditreport) printf '%s\n' 'scope	policy' 'aureport	REVIEW_PRIVATE_BOUNDED_REPORT' 'retention	EXPLICIT_OPERATOR_POLICY' ;;
         aideinit) printf '%s\n' 'scope	policy' 'initial-database	REVIEW_KNOWN_GOOD_SYSTEM' 'existing-database	KEEP_UNCHANGED' 'approval	INDEPENDENT_OPERATOR_REVIEW' ;;
         aidefinal) printf '%s\n' 'scope	policy' 'database-promotion	EXPLICIT_REVIEW_AFTER_ACCEPTANCE' 'existing-database	KEEP_UNCHANGED' 'drift	REPORT_ONLY' ;;
+        smartpolicy) printf '%s\n' 'scope	policy' 'devices	EXPLICIT_DEVICE_REVIEW' 'smartd	KEEP_AND_REVIEW' 'self-test	NO_AUTOMATIC_START' 'reports	REVIEW_CAPTURE' ;;
+        sensorpolicy) printf '%s\n' 'scope	policy' 'sensors	REVIEW_CAPTURE' 'sensors-detect	NO_AUTOMATIC_PROBE' 'thresholds	DEVICE_SPECIFIC_LIMITS' ;;
+        rngpolicy) printf '%s\n' 'scope	policy' 'kernel-rng	OBSERVE_ONLY' 'rng-tools,haveged	REVIEW_PLATFORM_NEED' 'entropy	NO_GENERIC_HEALTH_THRESHOLD' ;;
+        snmppolicy) printf '%s\n' 'scope	policy' 'agent	KEEP_DISABLED_UNLESS_APPROVED' 'transport	REVIEW_SNMPV3_AUTHPRIV' 'credentials	EXTERNAL_PRIVATE_CONFIGURATION' 'access	EXPLICIT_MANAGER_SCOPE' ;;
+        monitpolicy) printf '%s\n' 'scope	policy' 'configuration	KEEP_AND_REVIEW' 'checks	OBSERVE_ONLY_INITIAL_POLICY' 'restart	NO_AUTOMATIC_REMEDIATION' 'listener	NO_NEW_LISTENER' ;;
+        monitorenroll) printf '%s\n' 'scope	policy' 'big-sister	NO_UNREVIEWED_LEGACY_AGENT' 'sasd-monitoring	REUSE_M2_ENROLLMENT' 'identity	UNIQUE_OPERATOR_APPROVED' 'transport	SEPARATE_AUTHENTICATED_ACCEPTANCE' ;;
         sysstat) printf '%s\n' 'ENABLED="true"' ;;
         logwatch) printf 'MailTo = root@localhost\nMailFrom = logwatch@%s\nDetail = High\nRange = Yesterday\nService = all\n' "$host" ;;
         *) return 2 ;;

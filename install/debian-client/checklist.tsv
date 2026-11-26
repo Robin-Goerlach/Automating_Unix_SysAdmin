@@ -51,8 +51,8 @@ id	original_line	task	state	handler
 0500	428	SMTP_Banner	render	smtp
 0510	432	Cron_Daemon	render	cronpolicy
 0520	438	Cron_Access	render	cronaccess
-0530	446	SMART_Monitor	deferred	-
-0540	450	Sensors_Configure	review	-
+0530	446	SMART_Monitor	render	smartpolicy
+0540	450	Sensors_Configure	render	sensorpolicy
 0550	454	Kernel_Hardening	render	limitsreview
 0560	462	PAM_Hardening	render	pamreview
 0570	467	Password_Hashing_Policy	render	hashreview
@@ -72,7 +72,7 @@ id	original_line	task	state	handler
 0710	528	Services_Activate_Required	render	serviceon
 0720	531	NIS_Client	review	-
 0730	536	Packages_Stage_2	render	packages2
-0740	612	RNG_Tools	review	-
+0740	612	RNG_Tools	render	rngpolicy
 0750	617	Rkhunter_Configure	render	rkhunterpolicy
 0760	622	ClamAV_Configure	render	clamavpolicy
 0770	629	Lynis_Configure	render	lynispolicy
@@ -80,14 +80,14 @@ id	original_line	task	state	handler
 0790	638	Sysstat_Configure	render	sysstat
 0800	643	Logwatch_Configure	render	logwatch
 0810	650	SELinux_Configure	review	-
-0820	654	SNMP_Configure	review	-
+0820	654	SNMP_Configure	render	snmppolicy
 0830	657	Puppet_Agent	deferred	-
-0840	664	Monit_Configure	deferred	-
+0840	664	Monit_Configure	render	monitpolicy
 0850	670	USBGuard_Configure	review	-
 0860	676	LDAP_Client	review	-
 0870	678	Active_Directory_Client	review	-
 0880	680	ReaR_Configure	review	-
-0890	685	Big_Sister_Client	deferred	-
+0890	685	Big_Sister_Client	render	monitorenroll
 0900	688	Cron_CUPS_Cleanup	deferred	-
 0910	694	Cron_System_Update	review	-
 0920	700	Cron_AIDE	render	aideschedule
