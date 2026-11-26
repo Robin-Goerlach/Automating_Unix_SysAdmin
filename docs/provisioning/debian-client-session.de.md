@@ -194,3 +194,7 @@ Basis 68d693c8df8317c19a55a51320fa6974a2d2d2d1, CI #60 45785320877 erfolgreich. 
 ## M7-D.7a — Konsolidierung
 
 Basis 05fc32ebf11cb97b10d93c91b8019d14917cb202, CI #61 45785946650 erfolgreich. Alle 116 Originalmarker-Zeilennummern geprüft; 32 Apply (3 Baseline, 22 Konfig, 4 Modell, 3 Datensatz), 15 Verify-only, 42 Candidate-only, 11 zentral, 16 manuell. Coverage und expliziter Einzelgruppendispatch, Journalgrößenschutz und verschachteltes Sync; Quell-/Archivtests, erwartet 168 Dateien. Keine Abhängigkeits-Promotion oder native Abnahme. main a5dd317 unverändert, 6/46 divergierende Commits an Basis; überlappende Makefile und zweisprachige Roadmaps, PR #4 dirty, kein Merge. Lokaler DNS-Fehler; neue CI ausstehend, externe Logs unerreichbar. Nächster Schritt CI, dann inventargebundener gruppenübergreifender Evidenzentwurf und sichere Restabdeckung.
+
+## M7-D.7b — Evidenzsammlung
+
+Basis f7ae4e8477f124aace927f1b2f195518869e8d60, CI #62 erfolgreich. Nur-Lese-Prüfung abgeschlossener Journale/aktueller Snapshots, explizite Mehrgruppensammlung mit R2-/Releasebindung; alle 116 Tasks NOT_CERTIFIED, alle 57 Abhängigkeiten wartend. Keine native Promotion, Baseline oder Bulk-Apply. Erwartet 169 Archivdateien, CI ausstehend. main a5dd317 und Feature unverändert; PR #4 dirty, kein Merge. Nächster Schritt CI, dann abhängigkeitssensitive Installationsplanung mit getrennten Fixture-/Runtime-Gates.

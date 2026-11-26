@@ -68,6 +68,7 @@ def run(group):
     modes.add_argument('--review', action='store_true')
     modes.add_argument('--apply-fixture', action='store_true')
     modes.add_argument('--verify', action='store_true')
+    modes.add_argument('--evidence', metavar='JOURNAL')
     modes.add_argument('--recover')
     for key in ('root', 'hostname', 'inventory', 'roles'):
         p.add_argument('--' + key, required=True)
@@ -75,7 +76,8 @@ def run(group):
     a = p.parse_args()
     if bool(a.reference) == a.review:
         p.error('only review omits the reference')
-    if a.recover is not None and not re.fullmatch(r'native\.[0-9a-f]{32}\.json', a.recover):
+    if any(name is not None and not re.fullmatch(r'native\.[0-9a-f]{32}\.json', name)
+           for name in (a.recover, a.evidence)):
         p.error('invalid journal name')
     owner = os.geteuid()
     os.umask(0o077)
@@ -123,6 +125,26 @@ def run(group):
                     not isinstance(approved['original'], str) or
                     not re.fullmatch(r'[0-9a-f]{64}', approved['original'])):
                 raise ValueError('reference context mismatch')
+            if a.evidence is not None:
+                # Recheck the exact committed journal under the existing group lock.
+                # Matching bytes alone are not evidence of a committed transaction.
+                journal = tx.load_journal(store / a.evidence, owner)
+                if (journal['state'] != 'COMMITTED_STATIC' or journal['reference'] != approved or
+                        journal['desired'] != desired or original != desired):
+                    raise ValueError('committed fixture evidence does not match')
+                if (fixture(root, owner, tx, group) != identities or
+                        load('lab-install').release_digest() != release or
+                        tx.snapshot(etc, owner) != desired):
+                    raise ValueError('fixture evidence changed')
+                evidence = {'format': 'SASD-GROUP-EVIDENCE-1', 'scope': 'FIXTURE_STATIC_ONLY',
+                            'group-format': group.FORMAT, 'host': a.hostname,
+                            'inventory': context, 'release': release,
+                            'reference-sha256': tx.digest(tx.encoded(approved)),
+                            'journal': a.evidence, 'desired-sha256': current['desired'],
+                            'journal-sha256': tx.digest(tx.encoded(journal)),
+                            'native-verification': 'NOT_VERIFIED'}
+                sys.stdout.buffer.write(tx.encoded(evidence))
+                return 0
             if a.verify:
                 print('STATIC_' + group.LABEL + ('_MATCH' if original == desired else '_DRIFT'))
                 print('native-apply\tNOT_AUTHORIZED')

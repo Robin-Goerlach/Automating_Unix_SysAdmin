@@ -194,3 +194,7 @@ Base 68d693c8df8317c19a55a51320fa6974a2d2d2d1, CI #60 45785320877 successful. Ne
 ## M7-D.7a — consolidation
 
 Base 05fc32ebf11cb97b10d93c91b8019d14917cb202, CI #61 45785946650 success. All 116 original marker line numbers verified; 32 apply (3 baseline, 22 config, 4 model, 3 record), 15 verify-only, 42 candidate-only, 11 central, 16 manual. Added coverage and explicit single-group dispatcher, journal size guard and nested sync; source/archive tests, expected 168 files. No dependency promotion or native acceptance. Main a5dd317 unchanged, 6/46 divergent commits at base; overlapping Makefile and bilingual roadmaps, PR #4 dirty, no merge. Local DNS failure; new CI pending, external logs unavailable. Next CI then inventory-bound cross-group evidence design and safe remaining coverage.
+
+## M7-D.7b — evidence collection
+
+Base f7ae4e8477f124aace927f1b2f195518869e8d60, CI #62 success. Read-only committed journal/current snapshot checks, explicit multi-group collection with R2/release binding; all 116 tasks NOT_CERTIFIED and all 57 dependencies waiting. No native promotion, baseline or bulk apply. Expected 169 archive files, CI pending. Main a5dd317 and feature unchanged; PR #4 dirty, no merge. Next verify CI then dependency-aware installation planning with distinct fixture/runtime gates.
