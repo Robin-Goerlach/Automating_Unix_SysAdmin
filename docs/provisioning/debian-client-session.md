@@ -214,3 +214,7 @@ Base 875edb985c532659c703f069089af15e2b592657; CI #65 success. Extend network fi
 ## M7-D.7f — connected offline test
 
 Base bd648b94e5f7a079b13bb296d171c08f43aad480, CI #66 success. New test-offline-workflow.sh uses one R2 server plan, 39 candidate hashes, separate baseline, ten groups, evidence, orchestration and checkpoint, real child partial-write exit and explicit recovery, old checkpoint mismatch/new checkpoint match. Source/archive test only, 171 runtime files unchanged; no native proof. Main independently feeb68f, 51/7 divergence at base, same three overlaps, PR #4 dirty, no merge. New CI pending. Next CI then D.7g integration preparation without merge.
+
+## M7-D.7g — branch integration preparation
+
+Base f9ff5530614eaa58153b83e9b8e8aead07987a66; CI #68 success with two actual workflow PASS markers and archive verification; main feeb68f CI #67 separate success. Complete three-tree comparison, 55/231 changes, three overlap paths, no deletions; precise text edit review and semantic contract review. New bilingual integration plan, I0 PASS for pinned inputs, I1–I5 and G0–G6 open. Documentation only, no runtime or canonical roadmap/Makefile change, no merge/rebase. New CI pending. External logs unavailable. Next D.7h native lab review/decision packet; no native writes or branch integration without approval.

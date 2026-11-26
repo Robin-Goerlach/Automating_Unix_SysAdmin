@@ -214,3 +214,7 @@ Basis 875edb985c532659c703f069089af15e2b592657; CI #65 erfolgreich. Netzwerk fin
 ## M7-D.7f — zusammenhängender Offline-Test
 
 Basis bd648b94e5f7a079b13bb296d171c08f43aad480, CI #66 erfolgreich. Neues test-offline-workflow.sh nutzt einen R2-Serverplan, 39 Kandidatenhashes, separate Baseline, zehn Gruppen, Evidenz, Orchestrierung und Checkpoint, echten Kindprozess-Teilschreibabbruch und explizites Recovery, alter Checkpoint abweichend/neuer passend. Nur Quell-/Archivtest, 171 Runtime-Dateien unverändert; kein nativer Nachweis. main unabhängig feeb68f, 51/7 Divergenz an Basis, gleiche drei Überlappungen, PR #4 dirty, kein Merge. Neue CI ausstehend. Nächster Schritt CI, dann D.7g Integrationsvorbereitung ohne Merge.
+
+## M7-D.7g — Branch-Integrationsvorbereitung
+
+Basis f9ff5530614eaa58153b83e9b8e8aead07987a66; CI #68 erfolgreich mit zwei tatsächlichen Workflow-PASS-Markern und Archivprüfung; main feeb68f CI #67 separat erfolgreich. Vollständiger Drei-Tree-Vergleich, 55/231 Änderungen, drei Überlappungen, keine Löschungen; präzise Texteditier- und semantische Vertragsprüfung. Neuer zweisprachiger Integrationsplan, I0 PASS für fixierte Inputs, I1–I5 und G0–G6 offen. Nur Dokumentation, keine Runtime-/kanonische Roadmap-/Makefileänderung, kein Merge/Rebase. Neue CI ausstehend. Externe Logs unerreichbar. Nächster D.7h Laborreview/Entscheidungsvorlage; keine nativen Writes/Branchintegration ohne Freigabe.
