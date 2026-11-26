@@ -179,3 +179,8 @@ Base 0c05795870df639b5f452f4f5bd13222828c4fee; CI #57 45782296843 successful. Ne
 ## M7-D.6h — security configuration and integrity record
 
 Base 27d32fbab47406826c25489b9cad4e0eeed38423, no associated CI returned; PR #4 dirty/nonmergeable, previous CI #57 success. Exact integration push trigger added without weakening make test or PR checks; no main merge. New fixture-security.py applies limited login.defs and workload nofile configuration, records independently approved synthetic SASD manifest (not AIDE). Two additional apply-capable tasks, 26 total, two integrity review rows; expected archive 165, 39 staged unchanged. Shared context hook updated. Source/archive tests added, CI pending for both 6g/6h. Local direct Git DNS failure; external logs unavailable. Next confirm branch CI, then network/firewall fixtures. No native acceptance, no privileges/passwords/scanners/production changes.
+
+
+## M7-D.6i — network configuration and firewall policy
+
+Base e86cc23446435a73c3cd8216db63a0f9c1dff066, integration CI #59 45783906751 successful (6g/6h). New fixture-network.py applies bounded hosts/APT sources/APT proxy and synthetic firewall policy only; 5 additional apply IDs, 31 total, expected archive 166, 39 staged unchanged. No native network, DNS, IPv6, APT or firewall execution. Source/archive tests added, new CI pending. No independent local full-suite; external operator logs unavailable. PR #4 dirty, main a5dd317 unchanged; no merge. Next verify branch CI then monitoring/hardware fixture.

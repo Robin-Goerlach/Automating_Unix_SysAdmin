@@ -179,3 +179,8 @@ Basis 0c05795870df639b5f452f4f5bd13222828c4fee; CI #57 45782296843 erfolgreich. 
 ## M7-D.6h — Sicherheitskonfiguration und Integritätsdatensatz
 
 Basis 27d32fbab47406826c25489b9cad4e0eeed38423, keine zugehörige CI zurückgegeben; PR #4 dirty/nicht mergebar, vorherige CI #57 erfolgreich. Exakter Integrations-Push-Trigger ohne Abschwächung von make test/PR-Prüfungen ergänzt; kein main-Merge. Neues fixture-security.py bearbeitet begrenzt login.defs und workload-nofile-Konfiguration, dokumentiert unabhängig freigegebenes synthetisches SASD-Manifest (nicht AIDE). Zwei zusätzliche Apply-fähige Tasks, insgesamt 26, zwei Integritätsreview-Zeilen; erwartet 165 Archivdateien, 39 staged unverändert. Gemeinsamer Kontext-Hook angepasst. Quell-/Archivtests ergänzt, CI für 6g/6h ausstehend. Lokaler direkter Git-DNS-Fehler; externe Logs nicht verfügbar. Nächster Schritt Branch-CI bestätigen, dann Netzwerk-/Firewall-Fixtures. Keine native Abnahme, keine Rechte-/Passwort-/Scanner-/Produktionsänderungen.
+
+
+## M7-D.6i — Netzwerkkonfiguration und Firewall-Policy
+
+Basis e86cc23446435a73c3cd8216db63a0f9c1dff066, Integrations-CI #59 45783906751 erfolgreich (6g/6h). Neues fixture-network.py bearbeitet begrenzt hosts/APT-Quellen/APT-Proxy und rein synthetische Firewall-Policy; 5 zusätzliche Apply-IDs, insgesamt 31, erwartet 166 Archivdateien, 39 staged unverändert. Keine native Netzwerk-, DNS-, IPv6-, APT- oder Firewall-Ausführung. Quell-/Archivtests ergänzt, neue CI ausstehend. Kein unabhängiger lokaler Gesamttest; externe Betreiberlogs unerreichbar. PR #4 dirty, main a5dd317 unverändert; kein Merge. Nächster Schritt Branch-CI prüfen, dann Monitoring-/Hardware-Fixture.
