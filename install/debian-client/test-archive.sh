@@ -195,6 +195,9 @@ if [ -x /usr/bin/python3 ]; then
     cp "$here/test-native-install.sh" "$archive/test-native-install.sh"
     sh "$archive/test-native-install.sh"
     rm "$archive/test-native-install.sh"
+    cp "$here/test-r2-lifecycle.sh" "$archive/test-r2-lifecycle.sh"
+    sh "$archive/test-r2-lifecycle.sh"
+    rm "$archive/test-r2-lifecycle.sh"
 else
     echo 'Packaged native identity test SKIPPED: python3 unavailable'
 fi

@@ -207,6 +207,44 @@ def command(*args):
     return r.stdout
 
 
+def approved_plan(approved, owner, host, expected_state):
+    """Validate an independently pinned explicit R2 lifecycle snapshot.
+
+    The operator obtains the digest from the authoritative current site state.
+    This is not a live central connection, signature or hostile-writer lock.
+    """
+    require(re.fullmatch(r'[0-9a-f]{64}', expected_state or ''), 'invalid lifecycle digest')
+    names = ('site.conf', 'hosts.tsv', 'roles.tsv', 'host-state.tsv')
+    def capture():
+        data = {}
+        for name in names:
+            state = name == 'host-state.tsv'
+            raw, mode = read_file(approved / name, owner, 4 * 1024 * 1024, target=state)
+            if state:
+                require(mode == 0o600, 'private host state snapshot required')
+            data[name] = raw
+        require(digest(data['host-state.tsv']) == expected_state, 'lifecycle snapshot digest mismatch')
+        return data
+    data = capture()
+    # The canonical Perl planner reads only frozen copies of these validated bytes.
+    with tempfile.TemporaryDirectory(prefix='sasd-native-plan.') as tmp:
+        root = Path(tmp)
+        for name, raw in data.items():
+            path = root / name
+            path.write_bytes(raw)
+            path.chmod(0o600)
+        plan = command('/usr/bin/perl', str(HERE / 'plan-client.pl'), '--hostname=' + host,
+                       '--inventory=' + str(root / 'hosts.tsv'), '--roles=' + str(root / 'roles.tsv'),
+                       '--host-state=' + str(root / 'host-state.tsv'))
+    require(capture() == data, 'approved inputs changed during planning')
+    return {name: digest(raw) for name, raw in data.items()}, plan
+
+
+def match_approval(reference, context):
+    require(isinstance(reference, dict) and all(reference.get(k) == v for k, v in context.items()),
+            'approval context mismatch')
+
+
 def render(root, host, site, original):
     script = r'''set -eu
 root=$1; host=$2; site=$3; here=$4
@@ -252,7 +290,7 @@ def main():
     modes.add_argument('--review', action='store_true'); modes.add_argument('--apply', action='store_true'); modes.add_argument('--recover')
     p.add_argument('--confirm-disposable-vm', action='store_true', required=True)
     p.add_argument('--confirm-reviewed-gates', action='store_true')
-    for key in ('hostname', 'installation', 'fingerprint', 'release'):
+    for key in ('hostname', 'installation', 'fingerprint', 'release', 'host-state-sha256'):
         p.add_argument('--' + key, required=True)
     a = p.parse_args()
     if os.getuid() != 0 or os.geteuid() != 0 or os.getegid() != 0:
@@ -271,10 +309,8 @@ def main():
             command('/usr/bin/python3', '-I', str(HERE / 'native-capabilities.py'), '--live')
             command('/usr/bin/python3', '-I', str(HERE / 'native-identity.py'), '--live', '--hostname=' + a.hostname,
                     '--expected-installation=' + a.installation, '--expected-fingerprint=' + a.fingerprint)
-            inputs = {n: approved / n for n in ('site.conf', 'hosts.tsv', 'roles.tsv')}
-            hashes = {n: digest(read_file(path, 0, 4 * 1024 * 1024)[0]) for n, path in inputs.items()}
-            plan = command('/usr/bin/perl', str(HERE / 'plan-client.pl'), '--hostname=' + a.hostname,
-                           '--inventory=' + str(inputs['hosts.tsv']), '--roles=' + str(inputs['roles.tsv']))
+            inputs = {n: approved / n for n in ('site.conf', 'hosts.tsv', 'roles.tsv', 'host-state.tsv')}
+            hashes, plan = approved_plan(approved, 0, a.hostname, a.host_state_sha256)
             fields = plan.decode('ascii').splitlines()[1].split('\t')
             require(len(fields) == 7 and fields[:2] == ['host', a.hostname], 'invalid host plan')
             pre = command('/usr/bin/perl', str(HERE / 'native-preflight.pl'), '--live', '--hostname=' + a.hostname,
@@ -286,9 +322,11 @@ def main():
                        'identity': a.fingerprint, 'release': a.release, 'inputs': hashes, 'plan': digest(plan)}
             if not a.review:
                 reference = json.loads(read_file(approved / 'authorization.json', 0, 16384)[0], object_pairs_hook=unique_pairs)
-                require(isinstance(reference, dict) and all(reference.get(k) == v for k, v in context.items()), 'approval context mismatch')
+                match_approval(reference, context)
             if a.recover:
                 require(re.fullmatch(r'native\.[0-9a-f]{32}\.json', a.recover), 'invalid journal name')
+                require(approved_plan(approved, 0, a.hostname, a.host_state_sha256) == (hashes, plan),
+                        'approved context changed before recovery')
                 recover(etc, store, 0, reference, store / a.recover)
                 print('ROLLED_BACK_STATIC; runtime acceptance not performed'); return 0
             require(not pending(store, 0), 'open transaction requires recovery')
@@ -299,12 +337,14 @@ def main():
                     'static resolver/management prerequisites not observed')
             original = snapshot(etc, 0); desired = render(Path('/'), a.hostname, inputs['site.conf'], original)
             context.update(original=digest(encoded(original)), desired=digest(encoded(desired)))
+            require(approved_plan(approved, 0, a.hostname, a.host_state_sha256) == (hashes, plan),
+                    'approved context changed during review')
             if a.review:
                 sys.stdout.write(encoded(context).decode('ascii')); return 0
             require(reference == context, 'approved source/desired state differs')
-            require(hashes == {n: digest(read_file(path, 0, 4 * 1024 * 1024)[0]) for n, path in inputs.items()},
-                    'approved inputs changed')
             release_check(a.release)
+            require(approved_plan(approved, 0, a.hostname, a.host_state_sha256) == (hashes, plan),
+                    'approved context changed before apply')
             # Operator confirmation additionally attests reviewed G0/G1/G2, static ownership and console/snapshot.
             path = transition(etc, store, 0, context, original, desired, lambda: bool(command(
                 '/bin/sh', str(HERE / 'verify-baseline.sh'), '--root=/', '--hostname=' + a.hostname, '--site=' + str(inputs['site.conf']))))

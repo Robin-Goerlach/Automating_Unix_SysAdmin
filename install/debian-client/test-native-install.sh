@@ -121,6 +121,6 @@ with tempfile.TemporaryDirectory() as tmp:
     rejected(lambda:m.recover(etc,store,uid,ref,path))
 print('Native static transaction primitive tests passed')
 PY
-rc=0; "$here/native-install.py" --review --confirm-disposable-vm --hostname=node.lab.invalid --installation=12345678-1234-4234-8234-123456789abc --fingerprint=invalid --release=invalid >/dev/null 2>&1 || rc=$?
+rc=0; "$here/native-install.py" --review --confirm-disposable-vm --hostname=node.lab.invalid --installation=12345678-1234-4234-8234-123456789abc --fingerprint=invalid --release=invalid --host-state-sha256=invalid >/dev/null 2>&1 || rc=$?
 [ "$rc" -eq 2 ]
 echo 'Native CLI unprivileged refusal passed'

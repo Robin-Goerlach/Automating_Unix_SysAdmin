@@ -24,7 +24,7 @@ sub rows {
 }
 my %arg;
 for (@ARGV) {
-    /\A--(hostname|inventory|roles|only)=(.+)\z/ or fail('invalid argument');
+    /\A--(hostname|inventory|roles|only|host-state)=(.+)\z/ or fail('invalid argument');
     exists $arg{$1} and fail("duplicate option: $1");
     $arg{$1} = $2;
 }
@@ -53,7 +53,7 @@ for (qw(inventory roles)) {
 # Consume one validated R2 snapshot, preserving empty group fields.
 open my $inv, '-|', $^X, $validator, '--input', $arg{inventory}, '--roles', $arg{roles}, '--list'
     or fail('cannot start R2 validator');
-my (%names, %ips, $record);
+my (%names, %ips, %inventory_hosts, $record);
 while (my $line = <$inv>) {
     chomp $line;
     my @v = split /\t/, $line, -1;
@@ -63,11 +63,22 @@ while (my $line = <$inv>) {
     my $canonical = join '.', map { 0 + $_ } split /\./, $ip;
     $canonical eq $ip or fail('noncanonical IPv4 in inventory');
     $ips{$canonical}++ and fail('duplicate canonical IPv4');
+    $inventory_hosts{$name} = 1;
     $record = \@v if $name eq $host;
 }
 close $inv or fail('R2 validation failed');
 $record or fail('host not registered in R2 inventory');
 $record->[2] eq 'debian' or fail('selected OS family must be debian');
+# Explicit lifecycle mode uses the same canonical parser as site management.
+# Legacy planning without this option remains read-only, not authorization.
+if (exists $arg{'host-state'}) {
+    my $state_path = File::Spec->rel2abs($arg{'host-state'});
+    regular($state_path) or fail('explicit host state file unavailable');
+    require $monitor;
+    my $states = SASD::Monitor::read_host_state($state_path, \%inventory_hosts, 0);
+    exists($states->{$host}) && $states->{$host}->{state} eq 'enabled'
+        or fail('explicit enabled host state required');
+}
 
 my (%tasks, %deps, %edges);
 rows("$RealBin/checklist.tsv", "id\toriginal_line\ttask\tstate\thandler", sub {
