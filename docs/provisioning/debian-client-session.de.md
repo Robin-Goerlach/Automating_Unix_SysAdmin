@@ -149,3 +149,8 @@ Basis e0201edf9e0fc0409dc8a04d4bf1361a994f67a3. CI #49 45767843153 bestand Plane
 ## M7-D.6b — Logging-Fixture und gemeinsamer Runner
 
 Basis 9e514cc9497743c9d31da86b718d3c55e3e03488. Vorherige CI #50 45768807228 erfolgreich. fixture-config.py aus Banner extrahiert, fixture-logging.py nur Serverprofil 0410/0420/0790/0800, feste verschachtelte Ziel-/Verzeichnisliste, exakter Rendervertrag, referenzgebundenes Apply/statisches Verify/offene Journalwiederherstellung. Matrix acht Tasks mit Apply-Backends. Separater lokaler Logrotate-3.22.0-Debugtest als nobody, Pfad/Besitzer ersetzt, Exit 0 unverändertes Log, kein Postrotate. Kein Rsyslog-Binary oder native Dienstprüfung. Vollständiger Checkout/externe Betreiberlogs unerreichbar; neue Quell-/Archivtests warten auf CI. Erwartet 159 Archivdateien, 39 staged. Alte Releasereferenzen ungültig. Nächster Schritt CI, dann Paketbackend / VM-Gates. main und ursprünglicher Feature-Branch unangetastet.
+
+
+## M7-D.6c — synthetische Paketbestandstransaktion
+
+Basis 8d130ed3e660bb7045f2368b47bd9094ca9eefd8, CI #51 45769421070 erfolgreich. Gemeinsamer Fixture-Runner akzeptiert begrenzte gruppenspezifische Eingabebindung; neues fixture-packages.py modelliert 0200/0730 anhand expliziter synthetischer APT-Aktionen, keine echte Paketmutation. Quell-/Archivtest ergänzt; zehn Tasks mit Apply-Backend, erwartet 160 Archivdateien, 39 staged unverändert. Lokaler Clone DNS-Fehler, kein lokaler Gesamttest behauptet. Externe Betreiberlogs unerreichbar. Neue CI ausstehend. Nächster Schritt CI prüfen, dann begrenzte Dienstkonfigurations-Fixtures oder Wegwerf-VM-Gates. main und ursprünglicher Feature-Branch unverändert. Keine native Paketinstallation oder Systemaktualisierung, kein Merge.

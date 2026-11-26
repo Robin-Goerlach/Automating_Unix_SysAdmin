@@ -149,3 +149,8 @@ Base e0201edf9e0fc0409dc8a04d4bf1361a994f67a3. CI #49 45767843153 passed planner
 ## M7-D.6b — logging fixture and shared runner
 
 Base 9e514cc9497743c9d31da86b718d3c55e3e03488. Previous CI #50 45768807228 succeeded. Extracted fixture-config.py from banner, added server-profile-only fixture-logging.py for 0410/0420/0790/0800, fixed nested target/dir set, exact render contract, reference-bound apply/static verify/open journal recovery. Updated matrix eight tasks with apply backends. Local independent logrotate 3.22.0 debug exercise as nobody, substituted path/owner, exit 0 unchanged log, no postrotate. No rsyslog binary or native service verification. Full checkout and external operator logs unavailable; new source/archive tests pending CI. Expected 159 archive files, 39 staged. Old release references invalid. Next CI then package backend / VM gates. Main and original feature untouched.
+
+
+## M7-D.6c — synthetic package-state transaction
+
+Base 8d130ed3e660bb7045f2368b47bd9094ca9eefd8, CI #51 45769421070 successful. Shared fixture runner accepts a bounded group-specific input binding; new fixture-packages.py models stages 0200/0730 from explicit synthetic APT actions, no real package mutation. Source/archive test added; ten apply-capable tasks, expected 160 archive files, 39 staged unchanged. Local clone DNS failure, no local full-suite claim. External operator logs unavailable. New CI pending. Next verify CI, then bounded service configuration fixtures or disposable VM gates. Main and original feature branch untouched. No native package or system upgrade, no merge.

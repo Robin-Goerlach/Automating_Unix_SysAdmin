@@ -90,7 +90,7 @@ def run(group):
             if fixture(root, owner, tx, group) != identities or [os.fstat(fd).st_dev, os.fstat(fd).st_ino] != identities[2][:2]:
                 raise ValueError('fixture identity changed')
             pkg = load('plan-packages')
-            profile, _, context = pkg.inventory_selection(a.hostname, a.inventory, a.roles)
+            profile, stages, context = pkg.inventory_selection(a.hostname, a.inventory, a.roles)
             if group.PROFILES and profile not in group.PROFILES:
                 raise ValueError('fixture group not selected for this profile')
             release = load('lab-install').release_digest()
@@ -100,7 +100,13 @@ def run(group):
             # Existing regular 0644 files only; no creation, hardlinks or mode repair.
             if any(entry['mode'] != 0o644 for entry in original.values()):
                 raise ValueError('fixture configuration files must already have mode 0644')
-            content = group.render(a.hostname, tx)
+            if hasattr(group, 'prepare'):
+                binding, expected_original, content = group.prepare(root, profile, stages, tx)
+                common['group-input'] = binding
+                if (a.review or a.apply_fixture) and original != expected_original:
+                    raise ValueError('fixture package state differs from simulation input')
+            else:
+                content = group.render(a.hostname, tx)
             if set(content) != set(group.NAMES):
                 raise ValueError('unexpected target set')
             desired = {name: {'data': content[name].hex(), 'mode': 0o644} for name in group.NAMES}
@@ -126,6 +132,10 @@ def run(group):
                 tx.sync_dir(directory_path)
             if fixture(root, owner, tx, group) != identities or load('lab-install').release_digest() != release:
                 raise ValueError('fixture or release changed')
+            if hasattr(group, 'prepare'):
+                binding_after, expected_after, content_after = group.prepare(root, profile, stages, tx)
+                if binding_after != binding or expected_after != expected_original or content_after != content:
+                    raise ValueError('fixture input changed during review')
             if a.apply_fixture:
                 if approved != current:
                     raise ValueError('original snapshot differs from reviewed reference')
