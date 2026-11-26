@@ -5,11 +5,10 @@ use strict;
 use Digest::SHA qw(sha256_hex);
 use Fcntl qw(:DEFAULT :flock);
 use File::Path qw(make_path remove_tree);
-use File::Copy qw(copy);
 use File::Spec;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(read_roles read_host_records read_host_state);
+use SASD::Monitor qw(read_roles read_host_records read_host_state paths_conflict);
 
 my ($hosts,$roles,$checks,$services,$state,$staging,$target,$plan) = ('','','','','','','','');
 my ($prepare,$dry_run,$apply,$fail_after) = (0,0,0,'');
@@ -32,46 +31,100 @@ while (@ARGV) {
 }
 $hosts && $roles && $checks && $services && $staging && $target && $plan or die "inventory, staging, target and plan are required\n";
 $prepare + $dry_run + $apply == 1 or die "choose exactly one of --prepare, --dry-run or --apply\n";
-$staging !~ m!/(?:\.\.?)(?:/|\z)! && $target !~ m!/(?:\.\.?)(?:/|\z)! or die "unsafe path\n";
-$target =~ m!\A/! or die "target must be an absolute path\n";
-$target =~ m!\A(?:/|/bin|/sbin|/usr|/usr/.*|/etc|/etc/.*|/var|/var/.*|/home|/home/.*|/root|/root/.*)\z! and die "refusing system target prefix\n";
+$staging =~ m!\A/! && $target =~ m!\A/! or die "staging and target must be absolute paths\n";
 -f $hosts && !-l $hosts && -f $roles && !-l $roles && -f $checks && !-l $checks && -f $services && !-l $services or die "invalid inventory input\n";
 $state = "$hosts.state" if $state eq '';
 
 sub sha { my ($p)=@_; open my $fh, '<', $p or die "cannot read $p: $!\n"; binmode $fh; local $/; return sha256_hex(<$fh>); }
 sub regular_path { my ($p,$label)=@_; -f $p && !-l $p or die "invalid $label\n"; }
+sub owner_tree {
+    my ($path,$label)=@_;
+    my $abs=File::Spec->canonpath(File::Spec->rel2abs($path));
+    $abs =~ m!\A/tmp(?:/|\z)|\A/var/tmp(?:/|\z)! or die "$label must be below /tmp or /var/tmp\n";
+    my $current='';
+    my @parts=grep { length } split m!/!,$abs;
+    for my $i (0..$#parts) {
+        my $part=$parts[$i];
+        $current .= "/$part";
+        -l $current and die "$label has a symlink ancestor: $current\n";
+        next if $i == $#parts && !-e $current;
+        next if $i == $#parts && -f $current;
+        next unless -e $current;
+        -d $current or die "$label has a non-directory ancestor: $current\n";
+        my @st=stat($current);
+        @st or die "cannot stat $label ancestor: $current\n";
+        if (($current eq '/tmp' || $current eq '/var/tmp') && ($st[2] & 01777) == 01777) { next; }
+        $st[4] == $> or die "$label is not operator-owned: $current\n";
+        ($st[2] & 0022) == 0 or die "$label directory is writable by group/other: $current\n";
+    }
+    return $abs;
+}
+sub target_dir {
+    my ($required)=@_; my $abs=owner_tree($target,'target');
+    if (!-e $abs) { $required and die "target directory is missing\n"; return 0; }
+    -d $abs && !-l $abs or die "target is not a regular directory\n"; return 1;
+}
+sub safe_mode { my ($m)=@_; return $m =~ /\A0[0-7]{3}\z/ && !(oct($m) & 06000) && !(oct($m) & 0002); }
+sub safe_plan { my ($p)=@_; regular_path($p,'plan'); owner_tree($p,'plan'); paths_conflict($p,$staging) || paths_conflict($p,$target) and die "plan overlaps staging or target\n"; }
 sub safe_rel { my ($p)=@_; $p =~ m!\A[A-Za-z0-9][A-Za-z0-9_.-]*(?:/[A-Za-z0-9][A-Za-z0-9_.-]*)*\z! or die "unsafe manifest path: $p\n"; }
 sub write_text { my ($p,$text,$mode)=@_; my (undef,$d)=File::Spec->splitpath($p); make_path($d,{mode=>0700}) unless -d $d; sysopen(my $fh,$p,O_WRONLY|O_CREAT|O_EXCL,$mode) or die "cannot create $p: $!\n"; print $fh $text or die "cannot write $p\n"; close $fh or die "cannot close $p\n"; }
 sub generator { my ($name,@args)=@_; my $path="$FindBin::Bin/$name"; system($path,@args)==0 or die "generator $name failed\n"; }
 sub selected_hosts { my $r=read_roles($roles); my ($h)=read_host_records($hosts,$r,0); my $s=read_host_state($state,$h,1); return scalar grep { !exists($s->{$_}) || $s->{$_}->{state} eq 'enabled' } keys %$h; }
 sub manifest_entries {
     opendir my $dh,$staging or die "cannot read staging: $!\n"; my @files;
-    while (my $product=readdir $dh) { next if $product =~ /^\./ || $product eq 'MANIFEST.tsv'; safe_rel($product); -d "$staging/$product" && !-l "$staging/$product" or die "invalid staging product\n"; opendir my $ph,"$staging/$product" or die $!; while (my $file=readdir $ph) { next if $file =~ /^\./; safe_rel("$product/$file"); -f "$staging/$product/$file" && !-l "$staging/$product/$file" or die "invalid staging file\n"; push @files,"$product/$file"; } closedir $ph; } closedir $dh; return sort @files;
+    while (my $product=readdir $dh) { next if $product =~ /^\./ || $product eq 'MANIFEST.tsv'; safe_rel($product); -d "$staging/$product" && !-l "$staging/$product" or die "invalid staging product\n"; opendir my $ph,"$staging/$product" or die $!; while (my $file=readdir $ph) { next if $file =~ /^\./; safe_rel("$product/$file"); -f "$staging/$product/$file" && !-l "$staging/$product/$file" or die "invalid staging file\n"; my @st=stat("$staging/$product/$file"); @st && $st[3] == 1 or die "hardlink alias in staging\n"; push @files,"$product/$file"; } closedir $ph; } closedir $dh; @files && @files <= 100 or die "invalid staged file count\n"; return sort @files;
 }
 sub read_manifest {
-    -f "$staging/MANIFEST.tsv" && !-l "$staging/MANIFEST.tsv" or die "invalid manifest\n"; open my $fh,'<',"$staging/MANIFEST.tsv" or die $!; my %m; my $header=<$fh>; defined $header && $header eq "SASD-DEPLOY-1\n" or die "unknown manifest version\n"; while (<$fh>) { chomp; my ($p,$sum,$mode)=split /\t/,$_,-1; defined $mode && safe_rel($p) && $sum =~ /\A[0-9a-f]{64}\z/ && $mode =~ /\A[0-7]{4}\z/ or die "invalid manifest record\n"; exists $m{$p} and die "duplicate manifest path\n"; $m{$p}=[$sum,$mode]; } close $fh; return \%m;
+    -f "$staging/MANIFEST.tsv" && !-l "$staging/MANIFEST.tsv" or die "invalid manifest\n"; open my $fh,'<',"$staging/MANIFEST.tsv" or die $!; my %m; my $header=<$fh>; defined $header && $header eq "SASD-DEPLOY-1\n" or die "unknown manifest version\n"; while (<$fh>) { chomp; my @v=split /\t/,$_,-1; @v == 3 && safe_rel($v[0]) && $v[1] =~ /\A[0-9a-f]{64}\z/ && safe_mode($v[2]) or die "invalid manifest record\n"; exists $m{$v[0]} and die "duplicate manifest path\n"; $m{$v[0]}=[$v[1],$v[2]]; } close $fh; %m or die "manifest has no files\n"; return \%m;
 }
 sub prepare {
-    -e $staging and die "staging already exists\n"; make_path($staging,{mode=>0700});
+    -e $staging and die "staging already exists\n"; owner_tree($staging,'staging'); make_path($staging,{mode=>0700});
     my @state_arg = -e $state ? ('--state',$state) : ();
     my @jobs=(['site','sasd-site-config','--hosts',$hosts,'--roles',$roles,'--checks',$checks,'--services',$services,@state_arg,'--out',"$staging/site",'--apply'],['bigbrother','sasd-config-bigbrother','--hosts',$hosts,'--roles',$roles,'--checks',$checks,'--services',$services,@state_arg,'--out',"$staging/bigbrother/bb-hosts",'--force'],['bigsister','sasd-config-bigsister','--hosts',$hosts,'--roles',$roles,'--checks',$checks,'--services',$services,@state_arg,'--display-out',"$staging/bigsister/bb-display.cfg",'--network-out',"$staging/bigsister/uxmon-net",'--force'],['cfengine1','sasd-config-cfengine1','--hosts',$hosts,'--roles',$roles,@state_arg,'--out',"$staging/cfengine1/cfengine.conf",'--apply'],['cfengine2','sasd-config-cfengine2','--hosts',$hosts,'--roles',$roles,@state_arg,'--out',"$staging/cfengine2/cfengine.conf",'--apply']);
     for my $j (@jobs) { my ($dir,$name,@args)=@$j; generator($name,@args); }
-    my @paths=manifest_entries(); my $manifest="SASD-DEPLOY-1\n"; for my $p (@paths) { $manifest .= "$p\t".sha("$staging/$p")."\t0600\n"; } write_text("$staging/MANIFEST.tsv",$manifest,0600); my $plan_text="SASD-DEPLOY-PLAN-1\nmanifest_sha256\t".sha("$staging/MANIFEST.tsv")."\ntarget\t$target\nhosts\t".selected_hosts()."\n"; for my $p (@paths) { $plan_text .= "target_file\t$p\t".(-f "$target/$p" ? sha("$target/$p") : 'MISSING')."\n"; } write_text($plan,$plan_text,0600); print "staging=$staging files=",scalar(@paths)," status=PREPARED\n";
+    my @paths=manifest_entries(); my $manifest="SASD-DEPLOY-1\n"; for my $p (@paths) { $manifest .= "$p\t".sha("$staging/$p")."\t0600\n"; } write_text("$staging/MANIFEST.tsv",$manifest,0600); target_dir(0); owner_tree($plan,'plan'); safe_plan($plan) if -e $plan; my $plan_text="SASD-DEPLOY-PLAN-1\nmanifest_sha256\t".sha("$staging/MANIFEST.tsv")."\ntarget\t$target\nhosts\t".selected_hosts()."\n"; for my $p (@paths) { $plan_text .= "target_file\t$p\t".(-f "$target/$p" ? sha("$target/$p") : 'MISSING')."\n"; } write_text($plan,$plan_text,0600); print "staging=$staging files=",scalar(@paths)," status=PREPARED\n";
 }
 sub verify { my $m=read_manifest(); my @actual=manifest_entries(); my %a=map { $_=>1 } @actual; for my $p (keys %$m) { $a{$p} or die "missing staged file: $p\n"; sha("$staging/$p") eq $m->{$p}->[0] or die "staged checksum mismatch: $p\n"; } for my $p (@actual) { exists $m->{$p} or die "unexpected staged file: $p\n"; } return $m; }
 sub regular_plan_check {
     my ($m)=@_; regular_path($plan,'plan'); open my $fh,'<',$plan or die $!; my $header=<$fh>; defined $header && $header eq "SASD-DEPLOY-PLAN-1\n" or die "unknown plan version\n"; my ($manifest,$planned_target); my %files;
-    while (<$fh>) { chomp; my @v=split /\t/,$_,-1; next unless @v; if ($v[0] eq 'manifest_sha256') { $manifest=$v[1]; } elsif ($v[0] eq 'target') { $planned_target=$v[1]; } elsif ($v[0] eq 'target_file') { @v==3 && safe_rel($v[1]) && $v[2] =~ /\A(?:[0-9a-f]{64}|MISSING)\z/ or die "invalid plan target record\n"; $files{$v[1]}=$v[2]; } }
-    close $fh; defined($manifest) && $manifest eq sha("$staging/MANIFEST.tsv") or die "manifest changed since plan\n"; defined($planned_target) && $planned_target eq $target or die "target differs from plan\n";
+    while (<$fh>) { chomp; my @v=split /\t/,$_,-1; next unless @v; if ($v[0] eq 'manifest_sha256') { @v==2 && !defined($manifest) && $v[1] =~ /\A[0-9a-f]{64}\z/ or die "invalid manifest plan field\n"; $manifest=$v[1]; } elsif ($v[0] eq 'target') { @v==2 && !defined($planned_target) or die "invalid target plan field\n"; $planned_target=$v[1]; } elsif ($v[0] eq 'hosts') { @v==2 && $v[1] =~ /\A[0-9]+\z/ or die "invalid hosts plan field\n"; } elsif ($v[0] eq 'target_file') { @v==3 && safe_rel($v[1]) && $v[2] =~ /\A(?:[0-9a-f]{64}|MISSING)\z/ && !exists($files{$v[1]}) or die "invalid plan target record\n"; $files{$v[1]}=$v[2]; } else { die "unknown plan field: $v[0]\n"; } }
+    close $fh; defined($manifest) && $manifest eq sha("$staging/MANIFEST.tsv") or die "manifest changed since plan\n"; defined($planned_target) && $planned_target eq $target or die "target differs from plan\n"; scalar(keys %files) == scalar(keys %$m) or die "plan does not cover manifest\n";
     for my $p (keys %$m) { my $actual=-f "$target/$p" ? sha("$target/$p") : 'MISSING'; exists($files{$p}) && $files{$p} eq $actual or die "target changed since plan: $p\n"; }
 }
 sub refresh_plan {
     my ($m)=@_; my $text="SASD-DEPLOY-PLAN-1\nmanifest_sha256\t".sha("$staging/MANIFEST.tsv")."\ntarget\t$target\n"; for my $p (sort keys %$m) { $text .= "target_file\t$p\t".sha("$target/$p")."\n"; } my $tmp="$plan.tmp.$$"; write_text($tmp,$text,0600); rename($tmp,$plan) or die "cannot refresh plan: $!\n";
 }
+sub copy_atomic {
+    my ($src,$dst,$sum,$mode)=@_; my $tmp="$dst.tmp.$$"; my $ok=0;
+    eval {
+        open(my $in,'<',$src) or die "cannot read staged file: $!\n"; binmode $in;
+        sysopen(my $out,$tmp,O_WRONLY|O_CREAT|O_EXCL,0600) or die "cannot create temporary file: $!\n"; binmode $out;
+        my $buf;
+        while (read($in,$buf,65536)) {
+            my $off=0;
+            while ($off < length($buf)) { my $n=syswrite($out,$buf,length($buf)-$off,$off); defined($n) && $n > 0 or die "cannot write temporary file: $!\n"; $off += $n; }
+        }
+        close($in) or die "cannot close staged file: $!\n"; close($out) or die "cannot close temporary file: $!\n";
+        sha($tmp) eq $sum or die "temporary checksum mismatch\n"; chmod oct($mode),$tmp or die "cannot chmod temporary file: $!\n"; rename($tmp,$dst) or die "cannot publish file: $!\n"; $ok=1;
+    };
+    unlink $tmp unless $ok; $ok or die $@ || "atomic replacement failed\n";
+}
 sub apply_plan {
-    $fail_after ne '' && $fail_after !~ /\A[1-9][0-9]*\z/ and die "invalid failure hook\n"; my $m=verify(); -e $target || make_path($target,{mode=>0700}); -d $target && !-l $target or die "invalid target\n"; sysopen(my $lock,"$target/.sasd-deploy.lock",O_WRONLY|O_CREAT,0600) or die "cannot open deployment lock: $!\n"; flock($lock,LOCK_EX) or die "cannot lock deployment\n";
-    regular_plan_check($m);
-    my @changed; for my $p (sort keys %$m) { my $dst="$target/$p"; if (-e $dst) { -f $dst && !-l $dst or die "target is not a regular file: $p\n"; my $same=sha($dst) eq $m->{$p}->[0]; print "$p status=",($same ? 'UNCHANGED' : 'UPDATE'),"\n" if $dry_run; push @changed,$p unless $same; } else { print "$p status=CREATE\n" if $dry_run; push @changed,$p; } } print "target=$target changes=",scalar(@changed)," status=DRY-RUN\n" if $dry_run; unlink "$target/.sasd-deploy.lock" and return if $dry_run;
-    my $backup="$target/.sasd-backup-$$"; make_path($backup,{mode=>0700}); my @installed; my $n=0; eval { for my $p (@changed) { my $dst="$target/$p"; my (undef,$d)=File::Spec->splitpath($dst); make_path($d,{mode=>0700}) unless -d $d; if (-e $dst) { make_path("$backup/".(File::Spec->catdir($p =~ m!^(.*)/[^/]+$! ? $1 : '')), {mode=>0700}) if $p =~ m!/!; rename($dst,"$backup/$p") or die "cannot backup $p: $!\n"; } copy("$staging/$p",$dst) or die "cannot install $p: $!\n"; chmod oct($m->{$p}->[1]),$dst or die "cannot chmod $p\n"; push @installed,$p; $n++; $fail_after ne '' && $n >= $fail_after and die "controlled install failure\n"; } 1 } or do { my $e=$@||'apply failed\n'; unlink map { "$target/$_" } @installed; for my $p (@installed) { if (-e "$backup/$p") { my (undef,$d)=File::Spec->splitpath("$target/$p"); make_path($d,{mode=>0700}) unless -d $d; rename("$backup/$p","$target/$p") or die "rollback failed for $p\n"; } } remove_tree($backup); unlink "$target/.sasd-deploy.lock"; die $e; }; refresh_plan($m); remove_tree($backup); print "target=$target changes=",scalar(@changed)," status=APPLIED\n"; unlink "$target/.sasd-deploy.lock";
+    $fail_after ne '' && $fail_after !~ /\A[1-9][0-9]*\z/ and die "invalid failure hook\n";
+    my $m=verify(); target_dir(!$dry_run); safe_plan($plan); paths_conflict($staging,$target) and die "staging overlaps target\n";
+    if ($dry_run) { regular_plan_check($m); }
+    my $lock_path="$target/.sasd-deploy.lock"; my $lock;
+    unless ($dry_run) {
+        if (-e $lock_path) { -l $lock_path and die "deployment lock is a symlink\n"; my @ls=stat($lock_path); @ls && -f $lock_path && $ls[4] == $> && ($ls[2] & 0077) == 0 && $ls[3] == 1 or die "invalid deployment lock\n"; open($lock,'+<',$lock_path) or die "cannot open deployment lock: $!\n"; }
+        else { sysopen($lock,$lock_path,O_WRONLY|O_CREAT|O_EXCL,0600) or die "cannot create deployment lock: $!\n"; }
+        flock($lock,LOCK_EX) or die "cannot lock deployment\n"; regular_plan_check($m);
+    }
+    my @changed;
+    for my $p (sort keys %$m) { my $dst="$target/$p"; owner_tree($dst,'target file'); if (-e $dst) { -f $dst && !-l $dst or die "target is not a regular file: $p\n"; my @ds=stat($dst); @ds && $ds[3] == 1 or die "hardlink alias in target: $p\n"; my $same=sha($dst) eq $m->{$p}->[0]; push @changed,$p unless $same; print "$p status=",($same ? 'UNCHANGED' : 'UPDATE'),"\n" if $dry_run; } else { push @changed,$p; print "$p status=CREATE\n" if $dry_run; } }
+    if ($dry_run) { print "target=$target changes=",scalar(@changed)," status=DRY-RUN\n"; return; }
+    my $backup="$target/.sasd-backup-$$"; make_path($backup,{mode=>0700}); my (@installed,@backed_up); my $failure;
+    eval { for my $p (@changed) { my $dst="$target/$p"; my (undef,$d)=File::Spec->splitpath($dst); make_path($d,{mode=>0700}) unless -d $d; if (-e $dst) { make_path("$backup/".(File::Spec->catdir($p =~ m!^(.*)/[^/]+$! ? $1 : '')), {mode=>0700}) if $p =~ m!/!; rename($dst,"$backup/$p") or die "cannot backup $p: $!\n"; push @backed_up,$p; } copy_atomic("$staging/$p",$dst,$m->{$p}->[0],$m->{$p}->[1]); push @installed,$p; $fail_after ne '' && @installed >= $fail_after and die "controlled install failure\n"; } 1 } or $failure=$@||'apply failed\n';
+    if (defined $failure) { unlink map { "$target/$_" } @installed; for my $p (reverse @backed_up) { my (undef,$d)=File::Spec->splitpath("$target/$p"); make_path($d,{mode=>0700}) unless -d $d; rename("$backup/$p","$target/$p") or die "rollback failed for $p; backup retained at $backup\n"; } remove_tree($backup); die $failure; }
+    refresh_plan($m); remove_tree($backup); print "target=$target changes=",scalar(@changed)," status=APPLIED\n";
 }
 if ($prepare) { prepare(); } else { apply_plan(); }

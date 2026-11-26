@@ -43,6 +43,7 @@ echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister): PASS'
 deploy_stage=$lab/deploy-stage
 deploy_target=$lab/deploy-target
 deploy_plan=$lab/deploy.plan
+mkdir -m 0700 "$deploy_target"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --prepare > "$lab/deploy-prepare"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --dry-run > "$lab/deploy-dry-run"
 grep -q 'changes=7 status=DRY-RUN' "$lab/deploy-dry-run"

@@ -2,10 +2,10 @@
 use strict;
 use FindBin;
 use File::Spec;
-use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
+use Fcntl qw(O_WRONLY O_CREAT O_EXCL LOCK_EX);
 use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_config read_inventory read_checks applicable_checks
-    validate_status valid_epoch valid_host atomic_write ensure_dir
+    validate_status valid_epoch valid_host atomic_write ensure_dir read_latest
     read_enrollment_record enrollment_record_line append_event);
 
 my ($config, $input, $signature, $now, $skew) = ('', '', '', time(), 900);
@@ -91,7 +91,15 @@ for my $line (@lines) {
 }
 my $latest = File::Spec->catdir($cfg->{status_dir_path}, 'latest');
 ensure_dir($cfg->{status_dir_path}, 0750); ensure_dir($latest, 0750);
+sysopen(my $write_lock, File::Spec->catfile($latest, '.auth-import.lock'), O_WRONLY|O_CREAT, 0600)
+    or die "cannot open authenticated import lock: $!\n";
+flock($write_lock, LOCK_EX) or die "cannot lock authenticated import: $!\n";
 for my $v (@records) {
+    my $old = read_latest(File::Spec->catfile($latest, "$v->[0].$v->[1]"));
+    $old && $old->{source} eq 'ssh' && $old->{received} > $sent
+        and die "older authenticated observation would be replaced\n";
+    $old && $old->{received} == $sent && ($old->{color} ne $v->[2] || $old->{message} ne $v->[3])
+        and die "conflicting authenticated observation at same measurement epoch\n";
     atomic_write(File::Spec->catfile($latest, "$v->[0].$v->[1]"), join("\t", $sent, @$v[0..3], "ssh") . "\n", 0640);
 }
 $record->{state} = 'active'; $record->{sequence} = $sequence;

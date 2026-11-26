@@ -61,6 +61,10 @@ fi
 
 printf 'web.lab.invalid\tdisk\tgreen\tgood\n' > "$tmp/good.tsv"
 "$prefix/bin/sasd-monitor-import" --config "$prefix/etc/sasd-monitor.conf" --input "$tmp/good.tsv" --received-at 100 --source test > "$tmp/import"
+if "$prefix/bin/sasd-monitor-import" --config "$prefix/etc/sasd-monitor.conf" --input "$tmp/good.tsv" --received-at 90 --source test > "$tmp/old-error" 2>&1; then
+    echo "older observation replaced newer observation" >&2; exit 1
+fi
+grep -q 'older observation' "$tmp/old-error"
 "$prefix/bin/sasd-monitor-cycle" --config "$prefix/etc/sasd-monitor.conf" --now 1100 > "$tmp/stale-cycle"
 grep -q 'web.lab.invalid	disk	green	purple' "$prefix/var/status/state.tsv"
 "$prefix/bin/sasd-monitor-report" --config "$prefix/etc/sasd-monitor.conf" --out "$tmp/stale.html"
@@ -92,4 +96,8 @@ grep -q '^config=OK$' "$tmp/crlf-config"
 if printf 'web.lab.invalid\tdisk\tgreen\tunsafe\n' | "$prefix/bin/sasd-monitor-import" --config "$prefix/etc/sasd-monitor.conf" --received-at 1300 --source bad/source > "$tmp/source-error" 2>&1; then
     echo "unsafe source accepted" >&2; exit 1
 fi
+if printf 'web.lab.invalid\tdisk\tgreen\tunsafe\n' | "$prefix/bin/sasd-monitor-import" --config "$prefix/etc/sasd-monitor.conf" --received-at 1300 --source ssh > "$tmp/reserved-source-error" 2>&1; then
+    echo "reserved authenticated source accepted" >&2; exit 1
+fi
+grep -q 'reserved source' "$tmp/reserved-source-error"
 echo "M1 monitoring server: PASS"

@@ -9,7 +9,6 @@ import base64
 from contextlib import ExitStack
 from copy import deepcopy
 import csv
-import fcntl
 import hashlib
 import importlib.util
 import json
@@ -301,8 +300,6 @@ with ExitStack() as stack:
     pid=os.fork()
     if pid==0:
         try:
-            fd=os.open(store,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
-            fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
             atomic=tx.atomic_write
             def interrupted(path,data,mode,user):
                 atomic(path,data,mode,user)
