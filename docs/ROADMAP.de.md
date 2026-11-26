@@ -17,11 +17,11 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 ## Checkpoint-Status — 26.11.2026
 
 - **A — Qualität und Sicherheit: im aktuellen WSL-Umfang umgesetzt.** Inventarmigrationsprüfung, gemeinsame Pfadprüfungen, kooperative Sperren, exklusive `0600`-Migrationssicherungen, Marker-Regressionen, Dokumentationspaarprüfung und Release-Paketierung sind offline abgedeckt. Crash-atomare Mehrdatei-Commits, Schutz gegen feindliche TOCTOU-Angriffe und historische Plattformnachweise bleiben offen.
-- **B — Integrierte Site-Verwaltung: schrittweise umgesetzt.** Versioniertes Inventar, ausdrückliche Rollen, Lebenszykluszustand, ein gemeinsamer Service-Parser, Hostverwaltung und kontrollierte Kandidatengenerierung sind verfügbar. Ein vollständiger Deploy-/Apply-Orchestrator bleibt offen.
+- **B — Integrierte Site-Verwaltung: schrittweise umgesetzt.** Versioniertes Inventar, ausdrückliche Rollen, Lebenszykluszustand, ein gemeinsamer Service-Parser, Hostverwaltung und kontrollierte Kandidatengenerierung sind verfügbar. Begrenzte kontrollierte Bereitstellung ist offline umgesetzt; ein vollständiger Deploy-/Apply-Orchestrator bleibt offen.
 - **C — Historische Produktintegrationen: teilweise/offline.** CFEngine 1/2, MRTG/RRDtool und getrennte Big-Brother-/Big-Sister-Kandidaten besitzen gemeinsames Inventar sowie Offline-Positiv-/Negativtests. Ihre begrenzten Statusadapter teilen nun Messzeit-/Frischevalidierung. Native Produktabnahmen sowie die übrigen NetSaint-/Nagios-/Ganglia-Integrationen bleiben offen.
 - **D — Datenbank-Monitoring: geplant.** In diesem Paket wurde kein Datenbankadapter begonnen.
-- **E — Infrastruktur- und Clientinstallation: teilweise/offline.** M5–M7-Staging, Postinstallation und Enrollment-Fixtures bleiben verfügbar; native Netzwerkboot- und historische Installerabnahmen bleiben offen.
-- **F — Integrierte Abnahme: teilweise/offline-Labor umgesetzt.** `examples/sasd-integrated-site-lab.sh` prüft gemeinsamen Lifecycle, Kandidatengenerierung, SASD-/Big-Brother-/Big-Sister-Beobachtungen und einen statischen Bericht in einem Wegwerfbaum. Native Produkte, Netzwerkboot, kontrolliertes Deployment und eine spätere Administrationskonsole bleiben offen.
+- **E — Infrastruktur- und Clientinstallation: teilweise/offline.** M5–M7-Staging, Postinstallation und Enrollment-Fixtures bleiben verfügbar; moderner Debian-Offline-Ablauf auf Integrationslinie implementiert. Gemeinsame Abnahme, native Netzwerkboot- und historische Installerabnahmen bleiben offen.
+- **F — Integrierte Abnahme: teilweise/offline-Labor umgesetzt.** `examples/sasd-integrated-site-lab.sh` prüft gemeinsamen Lifecycle, Kandidatengenerierung, SASD-/Big-Brother-/Big-Sister-Beobachtungen und einen statischen Bericht in einem Wegwerfbaum. Kontrolliertes Deployment besitzt eine separate Offline-Regression; native Produkte, Netzwerkboot, vollständige Labororchestrierung und eine spätere Administrationskonsole bleiben offen.
 
 ## R2 — Rollenverwaltung und CFEngine 1
 
@@ -31,7 +31,7 @@ Fixture-Tests dürfen niemals als Live-Netzwerk oder historische Kompatibilität
 - [x] Ausdrückliche Hostoperationen mit `sasd-host-admin`, `--apply`-Schranke und getrenntem enabled/disabled/removed-Zustand.
 - [x] Deterministisches gemeinsames Host-/Service-Staging mit `sasd-site-config`, einschließlich Ausschluss deaktivierter Hosts und Schutz vor vorhandenen Ausgabeordnern.
 - [x] Geprüfte Host-Lebenszyklusereignisse über add/update/enable/disable/remove hinweg aufbewahren.
-- [x] Erste produktspezifische Generatoren und Inventarmigration/-versionierung; kontrolliertes Deploy/Apply bleibt offen.
+- [x] Erste produktspezifische Generatoren und Inventarmigration/-versionierung; begrenzte kontrollierte Bereitstellung offline umgesetzt; vollständige Orchestrierung und natives Deployment offen.
 - [ ] CFEngine-1.4-Syntax mit Originalprogramm und Wegwerf-VM prüfen.
 - [x] Eigenständige Konfigurationsprüfung ohne CFEngine.
 - [ ] Staging, Backup und ausdrückliches Apply mit Rollback.
@@ -149,3 +149,11 @@ Priorität haben R0-Härtung und R1-Werkzeuge; R2–R4 können bei unabhängigen
 - [ ] Native Postinstallation nach echter Netzwerkinstallation sowie automatisierter Schlüsselwechsel/-Recovery.
 
 Die kontrollierte Konfigurationsbereitstellung besitzt inzwischen einen separaten Offline-Regressionspfad; native Produktprüfung und vollständige Labororchestrierung bleiben offen.
+
+### M7-D — Moderne Debian-Checklistenerweiterung (Auflösungskandidat)
+
+- 116 Originalmarker, 89 lokale Kandidaten, 11 zentral, 16 manuell; 57 Abhängigkeiten. 34 begrenzte Apply-IDs (drei experimentelle native Baseline, 23 Konfigurationsfixtures, vier Zustandsmodelle, vier Policy-Datensätze), 16 Verify-only, 39 Candidate-only. Null native Abnahmen.
+- R2 bleibt einzige Inventarautorität. Versioniertes Inventar, Lifecycle, gemeinsame Produktmodelle und Debian-FQDN-/kanonische IPv4-Prüfungen erhalten. Explizite Lifecycle-Bindung vor nativer Mutation erforderlich; Enrollment und zentrale Registrierung/Entfernung bleiben getrennt.
+- Offline-Review, Transaktion, Recovery, Evidenz, Orchestrierung und Checkpoint-Ablauf unabhängig auf Integrationsbranch geprüft. Statische Evidenz erfüllt keine nativen Voraussetzungen. Gemeinsame Abnahme offen.
+- Verbleibende sichere Backends, Zuständigkeit/Reihenfolge gemeinsamer Ziele, echte Laufzeitprüfung, ausdrückliche Enrollmentfreigabe und Wegwerf-VM G0–G6 vervollständigen. M6/M7, historische und V1.1-Gates unverändert.
+- Siehe [Clientdesign](provisioning/debian-client.de.md), [Integrationsplan](provisioning/debian-client-integration-plan.de.md) und [Laborentscheidung](provisioning/debian-client-lab-decision.de.md).

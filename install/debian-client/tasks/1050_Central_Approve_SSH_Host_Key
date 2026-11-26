@@ -1,0 +1,6 @@
+#!/bin/sh
+# Checklist source line 754; central.
+set -eu
+here=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+. "$here/lib/task.sh"
+task_main 'central' '' "$@"

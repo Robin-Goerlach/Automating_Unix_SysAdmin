@@ -20,7 +20,7 @@ The repository must never mislabel a fixture-based test as live network or histo
 - **B — Integrated Site Management: implemented incrementally.** Versioned inventory, explicit roles, lifecycle state, one shared service parser, host administration, controlled candidate generation and a bounded manifest/plan/apply path are available. Native product validation and hostile filesystem guarantees remain open.
 - **C — Historical Product Integrations: partial/offline.** CFEngine 1/2, MRTG/RRDtool and separate Big Brother/Big Sister candidates have shared inventory and offline positive/negative tests. Their bounded status adapters now share measurement/freshness validation. Native product acceptance and the remaining NetSaint/Nagios/Ganglia integrations remain open.
 - **D — Database Monitoring: planned.** No database adapter was started in this package.
-- **E — Infrastructure and Client Installation: partial/offline.** M5–M7 staging, postinstall and enrollment fixtures remain available; native network boot and historical installer acceptance remain open.
+- **E — Infrastructure and Client Installation: partial/offline.** M5–M7 staging, postinstall and enrollment fixtures remain available; the modern Debian offline workflow is implemented on the integration line. Combined acceptance, native network boot and historical installer acceptance remain open.
 - **F — Integrated Acceptance: partial/offline laboratory implemented.** `examples/sasd-integrated-site-lab.sh` exercises shared lifecycle, candidate generation, SASD/Big Brother/Big Sister observations and a static report in a disposable tree. Controlled deployment has a separate offline regression; full laboratory orchestration and native products remain open.
 
 ## R0 — Independent baseline (implemented, contemporary CI)
@@ -58,7 +58,7 @@ The repository must never mislabel a fixture-based test as live network or histo
 - [x] Add explicit host inventory operations with `sasd-host-admin`, an `--apply` gate and separate enabled/disabled/removed state.
 - [x] Add deterministic shared host/service staging with `sasd-site-config`, including exclusion of disabled hosts and output-directory protection.
 - [x] Retain validated host lifecycle events across add/update/enable/disable/remove transitions.
-- [x] Add initial product-specific generators and inventory migration/versioning; controlled deploy/apply remains open.
+- [x] Add initial product-specific generators and inventory migration/versioning; bounded controlled deployment is implemented offline; complete orchestration and native deployment remain open.
 - Evaluate CFEngine 1.4 historical syntax using a disposable VM and actual binary.
 - CFEngine helper: policy inspection, syntax checking, role classification, status reporting; scripts may cooperate with a real cfagent but cannot claim its behavior by emulation.
 - Provide read-only, independent SASD config audit for systems without CFEngine.
@@ -179,3 +179,11 @@ Open policy decisions: per-module packaging, real legacy OS installation media r
 - [x] Reuse of the existing M2 enrollment and M2.1 authenticated import without automatic approval (offline acceptance).
 - [x] Reinstallation, duplicate-identity, stale-image and rejection acceptance (offline acceptance).
 - [ ] Native postinstall after a real network installation and automated key-rotation/recovery.
+
+### M7-D — Modern Debian checklist extension (reconciliation candidate)
+
+- 116 original markers, 89 local candidates, 11 central and 16 manual; 57 dependency edges. 34 bounded apply IDs (three experimental native baseline, 23 configuration fixtures, four state models, four policy records), 16 verify-only, 39 candidate-only. Zero native accepted.
+- R2 remains the sole inventory authority. Preserve versioned inventory, lifecycle, shared product models and Debian-specific FQDN/canonical IPv4 checks. Explicit lifecycle binding is required before native mutation; enrollment and central registration/removal remain separate.
+- Offline review, transaction, recovery, evidence, orchestration and checkpoint workflow verified independently on the integration branch. Static evidence does not satisfy native prerequisites. Combined acceptance is open.
+- Complete remaining safe backends, shared target ownership/order, actual runtime verification, explicit enrollment approval and disposable VM G0–G6. Keep M6/M7, historical and V1.1 gates unchanged.
+- See [client design](provisioning/debian-client.md), [integration plan](provisioning/debian-client-integration-plan.md) and [lab decision](provisioning/debian-client-lab-decision.md).

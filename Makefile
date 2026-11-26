@@ -22,6 +22,7 @@ test: syntax
 	sh tests/m7-postinstall.sh
 	sh tests/deployment.sh
 	sh examples/sasd-integrated-site-lab.sh
+	sh install/debian-client/test.sh
 deployment-test:
 	sh tests/deployment.sh
 site-test:

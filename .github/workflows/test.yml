@@ -1,7 +1,7 @@
 name: Offline UNIX regression checks
 on:
   push:
-    branches: [main]
+    branches: [main, integration/debian-client-checklist, integration/reconcile-debian-r2]
   pull_request:
 jobs:
   test:
@@ -10,5 +10,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Perl and POSIX shell smoke tests
         run: make test
+      - name: Reproducible source distribution check
+        if: github.ref == 'refs/heads/integration/reconcile-debian-r2'
+        run: make release-test

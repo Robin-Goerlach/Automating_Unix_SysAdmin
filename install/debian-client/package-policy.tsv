@@ -1,0 +1,16 @@
+stage	policy	packages_as_in_checklist_or_corrected_candidate	comment
+1	candidate	vim rsyslog postfix mailutils iptables lm-sensors smartmontools alsa-utils rsync nfs-common cups a2ps fail2ban openssh-server openssh-client openssh-sftp-server bc screen tmux	Review package side effects; local-only mail first
+1	optional	packagekit realmd xfonts-100dpi xfonts-75dpi xterm gnome	Desktop or directory integration
+1	review	ubuntu-desktop syslog-ng	Ubuntu-only or alternative logger
+2	candidate	vim-doc vim-scripts apt-listchanges needrestart monit rkhunter chkrootkit lynis auditd acct sysstat wget unix2dos snmp logwatch	Names not yet verified; candidate list only
+2	optional	arpwatch apt-listbugs puppet-agent clamav clamav-freshclam clamtk clamav-doc clamav-daemon audispd-plugins aide	Service and policy selection
+2	server-only	snort suricata nfs-kernel-server	Choose IDS and restrict server role
+2	laptop-only	wpa_supplicant wireless-tools	Choose WLAN backend and provide private credentials
+2	review	iptables-persistent firewalld usbguard usbgard-notifier selinux-basics selinux-policy-default rng-tools haveged	One firewall; USB notifier name and platform support need verification
+2	review	libpam-pwquality libpam-doc libpam-tmpdir	PAM lockout risk
+2	optional	nedit xsysinfo xutils xcalc x11-apps x11-utils x11-xserver-utils kde-full	Desktop packages and old names need verification
+2	optional	xfsprogs btrfs-progs jfsutils reiserfsprogs f2fs-tools ntfs-3g dosfstools exfat-utils exfat-fuse	Select only required filesystem support; old names need verification
+2	optional	beep mpg123 snmpd	Select roles and SNMP access policy
+2	review	nis autofs ldap-utils libnss-ldap libpam-ldap nscd sssd sssd-tools adcli	One identity provider per role; old names need verification
+2	review	rear extlinux rear-doc	Backup target and recovery rehearsal; unspecified Networker alternative unresolved
+2	duplicate	nfs-common	Already in stage 1

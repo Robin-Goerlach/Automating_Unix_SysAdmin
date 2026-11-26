@@ -1,0 +1,5 @@
+# I1/I2 — Auflösungskandidat
+
+English: [English version](debian-client-reconciliation.md)
+
+I1 ausdrücklich durch Betreiber genehmigt, nur separater Branch. Eltern: main feeb68f8fcd26835ae570b38c5f4ce68b4b8a54d, Integration f50abc84bc71a5c10ef988b12e4f87cf6af01b62; Vorfahr a245e2d404d8d00068e3fa8ed99964e4141ecf89. Aktualisierter vollständiger rekursiver Treevergleich: 56 Main-Änderungen, 235 Integrationsänderungen, drei unterschiedliche Überlappungen, keine Löschungen; 433 vereinigte Nicht-Tree-Einträge. Einseitige Änderungen byte-/modusgleich erhalten außer geprüfter CI-Triggerergänzung. Makefile erhält alle Main-Rezepte, ergänzt Debian-Suite einmal. Beide Main-Roadmaps mit abgeglichenem M7-D und begrenzter Deployment-Formulierung erhalten. Integrationstrigger erhalten; neuer Kandidatentrigger, vollständiger Checkout und make release-test nur auf Kandidat. Kein Produktivrelease, kein main-Update. I2 Tree und Zwei-Eltern-Commit vor Veröffentlichung prüfen. I3/I4/I5 warten auf gemeinsame Tests, Lifecycle-Implementierung und unabhängiges Releasevertrauen. Native G0–G6 alle offen.

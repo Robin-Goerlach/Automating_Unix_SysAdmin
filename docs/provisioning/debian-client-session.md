@@ -1,0 +1,224 @@
+# Debian client development handoff
+
+Deutsch: [Deutsche Fassung](debian-client-session.de.md)
+
+2026-11-25 — independent GitHub development on feature/debian-client-checklist. Do not modify main or the other active development session. Baseline: e5e947cf1bb536eee53089a20891f69b76648f93. User requested autonomous continuation in chat; no second Codex session. Local ../logs/LAST-SESSION.md is inaccessible from this environment. This sanitized repository document is the separate handoff; never include private site configuration or secrets.
+
+Completed: static read-only baseline checker and negative fixture tests, integrated test entry and archive member. Local fixture test as nobody passed (three initial file hashes unchanged). GitHub clone from the local container failed DNS resolution; no full make test or native Debian evidence. No live apply. The previous stage's complete CI status remains unknown. Next: centralize policy validation, implement fixture-backed atomic managed file installation preserving unrelated hosts entries, then dependency gates, rollback and task-specific verification. Only after acceptance enable an explicit native lab apply path. No automatic monitoring approval.
+
+## M7-D.1a — fixture application checkpoint
+
+Starting commit: 8e0d7fa8b48a546e15a99d6a8e659d79a91295b6. Shared policy validation, fixture-only apply-baseline.sh, read-only verifier tightened, test-apply.sh and packaging/test integration added. Executed the four new/refactored files locally as nobody; test-apply.sh passed with unchanged hashes after an injected final verification failure. Local GitHub DNS resolution failed again; full make test was not run. No native apply. Next: add explicit transaction evidence and operator-reviewed recovery, enforce task dependencies and central inventory selection, integrate the fixture path with the numbered tasks, then plan native Debian acceptance. Do not merge main or interact with the parallel Codex session. Retained backups grow per fixture apply; bounded cleanup and crash recovery are future work.
+
+## M7-D.1b — journal and recovery checkpoint
+
+Base: 14575c917e32d78250305d0e92bb9688d424c991. Added retained before/desired manifests, state transitions, directory flock, explicit recovery, and two local tests. Both tests passed as nobody in a Linux container, including real process SIGKILL after replacement, blocked reapply, restored original manifest, successful retry and unchanged repeat. Local GitHub DNS resolution failed; full repository tests and native Debian acceptance not run. Exact local hashes of the five changed/new scripts checked before publication. Next M7-D.1c: explicit task prerequisites and central inventory selection, followed by dispatcher integration. Keep main and parallel Codex work untouched. Power-loss durability, old backup migration, automatic pruning and reboot resume remain open.
+
+## M7-D.1c — read-only planning checkpoint
+
+Base: 1f5f5bf27ff49d4771e80875c616c761ca729914. Added plan-client.pl, dependencies.tsv (23 initial edges), test-plan.sh and test entry. Reused R2 validator without changes. Local syntax and unprivileged test-plan.sh passed with the exact published inventory validator and complete 116-row catalog (Git blob hashes matched), and synthetic no-execution task fixtures with matching names. New source blobs checked before branch update. Direct clone still fails DNS; complete repository tests, native Debian and CI not verified. No dispatcher enforcement or packaging integration yet; no live changes. Next M7-D.1d: bind validated inventory and plan to dispatcher, establish evidence contract and guard fixture execution; complete dependency coverage before native apply. Keep main and parallel Codex work untouched.
+
+## M7-D.1d.1 — candidate dispatcher integration
+
+Base 1cb65f33e6c09deeba3c1e4761f1ecafb7d06ad8. Integrated inventory-aware dryrun/stage and prerequisite enforcement, candidate hashes and allowlisted archive portability. Exact new dispatch-planned.sh tested as nobody against synthetic four-task planner and scripts; published blob checked. Real-catalog/packaging test added but not run; direct GitHub clone DNS unavailable, CI/native unverified. Next M7-D.1d.2: bounded transaction-backed fixture baseline apply and verified evidence, then native gate. Legacy no-inventory dryrun remains; no live apply. Main untouched.
+
+## M7-D.1d.2 — fixture transaction dispatcher checkpoint
+
+Base 80f506e05ca7ed4ca47bb29167780e8eaab1c57c. Added explicit inventory-bound baseline group transaction and private point-in-time evidence. Local unprivileged test-fixture-dispatch.sh passed with exact current entrypoint/planner/R2/catalog/dependency/transaction/policy/verifier files and synthetic task names, including repeat, conflict, changed dependency and pending journal. Root rejected. Exact new script blobs checked. Package and test entry updated, full archive and repository suite not run; no native writes. Next: M7-D.1e preparation, native acceptance contract (resolver ownership, runtime hostname/DNS, rollback, Debian version), complete offline integration where feasible; no live apply before disposable native gate. Main untouched. Known gaps: evidence lock gap, unsigned point-in-time report, no general verified edge enforcement or retention policy, DNS runtime open.
+
+## M7-D.1e.1 — native preflight preparation
+
+Base 480174582795e1d96d153e8bc77048e0d3ce1735. Added read-only native-preflight.pl, static fixture tests, bilingual native acceptance contract G0–G6, packaging/test integration. Perl syntax and unprivileged static tests passed. Actual Debian 13 container smoke run as nobody (no optional name queries) detected container, drift, unknown service states. No native VM or direct DNS/NSS test. Direct clone still fails DNS; full suite, archive and CI unverified. Exact new program/test blobs checked before publication. Next: close offline integration gap (G0) and implement bounded direct-DNS lab probe/evidence; native mutation remains disabled until a reviewed writer and disposable-VM acceptance. Main untouched.
+
+## M7-D.1e.2 — direct DNS verification preparation
+
+Recovered the actual published head 3d2453231e080b3396bb096dd51a50e8a0b4d51e after response interruption; no duplicate preflight implementation needed. Added verify-dns.pl, fixture tests, archive/test entry, and bilingual acceptance contract. Exact old preflight tests and new DNS tests executed as nobody in Debian 13 container; syntax and missing-dig exit 3 confirmed. New code blobs verified against local tested versions. No DNS traffic, live dig or native VM evidence; G5 open. G0 still open because direct GitHub clone fails DNS. Next prioritize complete offline provisioning integration and real dig compatibility using an approved isolated lab; no native apply. Main unchanged.
+
+## M7-D.1e.3 — full provisioning offline integration
+
+Base 89ae7c13399cd20fc587b74f2a6ab616bfe51301. Reconstructed exact 144-file provisioning Git tree e9fe44aec272690c79e1c5848307394559b4c041 plus R2 validator 5a1b56ba793ae92b75a6fb13a9dbe00c2b3cd22c. Ran complete provisioning test.sh as nobody, exit 0; added test-archive.sh and reran full provisioning suite, exit 0. Archive: 134 exact regular files/modes, all 116 real tasks, 8 staged in planned mode, fixture apply and static/DNS fixture verification. First new archive run found extraction umask issue in the test; corrected with --same-permissions inside private test tree. No runtime changes. G0 partly satisfied; full repository make test, independent release authentication, CI and native VM remain open. Next: G3 native write design and offline safety tests while preparing G1/G2 evidence collection; no live write authorization. Main untouched.
+
+## M7-D.1e.4a — native writer contract and review rehearsal
+
+Base 2d8a309957eacd7beffd7f20ec7e05b338a20cf4. Added unprivileged prepare-native.sh and test-prepare-native.sh, package/test integration and bilingual G3 native writer contract. Review reads three original source files, rehearses the existing transaction on copies and retains private source/desired evidence; PREPARED_NOT_AUTHORIZED is never a write authorization. Real provisioning suite and new packaged review tests ran as nobody in Debian 13, exit 0; archive has 135 exact files. Exact changed blobs checked before publication. No live review or native writes tested. Direct clone DNS still unavailable; repository-wide make test, independent release authentication, CI and VM acceptance open. Next: implement a separately reviewed native transaction backend and offline durability/metadata tests, prepare G1/G2 evidence collection; no native authorization until acceptance. Main untouched.
+
+## M7-D.1e.4b.1 — synchronized transaction foundation
+
+Base 4ae111cf147c97384912fe819897c0caacece9c3. Verified exact prior provisioning tree; extended fixture transaction library and apply with explicit file/directory sync ordering, basic staged uid/gid/mode checks, and best-effort SYNC_FAILED quarantine. Added test-durability.sh and test entry. Real sync, injected failure paths and actual rollback SIGKILL/recovery passed; complete provisioning suite as nobody on Debian 13 overlayfs, exit 0, archive 135 files. No privileged or native writes; no power-loss claim. Next: persistent native journal design and metadata contract/tests, with machine binding and VM acceptance separate. G3 open; full repo make test, CI and native VM still open. Main untouched.
+
+## M7-D.1e.4b.2 — versioned metadata and journal context
+
+Base be9dfef04c80348c0cabe983b5c5c452984ab5e6. Extended existing fixture journal with v2 context and versioned UID/GID/mode/size/hash manifests; synchronized before apply, rechecked before commit/recovery/evidence. Old open journals without v2 evidence refused. Added test-metadata.sh and updated recovery fixture. Full provisioning suite passed as nobody on Debian 13 overlayfs, exit 0, archive 135 files. Exact tested subtree checked. Persistent native journal layout and binding contract documented only; no native storage or writes, ACL/xattr/label support, authenticated machine binding or power-loss proof. Next: prioritize read-only G1/G2 lab evidence and native metadata capability validation, then bounded native backend with separate acceptance. Full repository make test/CI remain open. Main untouched.
+
+## M7-D.1e.4b.3 — native capabilities observation
+
+Base af89d803fe3ef1b43b0204e1f43395b777927f9c. Added optional Python 3 read-only native-capabilities.py and fixture tests, package/test integration. Real xattr and POSIX ACL detection, unsafe path/type/mode checks and synthetic mount policy tests passed as nobody on Debian 13 overlayfs. Complete provisioning suite exit 0, 136-file archive. Live unprivileged observation exit 3 (overlay, visibility unknown, journal absent). No native write, no actual ext4/XFS/VM acceptance. Exact tested subtree checked. Next prioritize G1/G2 lab runbook and evidence collection, then a separately reviewed bounded native backend. Do not equate diagnostic observations with authorization. Full repository make test and CI open; main untouched.
+
+## M7-D.1e.4c.1 — consolidated read-only acceptance evidence
+
+Base a7475ebaa613e8e72a708b3db1a402ae5baada8d. Added collect-native.sh and test-collect-native.sh, package/test integration and bilingual lab runbook. Unprivileged real fixture collection and source integrity tests passed; full provisioning suite as nobody exit 0, archive 137 exact files. Live read-only container smoke run without name probes exit 3; G2 BLOCKED, G5 NOT_RUN. Exact tested subtree checked. No native write, DNS live opt-in, actual VM acceptance or full repository make test/CI. Reports retain private inventories; no automatic gate approval. Next bounded lab-only native backend plus operator G1/G2 evidence, subject to separate review. Main untouched.
+
+## M7-D.1e.4c.2a — separate journal store rehearsal
+
+Base b25b96ecf924d1ba952349e7bf003bf9c5c4897d. Exact previous provisioning tree verified. Existing fixture engine supports explicit v1 legacy and v2 simulated persistent layouts, with validated store path, context binding, synchronization of store ancestors, apply/recovery and dispatcher integration. Added test-persistent-journal.sh; archive now exercises v2. Actual SIGKILL and rollback, changed parent and pre-mutation sync failure, full provisioning suite as nobody on Debian 13 overlayfs, exit 0, archive 137 files. Exact tested subtree checked. No actual native journal or privileged writes; native storage, reboot-stable machine binding, full repository tests/CI, independent release trust and VM acceptance remain open. Next native storage/machine identity contract validation and separate privileged backend review. Main untouched.
+
+## M7-D.1e.4c.2b — identity comparison checkpoint
+
+Base 1323993f98a8ae1c1b9d3f5508c19658774e82eb. Added optional native-identity.py, tests and package integration for installation UUID and application-scoped machine correlation digest comparison. Full provisioning suite as nobody exit 0, archive 138 files; live read-only smoke UNKNOWN/3. Exact tested subtree checked. No local identity initialization, no authenticated clone detection or reboot proof, no native gate enforcement. Next prioritize the bounded native installer backend and its independent lab authorization contract; integrate identity/release/policy checks before any native writes. G3 open, full repository make test/CI and VM acceptance open. Main untouched.
+
+## M7-D.1e.4c.2c — reference-bound fixture installation
+
+Base 8d8cfc909dcb2c57237f8740e06f42b00e3769d4. Added lab-install.py and tests, integrated source/desired metadata digests before mutation under the existing transaction lock, package and archive reference equality test. Full provisioning suite as nobody on Debian 13 exit 0; 139-file archive. No native writes or actual native backend. Unsigned reference, trusted same-UID source, remaining identity/code lock gap; direct fixture commands are not an authorization boundary. Next actual bounded native backend and disposable VM evidence, with independently trusted release and operator review. Full repository make test/CI open. Main untouched.
+
+## M7-D.1e.4c.2d — first native static writer
+
+Base 33e385cf766c84ad13f2552b69a6502deb6bd1d5. Added experimental native-install.py with root-only fixed live path, operator attestations, identity/release/plan/input/reference checks under journal-store lock, durable JSON snapshots and explicit open-transaction rollback. Shared baseline-render.sh with fixture engine; package and runtime digest integrated. Native primitives tested as nobody on Debian 13 overlayfs, including partial apply, interrupted rollback via injected failures, sync quarantine, xattrs and unchanged repeat. Entire provisioning suite exit 0, archive 141 files, exact tested subtree cb99258e437d6b430a7cfa186d99b171af651853. Actual privileged CLI/VM, independent release trust, native initialization, runtime verification, full repository make test and CI open. No actual native mutation. Next practical VM preparation/acceptance, not additional architecture detours; G3 not yet accepted. Main untouched.
+
+## M7-D.1e.4c.3a — lab preparation and native process interruption evidence
+
+Base c6566b58892d266259a5a1c721fe889223732e3e; prior subtree and R2 blob verified. Added final file/directory fsync before terminal native states and actual forked SIGKILL apply/rollback tests, final-flush fault test, bilingual lab runbook and corrected obsolete acceptance status header. Full provisioning suite as nobody on Debian 13 exit 0, archive 141 files, tested subtree 3e100f63c3a9bf1ec584a7dc0bb08133691fdb1b. No VM available here (no /dev/kvm, QEMU or virsh); direct clone DNS still unavailable. Main has diverged with independent work; no merge. Next G0 CI and operator-assisted G1/G2 initial read-only collection on disposable guest; no live write authorization.
+
+## M7-D.2a — local package-stage planning
+
+The isolated integration branch (base 52c3675c555cb28fc30290273a2fa0690d26d0d4) reconciles main a245e2d and feature 01de137; PR #4 has no merge conflict and repository-wide CI run 45620549662 completed successfully for the base. Continue on integration/debian-client-checklist; do not merge or alter the original branches. Native VM acceptance remains open. Added plan-packages.py and tests for tasks 0200/0730; 34 explicit candidates from existing policy, renderer equality, local APT observations and opt-in simulation, no real install/update. Real Debian 13 non-root run: 3 INSTALLED_SAME, remaining 31 no local record/candidate; exit 3, complete simulation blocked. Separate actual single-package apt-get simulation of installed vim returned no changes; integrated successful simulation path tested with synthetic command results. Full provisioning suite as nobody exit 0, 142-file archive, exact tested subtree 8a3475ce10d183b8a1855e2f0107caf7df01c0f8. No changes to checklist categories, package sources, live configuration or native acceptance. Next: explicit profile-specific package selection and reviewed APT transaction plan, then lab package execution and verification after G0/G1/G2. Keep other infrastructure tasks progressing independently. The operator-local external ../logs archive is not accessible from this checkout; session notes remain in bilingual repository documents.
+
+## M7-D.2b — package profiles, versioned simulation and installed-state verification
+
+package-profiles.tsv classifies every one of the 34 existing stage candidates exactly once. Curated profiles: baseline (8), workstation (18), laptop (18), server (18); all-candidates (34) remains the backward-compatible planning default. Twelve review packages are excluded from every curated profile, not from the historical candidate list. Laptop currently equals workstation; wireless tools and optional software remain outside selection. Server includes SSH server and accounting/logwatch candidates, workstation/laptop include printing and audio candidates. These are reviewable initial choices, not approved service policies or actual package availability guarantees. Select a profile explicitly; no automatic inference from R2 inventory or hardware.
+
+    ./plan-packages.py --list --profile=workstation
+    ./plan-packages.py --live --profile=baseline --simulate
+    ./plan-packages.py --live --profile=baseline --verify-installed
+
+List mode reads only bundled policies, not APT. Live modes require ordinary user. Verification queries dpkg-query and accepts only exact ii status with a valid version, reporting NOT_HEALTHY_OR_UNKNOWN otherwise; it is not a file-integrity, version compliance or service health check. Simulation explicitly pins requested candidate versions and emits normalized Inst/Conf/Remv/Purg action rows with old/new versions and optional architecture qualifiers. A selected missing package must appear in installation actions; requested versions must agree. Configuration-only actions require review. The SHA-256 record binds profile, stage, requested name/version pairs, parsed actions, summary counts and status; not a full dependency lockfile, signature, source authentication, approval or executable authorization. APT format or ambiguity failures remain blocked. No package writes, downloads, index refresh or service changes requested. Existing dispatcher and checklist categories unchanged.
+
+Local Debian 13 tests as nobody: profile coverage, invalid/duplicate/incomplete classification, offline list, dpkg status parsing and synthetic calls, normalized versioned action parsing, missing requested action and configuration-only rejection. Actual baseline dpkg query: 3 INSTALLED, 5 NOT_HEALTHY_OR_UNKNOWN; no installation. Full provisioning suite exit 0, 143 exact archive files including the profile table, exact tested subtree 2c41a7bd743030f885bbaa93f55ba6c343880fb2. Prior integration CI run 45621812530 passed for base 8cc2c82, new CI pending. Actual dependency-bearing simulation against populated APT indexes, inventory binding, package execution, service side effects and recovery remain open. Native VM acceptance still required.
+
+## M7-D.2c — R2 package profile binding
+
+Base a852f333488c85bbc604a646b7c4607f714abf8b, previous provisioning subtree 2c41a7bd743030f885bbaa93f55ba6c343880fb2 and R2 blob 5a1b56ba793ae92b75a6fb13a9dbe00c2b3cd22c verified. Previous M7-D.2b CI 45622811652 completed successfully. Existing package planner now supports inventory-bound profile selection, private frozen input hashes, reference digest comparison and stricter install/configure version consistency. Targeted tests and full provisioning suite as nobody on Debian 13 exit 0, packaged tests 143 files; tested subtree 4a11ad8d6b8bef2c9f5504e6fea2f869420a9abb. Live bound baseline: 3 equal, 3 no local record, 2 no candidate; exit 3, simulation blocked. Synthetic successful reference comparisons only; runtime host binding, exact version verification, real installation and VM acceptance remain open. No changes to catalog states, main or original feature branch. Next functional block: lab package/service acceptance and independent core-service policy candidates (logging, logrotate, cron); avoid further standalone architecture detours. External operator logs unavailable.
+
+## M7-D.2d — grouped core service candidates
+
+Base 023efa35c2ff4c4c68c4953961fed39b1ac28750; previous CI 45623700382 successful. Added six independent renderers for 0300/0410/0420/0510/0710/0960, included existing 0790/0800; 15 render and 101 remaining catalog tasks, 11 staged with verified gates. New inventory-bound plan-services.py selects profile policies and observes dpkg/systemctl state only. Full provisioning suite as nobody exit 0, archive 144 files; tested subtree 6b42417544922d8615fa5e45e0bdc2b79d7008d5. Actual local observation exit 3, all five units UNKNOWN; actual modified-path logrotate debug exit 0 and unchanged log. No rsyslogd available; no service mutations, native package/VM acceptance or native logging/scheduling verification. Explicit candidate decisions: rsyslog instead of syslog-ng, dedicated local5, no duplicate Logwatch schedule, no automatic ModemManager disabling. Main and original feature unchanged by this work. External operator logs not available. Next grouped mail/SSH/service verification or VM acceptance.
+
+## M7-D.2e — SSH/SFTP/mail functional block
+
+Base d98dfc7058ff8244fa8131c1fbb9e60eec7bcab2; previous integration CI 45624513529 completed successfully. Exact base subtree 6b42417544922d8615fa5e45e0bdc2b79d7008d5. Added seven independent candidate renderers and plan-communications.py offline inventory-bound review of public Ed25519 pin fingerprints, captured SFTP subsystem and explicit relay/alias candidate values. 22 render, 94 other tasks; 13 staged under verified gates. Full provisioning suite as nobody on Debian 13 exit 0, archive 145 exact files; tested subtree a73da34abe53571580ea2080d6786bd851267e74. No live SSH or Postfix executables locally, no native mutation, runtime proof, mail delivery or VM acceptance. Corrected checklist's known-hosts path, preserved existing SSH config/keys, proposed disabled X11 and authenticated TLS relay; no real site data. External operator logs unavailable. Next grouped NFS/mount and local inventory preparation; native VM remains separate. Main and original feature untouched.
+
+## M7-D.2f — grouped storage and inventory candidates
+
+Base 3fb8f39ede8a86d3af3cb4c865a50baa4b743ea7, prior exact provisioning subtree a73da34abe53571580ea2080d6786bd851267e74 verified locally. Previous CI 45625269196 completed successfully. Seven renderer additions (0320/0330/0340/0350/0360/0970/1010), inventory-bound plan-storage.py, fixture and archive tests. Full provisioning test.sh as nobody exit 0, 146 files, 17 staged, tested subtree 8856ceb137007b8560698762897f1fbf63975d49. Read-only Debian 13 live observation exit 3, 14 mountinfo records, 0 NFS. Chose separate /mnt/sasd namespace, read-only NFSv4, manual noauto and explicitly selected systemd on-demand, no remote scripts; actual mounting and detailed private inventory open. No native mutations or VM acceptance. First transfer failed because task IDs were incorrectly ordered in the connector script; corrected mapping, exact tree verified before updating ref. External operator logs unavailable; bilingual repository handoff maintained. Next grouped client local shell/profile/compatibility and safe configuration preparation, then security and monitoring; native lab acceptance remains separate. Main and original feature not changed.
+
+## M7-D.2g — shell and UNIX compatibility block
+
+Base 438a81f2c8c7eee4a8206c15260501709110626b, previous subtree 8856ceb137007b8560698762897f1fbf63975d49 and R2 validator blob 5a1b56ba793ae92b75a6fb13a9dbe00c2b3cd22c checked. Previous CI 45626317188 successful. Original private checklist inspected for ten tasks without publishing site data. Nine renderers added, 0580 revised, optional plan-shell.py and tests. Chose isolated optional shell fragments, no global symlinks or package-owned executable replacement, no remote root profiles/keys/boot jobs, preserved existing TMOUT and pager preferences. Full provisioning suite as nobody exit 0, archive 147 files, 25 staged, exact tested subtree 3399cfb498493c9918c7fb841db1bad99205ae4b. Actual local Bash/Dash tests and unprivileged metadata observation; csh/tcsh/less/man missing. No native mutation/login integration or VM acceptance. External operator logs unavailable. Next grouped defensive security policy (account/password/permissions audit and sudo review); no automatic account/authentication changes. Main and original feature untouched.
+
+## M7-D.3a — local accounts and security policy
+
+Base f30dd7c191bf9d66659fe9e698feb18ca2954f75; previous provisioning subtree 3399cfb498493c9918c7fb841db1bad99205ae4b and R2 blob 5a1b56ba793ae92b75a6fb13a9dbe00c2b3cd22c checked. Previous CI 45627095718 passed. Six TSV renderers for 0520/0550/0560/0570/0600/0610; aggregate plan-security.py reuses plan-shell metadata checks. Historical passwd audit unchanged (per-account output unsuitable for this summary). Chose preserved authentication/access settings, workload-specific limits, yescrypt review, explicit memberships and sudoers mode review. Full provisioning suite as nobody exit 0, archive 148 files, 30 staged; exact tested subtree 8b4ac1e0e972e134e23a599276ca1307470ad6d8. Actual local aggregate read-only observation exit 3; 21 accounts/49 groups, no duplicate UID or unexpected UID zero, YESCRYPT, four mode-only matches. No shadow content, actual authentication, PAM/sudo syntax or native writes; VM acceptance open. External operator logs unavailable. Next grouped local integrity and security auditing candidates (AIDE, rkhunter, ClamAV, Lynis, auditd and scheduled reports), without scanner execution or automatic remediation. Main and original feature untouched.
+
+## M7-D.3b — grouped auditing and candidate integrity
+
+Base bd44e193366596914b169ae9a37273dc99796346; previous integration CI 45628699010 successful. Ten TSV renderer additions, existing dependency gates extended, plan-audits.py adds inventory-bound read-only security package/path review and fixed four-file offline content/mode SHA-256 reference comparison. Local Debian 13 nobody test of snapshot/compare primitives passed; exact executable blob 3da630c4caa334c726784cfdf46feb815adcd43c verified. Full local checkout unavailable and direct GitHub clone DNS fails; new source/packaged tests await CI. Expected catalog 54 render, 149 archive files, 30 inventory-bound staged. No scanner execution, database promotion, native changes or VM acceptance. No external operator logs available. Next grouped monitoring and hardware checks, or address CI defects first. Main and original feature not modified.
+
+## M7-D.4a — grouped monitoring and hardware review
+
+Base 67c33dc0a391b6087dea5e8e88b2216b842c6672; previous CI 45761446407 successful. Six policy renderers and plan-monitoring.py, offline ATA SMART and temperature JSON interpretation, local entropy observation, four-column unauthenticated preview (unregistered checks), no central import. Targeted Debian 13 nobody tests passed; executable blob 5ff3b1d64335ae8f883d400c73f018e9c5251d0f verified. Full checkout and external operator logs unavailable, complete source/archive tests pending CI; expected 60 render, 150 archive files, 30 staged. No actual hardware scanner, native service or VM acceptance. Next: address CI failures first; grouped network/DNS/APT infrastructure and firewall review. Main and original feature untouched.
+
+## M7-D.4b — network/DNS/firewall/APT block
+
+Base a65588f22b8dc8a07f50676c085aead70425cd1a; previous CI 45764132117 successful. Twelve renderers, including final DNS renderer reuse, dependency gates and plan-network.py for inventory IPv4/default route review and release-pinned deb822 candidates. Local targeted Debian 13 nobody tests passed; actual read-only IP observation against synthetic expected host missing, one default route. Executable blob 4706d96098c427b8ab1b3cc68e94cd6a49e8ad78 matches locally tested code. No complete checkout or external operator logs; source/archive integration pending CI. Expected 72 render, 151 archive files, 35 staged. Eleven policies are TSV only; no live DNS, firewall, WLAN, proxy, package changes or native acceptance. Next check CI and remaining local catalog tasks, then consolidate actual VM acceptance rather than counting policies as installations. Main and original feature not modified.
+
+## M7-D.5a — directory services and CI regression repair
+
+Base ac9e99e21bb29aad39bda1755f0e5b3543aba4df; previous CI 45765226744 failed in planner negative test due to obsolete 0020 non-renderable assumption (diagnosis from logs and source, fix not yet CI verified). Fix isolated catalog mutation plus positive WAIT_CANDIDATE assertion. Five renderer additions, new plan-directory.py static NSS review and local package/metadata observation. Targeted parser tests as nobody passed; exact executable blob 3e1869bb9a7aabd8d6cda05c77ed9ef8172459c5. Local NSS text netgroup nis observed, not functional NIS evidence. Full checkout/external operator logs unavailable; full tests pending CI. Expected 77 render, 152 archive files, 36 staged. No native changes or directory joins. Next: check CI first, then grouped boot/system protection and recovery (0170/0180/0310/0810/0850/0880). Main and original feature unchanged by this work.
+
+## M7-D.5b — boot protection and recovery
+
+Base 55c8dd54c4dc4c60dc84c3af93ad7e72a0f5d337; previous CI 45765982250 succeeded, regression repaired. Six TSV renderers and plan-recovery.py, read-only kernel parameters/modules/IPv6/SELinux observations. Original private checklist inspected, no private data published. Targeted Debian 13 nobody parser tests passed, actual IPv6 sysctl values 0/0, module and SELinux observations UNKNOWN. Exact executable blob 59bfb849d14126081a66b0e4b53551b2bb1d0d80 matches local tested code. Full checkout and external operator logs unavailable; full integration pending CI. Expected 83 render, 153 archive files, 39 staged. No native mutations, backup/media creation or VM restore acceptance. Next check CI and remaining six local tasks 0380/0470/0830/0900/0910/1020. Main and original feature not modified.
+
+## M7-D.5c — final local candidate block and R2 packaging repair
+
+Base 5285048ba01a0a1b042dccf775b33ff164e638c5; prior CI #48 45766754003 failed because main's canonical validator now imports SASD::Monitor and isolated layout lacks it. Preserve main; package module and validator, include both in release digest and isolated test layouts; add missing-module regression. Six TSV renderers (0380/0470/0830/0900/0910/1020) and plan-operations.py. Targeted local nobody parser/logger tests passed, actual apt-config dump exit 0 five keys NOT_EXPLICIT; systemctl show exit 1. Executable blob 5f240bb7672bd34046d0cd6e25937903248190b3 verified. Full checkout and external operator logs unavailable; full CI pending. Expected 89 render, 39 staged, 155 archive files; 11 central/16 manual. No native writes. Next CI repair confirmation, implementation/acceptance matrix and baseline VM gates. Main and original feature unchanged.
+
+## M7-D.6a — capability matrix and banner fixture
+
+Base e0201edf9e0fc0409dc8a04d4bf1361a994f67a3. CI #49 45767843153 passed planner and archived dispatcher, failed in fixture dispatch; second isolated copy lacked SASD::Monitor, repaired. New 116-row capabilities.tsv (16 config text, 2 package lists, 71 review TSV, 11 central, 16 manual). New fixture-banner.py reuses native transaction primitives in isolated two-file scope, reference-bound apply/static verify/open-journal recovery; no native path. Source/archive tests added, expected 157 archive files, 39 staged. Local clone still unavailable (GitHub DNS); full tests pending CI, no local PASS claim. External operator logs inaccessible. Next CI confirmation and bounded fixture groups / G0–G6 lab. Main and original feature untouched.
+
+## M7-D.6b — logging fixture and shared runner
+
+Base 9e514cc9497743c9d31da86b718d3c55e3e03488. Previous CI #50 45768807228 succeeded. Extracted fixture-config.py from banner, added server-profile-only fixture-logging.py for 0410/0420/0790/0800, fixed nested target/dir set, exact render contract, reference-bound apply/static verify/open journal recovery. Updated matrix eight tasks with apply backends. Local independent logrotate 3.22.0 debug exercise as nobody, substituted path/owner, exit 0 unchanged log, no postrotate. No rsyslog binary or native service verification. Full checkout and external operator logs unavailable; new source/archive tests pending CI. Expected 159 archive files, 39 staged. Old release references invalid. Next CI then package backend / VM gates. Main and original feature untouched.
+
+
+## M7-D.6c — synthetic package-state transaction
+
+Base 8d130ed3e660bb7045f2368b47bd9094ca9eefd8, CI #51 45769421070 successful. Shared fixture runner accepts a bounded group-specific input binding; new fixture-packages.py models stages 0200/0730 from explicit synthetic APT actions, no real package mutation. Source/archive test added; ten apply-capable tasks, expected 160 archive files, 39 staged unchanged. Local clone DNS failure, no local full-suite claim. External operator logs unavailable. New CI pending. Next verify CI, then bounded service configuration fixtures or disposable VM gates. Main and original feature branch untouched. No native package or system upgrade, no merge.
+
+
+## M7-D.6d — service and schedule reuse fixture
+
+Base 31551843c5a9360f15876a40e0b3211b89fb727f; CI 45776928073 successful. New reference-bound service-state and schedule-selection fixture reuses profile policies; two apply-capable tasks, four schedule selection checks only. 12 apply-capable tasks total, expected archive 161, 39 staged unchanged. Package fixture preparation accepts hostname without semantic change. Source/archive regressions added, CI pending; local Git checkout DNS failure, no local test claim. Operator logs unavailable. Next verify CI, then NFS/filesystem/AutoFS block. No native service, schedule, package or access modifications. Main and feature branches unchanged, no merge.
+
+
+## M7-D.6e — fstab and NFS fixture
+
+Base 8e47cf674da78e381aaa2ef3bdc7e5ecf2f7dcf8, CI #55 45779454508 success. New fixture-storage.py reuses storage parser, NFS candidate generator and common runner; actual private fstab edit, explicit local hardening and read-only NFS candidate insertion, mount/AutoFS conflict capture. Two additional apply-capable tasks (static configuration only), two review entries; 14 apply total, expected archive 162, 39 staged unchanged. Existing AutoFS maps unchanged; no runtime mounts or native evidence. Source/archive regression tests added, new CI pending; no independent local full-suite result. External operator logs unavailable. Next CI, then SSH/SFTP/mail configuration. Main and original feature branch unchanged; no merge.
+
+
+## M7-D.6f — SSH client and mail fixture
+
+Base 7da14d5b7e2b08dbf2bc6d52955521bfe330087c; CI #56 45781274687 successful. New fixture-communications.py binds literal Ed25519 pins and supplied fingerprints, X11 fragment, bounded alias/main.cf edits and optional SFTP capture. Five static fixture apply tasks, 19 total; SFTP capture only, no SSH server write. Expected archive 163, 39 staged unchanged. Source/archive tests added; CI pending. Local direct checkout DNS failure, no local full-suite result; external operator logs unavailable. Next verify CI, then user/shell environments. No native package, SSH, mail, authentication or service execution; no merge, main and original feature branch unchanged.
+
+
+## M7-D.6g — opt-in shell fragments
+
+Base 0c05795870df639b5f452f4f5bd13222828c4fee; CI #57 45782296843 successful. New fixture-shell.py applies five exact opt-in shell fragments in private non-auto-sourced etc/sasd-shell; no user/account/profile mutation. Five additional static fixture apply tasks, 24 total, expected archive 164, 39 staged unchanged. Source/archive tests added; CI pending. No independent local full suite or native acceptance, external operator logs unavailable. Main independently advanced to a5dd317 with CI #58 success; no merge. Next verify CI, then security/hardening fixtures with explicit privilege and authentication boundaries.
+
+
+## M7-D.6h — security configuration and integrity record
+
+Base 27d32fbab47406826c25489b9cad4e0eeed38423, no associated CI returned; PR #4 dirty/nonmergeable, previous CI #57 success. Exact integration push trigger added without weakening make test or PR checks; no main merge. New fixture-security.py applies limited login.defs and workload nofile configuration, records independently approved synthetic SASD manifest (not AIDE). Two additional apply-capable tasks, 26 total, two integrity review rows; expected archive 165, 39 staged unchanged. Shared context hook updated. Source/archive tests added, CI pending for both 6g/6h. Local direct Git DNS failure; external logs unavailable. Next confirm branch CI, then network/firewall fixtures. No native acceptance, no privileges/passwords/scanners/production changes.
+
+
+## M7-D.6i — network configuration and firewall policy
+
+Base e86cc23446435a73c3cd8216db63a0f9c1dff066, integration CI #59 45783906751 successful (6g/6h). New fixture-network.py applies bounded hosts/APT sources/APT proxy and synthetic firewall policy only; 5 additional apply IDs, 31 total, expected archive 166, 39 staged unchanged. No native network, DNS, IPv6, APT or firewall execution. Source/archive tests added, new CI pending. No independent local full-suite; external operator logs unavailable. PR #4 dirty, main a5dd317 unchanged; no merge. Next verify branch CI then monitoring/hardware fixture.
+
+
+## M7-D.6j — monitoring handoff and hardware
+
+Base 68d693c8df8317c19a55a51320fa6974a2d2d2d1, CI #60 45785320877 successful. New fixture-monitoring.py stages synthetic status preview and handoff, existing plan-monitoring parser and canonical SASD::Monitor catalog/role/status validation. One additional apply ID (handoff only), 32 total, three review rows, expected archive 167, 39 staged unchanged. No enrollment, live checks, signing or transfer; default catalog lacks hardware check names, explicit central review necessary. Source/archive tests added; new CI pending. No independent local full-suite, external operator logs unavailable. PR #4 dirty, main a5dd317 unchanged, no merge. Next verify branch CI, assess remaining checklist/fixture coverage and native gates; M7-D.6 topic sequence not native completion.
+
+
+## M7-D.7a — consolidation
+
+Base 05fc32ebf11cb97b10d93c91b8019d14917cb202, CI #61 45785946650 success. All 116 original marker line numbers verified; 32 apply (3 baseline, 22 config, 4 model, 3 record), 15 verify-only, 42 candidate-only, 11 central, 16 manual. Added coverage and explicit single-group dispatcher, journal size guard and nested sync; source/archive tests, expected 168 files. No dependency promotion or native acceptance. Main a5dd317 unchanged, 6/46 divergent commits at base; overlapping Makefile and bilingual roadmaps, PR #4 dirty, no merge. Local DNS failure; new CI pending, external logs unavailable. Next CI then inventory-bound cross-group evidence design and safe remaining coverage.
+
+## M7-D.7b — evidence collection
+
+Base f7ae4e8477f124aace927f1b2f195518869e8d60, CI #62 success. Read-only committed journal/current snapshot checks, explicit multi-group collection with R2/release binding; all 116 tasks NOT_CERTIFIED and all 57 dependencies waiting. No native promotion, baseline or bulk apply. Expected 169 archive files, CI pending. Main a5dd317 and feature unchanged; PR #4 dirty, no merge. Next verify CI then dependency-aware installation planning with distinct fixture/runtime gates.
+
+## M7-D.7c — orchestration plan
+
+Base 10e540518223083994de6d808d22b319b4fcf06a; CI #63 success. Read-only canonical R2 plan and selected prerequisite closure, optional fresh fixture evidence, group review/waiting lists; no candidate generation, dependency promotion or native execution. Expected 170 archive files, CI pending. Main and feature unchanged, PR #4 dirty, no merge. Next CI then restart/checkpoint management.
+
+## M7-D.7d — checkpoint and restart review
+
+Base 263839d15a2b09c5ffbc18488addea15e501c488, CI #64 success. Immutable private checkpoint save and digest-bound resume; selected committed group journals and evidence rechecked, open/blocked/drift/context states, no automatic recovery or execution. Expected 171 archive files, CI pending. No native reboot proof, no independent local suite. Main and feature unchanged, PR #4 dirty, no merge. Next CI then safe backend completion and offline workflow integration.
+
+## M7-D.7e — bounded backend completion
+
+Base 875edb985c532659c703f069089af15e2b592657; CI #65 success. Extend network final resolver 0370 via canonical renderer, storage modeled mountpoint metadata 0350, services reviewed CUPS maintenance schedule record 0900. 34 apply IDs, 16 verify-only, 39 candidate-only, 55 local without apply; 171 archive files expected, 57 edges unchanged. Network/storage request changes require new fixtures; retain old release for recovery. No native execution or dependency promotion. CI pending; main and feature unchanged, PR #4 dirty, no merge. Next CI then further safe coverage or D.7f offline workflow.
+
+## M7-D.7f — connected offline test
+
+Base bd648b94e5f7a079b13bb296d171c08f43aad480, CI #66 success. New test-offline-workflow.sh uses one R2 server plan, 39 candidate hashes, separate baseline, ten groups, evidence, orchestration and checkpoint, real child partial-write exit and explicit recovery, old checkpoint mismatch/new checkpoint match. Source/archive test only, 171 runtime files unchanged; no native proof. Main independently feeb68f, 51/7 divergence at base, same three overlaps, PR #4 dirty, no merge. New CI pending. Next CI then D.7g integration preparation without merge.
+
+## M7-D.7g — branch integration preparation
+
+Base f9ff5530614eaa58153b83e9b8e8aead07987a66; CI #68 success with two actual workflow PASS markers and archive verification; main feeb68f CI #67 separate success. Complete three-tree comparison, 55/231 changes, three overlap paths, no deletions; precise text edit review and semantic contract review. New bilingual integration plan, I0 PASS for pinned inputs, I1–I5 and G0–G6 open. Documentation only, no runtime or canonical roadmap/Makefile change, no merge/rebase. New CI pending. External logs unavailable. Next D.7h native lab review/decision packet; no native writes or branch integration without approval.
+
+## M7-D.7h — native lab preparation
+
+CI #69 failure job 139827130484: source PASS, archive fixture-apply exit 2; likely underscore in random legacy root. Fix 278656ece5aa68300f85c21496fa729f13e7f21f test only, CI #70 pending. Added bilingual decision packet, refreshed runbook/acceptance, G0–G6 all open, lifecycle guard mandatory before native, I1–I5 open. Main feeb68f and feature unchanged; PR #4 dirty. No merge/rebase/native execution; no local combined suite or external logs. Next verify CI and request explicit I1 only.

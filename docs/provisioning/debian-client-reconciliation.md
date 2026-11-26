@@ -1,0 +1,5 @@
+# I1/I2 — reconciliation candidate
+
+Deutsch: [Deutsche Fassung](debian-client-reconciliation.de.md)
+
+I1 explicitly approved by operator, separate branch only. Parent pins: main feeb68f8fcd26835ae570b38c5f4ce68b4b8a54d, integration f50abc84bc71a5c10ef988b12e4f87cf6af01b62; ancestor a245e2d404d8d00068e3fa8ed99964e4141ecf89. Refresh from complete recursive tree comparison: 56 main changes, 235 integration changes, three differing overlaps, no deletions; 433 union non-tree entries. All one-sided changes preserved byte/mode exactly except reviewed CI trigger addition. Makefile preserves all main recipes and adds Debian suite once. Both main roadmaps retained with reconciled M7-D and bounded deployment wording. Integration CI trigger retained; new candidate trigger, full checkout and candidate-only make release-test. No production release, no main update. I2 tree and two-parent commit to be verified before publication. I3/I4/I5 await combined tests, lifecycle implementation and independent release trust. Native G0–G6 all open.
