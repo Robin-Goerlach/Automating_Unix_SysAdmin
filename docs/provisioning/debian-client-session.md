@@ -169,3 +169,8 @@ Base 8e47cf674da78e381aaa2ef3bdc7e5ecf2f7dcf8, CI #55 45779454508 success. New f
 ## M7-D.6f — SSH client and mail fixture
 
 Base 7da14d5b7e2b08dbf2bc6d52955521bfe330087c; CI #56 45781274687 successful. New fixture-communications.py binds literal Ed25519 pins and supplied fingerprints, X11 fragment, bounded alias/main.cf edits and optional SFTP capture. Five static fixture apply tasks, 19 total; SFTP capture only, no SSH server write. Expected archive 163, 39 staged unchanged. Source/archive tests added; CI pending. Local direct checkout DNS failure, no local full-suite result; external operator logs unavailable. Next verify CI, then user/shell environments. No native package, SSH, mail, authentication or service execution; no merge, main and original feature branch unchanged.
+
+
+## M7-D.6g — opt-in shell fragments
+
+Base 0c05795870df639b5f452f4f5bd13222828c4fee; CI #57 45782296843 successful. New fixture-shell.py applies five exact opt-in shell fragments in private non-auto-sourced etc/sasd-shell; no user/account/profile mutation. Five additional static fixture apply tasks, 24 total, expected archive 164, 39 staged unchanged. Source/archive tests added; CI pending. No independent local full suite or native acceptance, external operator logs unavailable. Main independently advanced to a5dd317 with CI #58 success; no merge. Next verify CI, then security/hardening fixtures with explicit privilege and authentication boundaries.

@@ -169,3 +169,8 @@ Basis 8e47cf674da78e381aaa2ef3bdc7e5ecf2f7dcf8, CI #55 45779454508 erfolgreich. 
 ## M7-D.6f — SSH-Client- und Mail-Fixture
 
 Basis 7da14d5b7e2b08dbf2bc6d52955521bfe330087c; CI #56 45781274687 erfolgreich. Neues fixture-communications.py bindet literale Ed25519-Pins und gelieferte Fingerprints, X11-Fragment, begrenzte Alias-/main.cf-Bearbeitung und optionalen SFTP-Capture. Fünf statische Fixture-Apply-Tasks, insgesamt 19; SFTP nur Capture, keine SSH-Serveränderung. Erwartet 163 Archivdateien, 39 staged unverändert. Quell-/Archivtests ergänzt; CI ausstehend. Lokaler direkter Checkout DNS-Fehler, kein lokaler Gesamttest; externe Betreiberlogs unerreichbar. Nächster Schritt CI, dann Benutzer-/Shell-Umgebungen. Keine nativen Paket-, SSH-, Mail-, Authentifizierungs- oder Dienstausführungen; kein Merge, main und ursprünglicher Feature-Branch unverändert.
+
+
+## M7-D.6g — Opt-in Shell-Fragmente
+
+Basis 0c05795870df639b5f452f4f5bd13222828c4fee; CI #57 45782296843 erfolgreich. Neues fixture-shell.py installiert fünf exakte Opt-in-Shell-Fragmente in privatem nicht automatisch eingelesenem etc/sasd-shell; keine Benutzer-/Konten-/Profilmutation. Fünf zusätzliche statische Fixture-Apply-Tasks, insgesamt 24, erwartet 164 Archivdateien, 39 staged unverändert. Quell-/Archivtests ergänzt; CI ausstehend. Kein unabhängiger lokaler Gesamttest oder native Abnahme, externe Betreiberlogs unerreichbar. main unabhängig auf a5dd317 mit CI #58 erfolgreich weiterentwickelt; kein Merge. Nächster Schritt CI prüfen, dann Security-/Härtungs-Fixtures mit expliziten Rechte-/Authentifizierungsgrenzen.
