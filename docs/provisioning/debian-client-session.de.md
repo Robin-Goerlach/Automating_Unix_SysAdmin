@@ -202,3 +202,7 @@ Basis f7ae4e8477f124aace927f1b2f195518869e8d60, CI #62 erfolgreich. Nur-Lese-Pr�
 ## M7-D.7c — Installationsplanung
 
 Basis 10e540518223083994de6d808d22b319b4fcf06a; CI #63 erfolgreich. Nur-Lese-R2-Plan und ausgewählte Voraussetzungshülle, optional frische Fixture-Evidenz, Gruppenreview-/Wartelisten; keine Kandidatenerzeugung, Promotion oder native Ausführung. Erwartet 170 Archivdateien, CI ausstehend. main und Feature unverändert, PR #4 dirty, kein Merge. Nächster Schritt CI, dann Wiederanlauf/Checkpoints.
+
+## M7-D.7d — Checkpoint und Wiederanlaufreview
+
+Basis 263839d15a2b09c5ffbc18488addea15e501c488, CI #64 erfolgreich. Unveränderliches privates Checkpoint-Save und digestgebundener Resume; ausgewählte abgeschlossene Gruppenjournale/Evidenz erneut geprüft, offene/blockierte/Drift-/Kontextzustände, keine automatische Recovery/Ausführung. Erwartet 171 Archivdateien, CI ausstehend. Kein nativer Rebootnachweis, kein unabhängiger Gesamttest. main und Feature unverändert, PR #4 dirty, kein Merge. Nächster Schritt CI, dann sichere Backendvervollständigung und Offline-Ablaufintegration.

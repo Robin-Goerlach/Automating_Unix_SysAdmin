@@ -6,6 +6,9 @@ umask 077
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 # New explicit group route and read-only coverage, before legacy fixture routing.
 for arg do
+    case "$arg" in --checkpoint-save|--checkpoint-resume) exec /usr/bin/python3 -I "$here/orchestration-checkpoint.py" "$@" ;; esac
+done
+for arg do
     case "$arg" in --orchestration-plan) exec /usr/bin/python3 -I "$here/orchestration-plan.py" "$@" ;; esac
 done
 for arg do

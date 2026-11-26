@@ -202,3 +202,7 @@ Base f7ae4e8477f124aace927f1b2f195518869e8d60, CI #62 success. Read-only committ
 ## M7-D.7c — orchestration plan
 
 Base 10e540518223083994de6d808d22b319b4fcf06a; CI #63 success. Read-only canonical R2 plan and selected prerequisite closure, optional fresh fixture evidence, group review/waiting lists; no candidate generation, dependency promotion or native execution. Expected 170 archive files, CI pending. Main and feature unchanged, PR #4 dirty, no merge. Next CI then restart/checkpoint management.
+
+## M7-D.7d — checkpoint and restart review
+
+Base 263839d15a2b09c5ffbc18488addea15e501c488, CI #64 success. Immutable private checkpoint save and digest-bound resume; selected committed group journals and evidence rechecked, open/blocked/drift/context states, no automatic recovery or execution. Expected 171 archive files, CI pending. No native reboot proof, no independent local suite. Main and feature unchanged, PR #4 dirty, no merge. Next CI then safe backend completion and offline workflow integration.
