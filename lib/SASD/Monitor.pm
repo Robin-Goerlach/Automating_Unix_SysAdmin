@@ -320,7 +320,7 @@ sub validate_status {
 
 sub read_external_status {
     my ($path, $product, $hosts, $checks) = @_;
-    $product =~ /\A(?:bigbrother|bigsister|netsaint)\z/ or die "invalid external status product\n";
+    $product =~ /\A(?:bigbrother|bigsister|netsaint|nagios)\z/ or die "invalid external status product\n";
     _real_file($path, 'external status');
     open(my $fh, '<', $path) or die "cannot read external status: $!\n";
     my (@records, %seen);

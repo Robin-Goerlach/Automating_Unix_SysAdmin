@@ -30,18 +30,24 @@ except OSError as exc:
         raise SystemExit(77)
     raise
 PY
+xattr_available=1
 if [ "$rc" -eq 77 ]; then
     echo 'Native capability observation tests SKIPPED: user xattrs unavailable'
-    exit 0
+    xattr_available=0
 fi
-[ "$rc" -eq 0 ] || { echo "Native capability observation tests FAILED: xattr operation rc=$rc" >&2; exit 1; }
-run; grep -q 'hosts.xattrs.*BLOCK.*present' "$tmp/out"
-! grep -q 'private-test-value\|user.sasd-test' "$tmp/out"
+[ "$rc" -eq 0 ] || [ "$rc" -eq 77 ] || { echo "Native capability observation tests FAILED: xattr operation rc=$rc" >&2; exit 1; }
+if [ "$xattr_available" -eq 1 ]; then
+    run; grep -q 'hosts.xattrs.*BLOCK.*present' "$tmp/out"
+    ! grep -q 'private-test-value\|user.sasd-test' "$tmp/out"
+fi
 rc=0
 /usr/bin/python3 - "$tmp/etc/hosts" <<'PY' || rc=$?
 import errno, os, struct, sys
 p=sys.argv[1]
-os.removexattr(p, 'user.sasd-test')
+try:
+    os.removexattr(p, 'user.sasd-test')
+except OSError:
+    pass
 acl=struct.pack('<I', 2)+b''.join(struct.pack('<HHI', *v) for v in [(1,6,0xffffffff),(2,4,65533),(4,4,0xffffffff),(16,4,0xffffffff),(32,0,0xffffffff)])
 try:
     os.setxattr(p, 'system.posix_acl_access', acl)
@@ -50,15 +56,21 @@ except OSError as exc:
         raise SystemExit(77)
     raise
 PY
+acl_available=1
 if [ "$rc" -eq 77 ]; then
     echo 'Native capability observation tests SKIPPED: POSIX ACL xattrs unavailable'
-    exit 0
+    acl_available=0
 fi
-[ "$rc" -eq 0 ] || { echo "Native capability observation tests FAILED: ACL operation rc=$rc" >&2; exit 1; }
-run; grep -q 'hosts.xattrs.*BLOCK.*present' "$tmp/out"
+[ "$rc" -eq 0 ] || [ "$rc" -eq 77 ] || { echo "Native capability observation tests FAILED: ACL operation rc=$rc" >&2; exit 1; }
+if [ "$acl_available" -eq 1 ]; then
+    run; grep -q 'hosts.xattrs.*BLOCK.*present' "$tmp/out"
+fi
 /usr/bin/python3 - "$tmp/etc/hosts" <<'PY'
 import os, sys
-os.removexattr(sys.argv[1], 'system.posix_acl_access')
+try:
+    os.removexattr(sys.argv[1], 'system.posix_acl_access')
+except OSError:
+    pass
 PY
 chmod 600 "$tmp/etc/hosts"
 # Basic unsafe metadata and unsafe types.

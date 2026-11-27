@@ -24,6 +24,31 @@ printf '#!/bin/sh\nprintf "plugin output\\n"\nexit 1\n' > "$tmp/plugin"; chmod 7
 rc=0; bin/sasd-check-plugin --plugin "$tmp/plugin" --check disk > "$tmp/plugin.out" || rc=$?
 [ "$rc" -eq 1 ]
 grep -q '^yellow[[:space:]]' "$tmp/plugin.out"
+for state in 0 1 2 3; do
+    printf '#!/bin/sh\nprintf "state %s"\nexit %s\n' "$state" "$state" > "$tmp/state-$state"
+    chmod 700 "$tmp/state-$state"
+    rc=0; bin/sasd-check-plugin --plugin "$tmp/state-$state" --check disk > "$tmp/state-$state.out" || rc=$?
+    [ "$rc" -eq "$state" ]
+done
+printf '#!/bin/sh\nexec 1>&-\nexec 2>&-\nsleep 2\n' > "$tmp/closed-plugin"; chmod 700 "$tmp/closed-plugin"
+start=$(date +%s); rc=0; bin/sasd-check-plugin --plugin "$tmp/closed-plugin" --check disk --timeout 1 > "$tmp/closed.out" || rc=$?; elapsed=$(($(date +%s)-start))
+[ "$rc" -eq 3 ] && [ "$elapsed" -le 3 ]
+printf '#!/bin/sh\n( trap : TERM; sleep 5 ) &\nexec 1>&-\nexec 2>&-\nwait\n' > "$tmp/descendant-plugin"; chmod 700 "$tmp/descendant-plugin"
+rc=0; bin/sasd-check-plugin --plugin "$tmp/descendant-plugin" --check disk --timeout 1 > "$tmp/descendant.out" || rc=$?
+[ "$rc" -eq 3 ]
+printf '#!/bin/sh\ntrap : TERM\nsleep 5\n' > "$tmp/term-ignore-plugin"; chmod 700 "$tmp/term-ignore-plugin"
+rc=0; bin/sasd-check-plugin --plugin "$tmp/term-ignore-plugin" --check disk --timeout 1 > "$tmp/term-ignore.out" || rc=$?
+[ "$rc" -eq 3 ]
+printf '#!/bin/sh\nprintf "no\\000control\\001bytes"\nexit 0\n' > "$tmp/control-plugin"; chmod 700 "$tmp/control-plugin"
+bin/sasd-check-plugin --plugin "$tmp/control-plugin" --check disk > "$tmp/control.out"
+! grep -q '[[:cntrl:]]' "$tmp/control.out"
+printf '#!/bin/sh\nprintf "arg=%%s" "$1"\nexit 0\n' > "$tmp/space name; harmless"
+chmod 700 "$tmp/space name; harmless"
+bin/sasd-check-plugin --plugin "$tmp/space name; harmless" --check disk --arg 'value with spaces' > "$tmp/space.out"
+grep -q 'arg=value with spaces' "$tmp/space.out"
+if bin/sasd-check-plugin --plugin "$tmp/missing" --check disk >/dev/null 2>&1; then exit 1; fi
+printf '#!/bin/sh\nexit 0\n' > "$tmp/not-executable"; chmod 600 "$tmp/not-executable"
+if bin/sasd-check-plugin --plugin "$tmp/not-executable" --check disk >/dev/null 2>&1; then exit 1; fi
 printf '#!/bin/sh\nprintf "unknown output\\n" >&2\nexit 3\n' > "$tmp/unknown-plugin"; chmod 700 "$tmp/unknown-plugin"
 rc=0; bin/sasd-check-plugin --plugin "$tmp/unknown-plugin" --check disk > "$tmp/unknown.out" || rc=$?
 [ "$rc" -eq 3 ]

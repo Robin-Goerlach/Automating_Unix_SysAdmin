@@ -12,7 +12,7 @@ The configured `rrd_dir` reserves a metric area. Existing `sasd-rrd-cycle` remai
 
 ## NetSaint, Nagios, and Ganglia
 
-M1 owns the canonical local SASD state and history. Future adapters may export observations or import externally checked observations through bounded files. NetSaint belongs to the 1999 profile; Nagios and Ganglia are later-profile integrations. No native protocol, daemon, or alerting engine is implemented here.
+M1 owns the canonical local SASD state and history. NetSaint belongs to the 1999 profile. The bounded Nagios candidate is a separate 2002-era profile using the same inventory and plugin boundary; its status importer accepts only synthetic SASD fixtures. Ganglia remains a later planned adapter. No native protocol, daemon, or alerting engine is implemented here.
 
 ## CFEngine
 

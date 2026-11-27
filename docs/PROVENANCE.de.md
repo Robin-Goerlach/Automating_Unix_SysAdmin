@@ -22,6 +22,8 @@ SASD ist eine 2026 neu erstellte, eigenständige Sammlung von Systemverwaltungsp
 - Big Brother — https://linuxgazette.net/issue15/bb-info.html
 - Big Sister, Konfigurationsreferenz und Änderungshistorie — https://www.bigsister.ch/bigsister.html, https://www.bigsister.ch/pdoc/CONFIG.html, https://www.bigsister.ch/pdoc/CHANGES.html
 - Nagios — https://www.nagios.org/about/history/
+- Nagios-Altrelease-Index — https://sourceforge.net/projects/nagios/files/OldFiles/ (führt nagios-1.0a7.tar.gz mit Zeitstempel 13.03.2002 auf).
+- Nagios-Objektdefinitionsreferenz — https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/objectdefinitions.html (für das Objektvokabular, nicht als exakte Parser-Evidenz für 1.0a7 verwendet).
 - Debian-Diskussion zur NetSaint-Paketierung (1999) — https://lists.debian.org/debian-devel/1999/11/msg00316.html
 - Archivindex des NetSaint-0.0.7-Pakets — https://archive.freebsd.org/ports/alpha/packages-4.6-release/All/
 

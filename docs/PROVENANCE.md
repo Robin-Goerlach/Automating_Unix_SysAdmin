@@ -22,6 +22,8 @@ SASD is authoring a new, stand-alone script collection in 2026 to explore classi
 - Big Brother history — https://linuxgazette.net/issue15/bb-info.html
 - Big Sister project, configuration reference and change history — https://www.bigsister.ch/bigsister.html, https://www.bigsister.ch/pdoc/CONFIG.html, https://www.bigsister.ch/pdoc/CHANGES.html
 - Nagios history — https://www.nagios.org/about/history/
+- Nagios old release index — https://sourceforge.net/projects/nagios/files/OldFiles/ (lists nagios-1.0a7.tar.gz with a 2002-03-13 timestamp).
+- Nagios object-definition reference — https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/objectdefinitions.html (used for object vocabulary, not exact 1.0a7 parser evidence).
 - NetSaint Debian packaging discussion (1999) — https://lists.debian.org/debian-devel/1999/11/msg00316.html
 - NetSaint 0.0.7 package archive — https://archive.freebsd.org/ports/alpha/packages-4.6-release/All/
 

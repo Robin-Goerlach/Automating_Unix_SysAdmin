@@ -40,3 +40,5 @@ Der M1-Import ist lokal und nur durch den vom Administrator gewählten Eingabepf
 Betriebssteuerung und Wiederherstellung verwenden `sasd-monitor-control`, `sasd-monitor-backup` und `sasd-monitor-restore`. `tests/m4-operations.sh` und `tests/m4-backup.sh` prüfen sie in Wegwerfpräfixen. Native MRTG-/RRDtool-Evidenz läuft mit `tests/m3-native.sh --require`, wenn die exakten Werkzeuge bereitgestellt sind.
 
 Die Verfahren stehen in [operations.de.md](operations.de.md).
+
+Der spätere Nagios-Kandidat ist in [nagios.de.md](nagios.de.md) dokumentiert; er bleibt offline und ist gegen einen nativen Nagios-Parser der 1.0-Zeit nicht abgenommen.

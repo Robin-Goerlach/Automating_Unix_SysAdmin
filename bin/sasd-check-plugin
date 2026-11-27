@@ -1,20 +1,26 @@
 #!/usr/bin/env perl
 # Run one explicitly selected classic plugin and normalize its result.
 use strict;
-use POSIX qw(WIFEXITED WEXITSTATUS);
-my ($plugin,$check,$timeout)=('','','30'); my @args;
+use POSIX qw(WIFEXITED WEXITSTATUS WNOHANG);
+my ($plugin,$check,$timeout)=('','','30');
+my @args;
 while (@ARGV) { my $a=shift @ARGV; if($a eq '--plugin'){$plugin=shift @ARGV} elsif($a eq '--check'){$check=shift @ARGV} elsif($a eq '--arg'){push @args,shift @ARGV} elsif($a eq '--timeout'){$timeout=shift @ARGV} elsif($a eq '--help'){print "usage: sasd-check-plugin --plugin FILE --check NAME [--arg VALUE ...] [--timeout SECONDS]\n";exit 0} else {die "unknown argument: $a\n"} }
 $plugin && -f $plugin && !-l $plugin && -x $plugin or die "plugin must be an executable regular file\n"; $check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/ or die "invalid check\n"; $timeout =~ /\A[1-9][0-9]{0,2}\z/ or die "invalid timeout\n";
 my $pid=open(my $fh,'-|'); defined $pid or die "cannot start plugin: $!\n";
 if (!$pid) {
+    # The child owns a private process group.  The parent only ever signals
+    # this group, so a timeout cannot target an unrelated administrator job.
+    setpgrp(0, 0) or exit 3;
     open(STDERR, '>&STDOUT') or exit 3;
-    exec($plugin,@args) or exit 3;
+    # The indirect form is intentional: it never invokes Perl's shell fallback
+    # when @args is empty, and keeps every argument a separate argv element.
+    exec { $plugin } $plugin, @args or exit 3;
 }
 my ($out,$timed_out,$too_large)=('',0,0);
 local $SIG{ALRM}=sub {
     $timed_out=1;
-    kill 'TERM', $pid;
-    kill 'KILL', $pid;
+    kill 'TERM', -$pid;
+    kill 'KILL', -$pid;
 };
 alarm $timeout;
 while (1) {
@@ -28,16 +34,27 @@ while (1) {
 }
 if (!$timed_out && length($out) >= 4096) {
     $too_large=1;
-    kill 'TERM', $pid;
-    kill 'KILL', $pid;
+    kill 'TERM', -$pid;
+    kill 'KILL', -$pid;
 }
+# Reading EOF is not process completion: a plugin can close both streams and
+# continue running.  Reap explicitly while the timeout alarm is still active.
+my $reaped=0;
+while (!$reaped) {
+    my $waited=waitpid($pid,WNOHANG);
+    if ($waited == $pid) { $reaped=1; last }
+    last if $waited < 0 && $!{ECHILD};
+    select(undef,undef,undef,0.02);
+}
+my $rc=$?;
 alarm 0;
 close $fh;
-my $rc=$?;
 if ($timed_out) { print "purple\tplugin timeout\n"; exit 3 }
 if ($too_large) { print "purple\tplugin output exceeded 4096 bytes\n"; exit 3 }
 $out =~ s/[\r\n]+\z//;
-$out =~ s/[\t\r\n]/ /g;
+# Keep the result newline-oriented and prevent NUL/control bytes from leaking
+# into the status stream.  This is output normalization, not trust of content.
+$out =~ s/[\x00-\x1f\x7f]/ /g;
 my %map=(0=>'green',1=>'yellow',2=>'red',3=>'purple');
 my $color=WIFEXITED($rc) && exists $map{WEXITSTATUS($rc)} ? $map{WEXITSTATUS($rc)} : 'purple';
 print "$color\t",($out eq ''?'plugin returned no output':$out),"\n";

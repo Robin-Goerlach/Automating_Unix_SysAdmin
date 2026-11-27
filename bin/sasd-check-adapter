@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+# Controlled bridge from shared check names to existing SASD programs.
+# It never evaluates an inventory value as shell code and never opens a socket.
+use strict;
+use FindBin;
+my ($check,$host,$input)=('','','');
+while (@ARGV) { my $a=shift @ARGV;
+    if ($a eq '--check') {$check=shift @ARGV}
+    elsif ($a eq '--arg') { my $v=shift @ARGV; $host eq '' ? ($host=$v) : ($input=$v) }
+    elsif ($check eq '') {$check=$a}
+    elsif ($host eq '') {$host=$a}
+    elsif ($input eq '') {$input=$a}
+    else { print "UNKNOWN - unsupported adapter argument\n"; exit 3 }
+}
+$check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/ && $host =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,62}\z/
+    or print("UNKNOWN - invalid check target\n"), exit 3;
+if ($check ne 'disk') { print "UNKNOWN - check '$check' is not implemented by SASD\n"; exit 3 }
+$input ne '' && -f $input && !-l $input or print("UNKNOWN - disk fixture is not a regular file\n"), exit 3;
+my $program="$FindBin::Bin/sasd-disk-watch";
+my $pid=open(my $fh,'-|'); defined $pid or print("UNKNOWN - cannot start disk check\n"), exit 3;
+if (!$pid) { exec {$program} $program, '--host', $host, '--input', $input or exit 3 }
+my ($best,$message)=('green','');
+my %rank=(green=>0,yellow=>1,red=>2,purple=>3);
+while (<$fh>) {
+    chomp; my @f=split /\t/,$_,4; next unless @f == 4;
+    my $color=$f[2]; next unless exists $rank{$color};
+    $best=$color if $rank{$color} > $rank{$best};
+    $message=$f[3] if $message eq '';
+}
+close $fh; my $rc=$?;
+$rc == 0 or print("UNKNOWN - disk check failed\n"), exit 3;
+$message ||= 'disk check returned no observation';
+print uc($best)," - ",$message,"\n";
+exit($rank{$best});

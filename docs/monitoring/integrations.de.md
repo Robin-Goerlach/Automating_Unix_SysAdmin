@@ -12,7 +12,7 @@ English: [English version](integrations.md)
 
 ## NetSaint, Nagios und Ganglia
 
-M1 besitzt den kanonischen lokalen SASD-Zustand und die Historie. Künftige Adapter können Beobachtungen über begrenzte Dateien exportieren oder importieren. NetSaint gehört in das Profil 1999; Nagios und Ganglia sind spätere Profile. Kein natives Protokoll und kein Daemon werden hier implementiert.
+M1 besitzt den kanonischen lokalen SASD-Zustand und die Historie. NetSaint gehört in das Profil 1999. Der begrenzte Nagios-Kandidat ist ein getrenntes Profil von 2002 und nutzt dasselbe Inventar sowie dieselbe Plugin-Grenze; sein Statusimporter akzeptiert nur synthetische SASD-Fixtures. Ganglia bleibt ein später geplanter Adapter. Kein natives Protokoll und kein Daemon werden hier implementiert.
 
 ## CFEngine
 

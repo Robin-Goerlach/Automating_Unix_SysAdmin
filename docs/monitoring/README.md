@@ -42,3 +42,5 @@ M2 enrollment, client bootstrap and signed offline status import are documented 
 Operational controls and recovery use `sasd-monitor-control`, `sasd-monitor-backup` and `sasd-monitor-restore`. Run `tests/m4-operations.sh` and `tests/m4-backup.sh` for their disposable acceptance tests. Native MRTG/RRDtool evidence is available through `tests/m3-native.sh --require` when the exact tools are supplied.
 
 See [operations.md](operations.md) for routine maintenance, acknowledgement, backup and restore procedures.
+
+The later Nagios candidate is documented in [nagios.md](nagios.md); it remains offline and unverified against a native Nagios 1.0-era parser.
