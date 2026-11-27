@@ -1,0 +1,3 @@
+# SASD database instance inventory: instance	host	product	version	profile	state
+erp-primary	mon.lab.invalid	mariadb	10.11	mariadb_10_11	enabled
+erp-reporting	mon.lab.invalid	postgresql	15	postgresql_15	enabled

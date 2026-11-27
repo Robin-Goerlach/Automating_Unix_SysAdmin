@@ -1,0 +1,13 @@
+SASD-DB-HEALTH-1
+product=mariadb
+version=10.11.6
+instance=erp-primary
+host=mon.lab.invalid
+source=OFFLINE
+diagnostic=db-health
+observed_at=1699990000
+scope=server
+connections=8
+active=1
+uptime=53001
+visibility=complete

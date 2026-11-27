@@ -14,6 +14,10 @@ English: [English version](integrations.md)
 
 M1 besitzt den kanonischen lokalen SASD-Zustand und die Historie. NetSaint gehört in das Profil 1999. Der begrenzte Nagios-Kandidat ist ein getrenntes Profil von 2002 und nutzt dasselbe Inventar sowie dieselbe Plugin-Grenze; sein Statusimporter akzeptiert nur synthetische SASD-Fixtures. Ganglia ist ein später Offline-Kandidat im Umfeld von 3.1.1 mit Inventargruppen und getrennten gmond-/gmetad-Kandidaten. Native XML-Parser, Daemon, Multicast-Transport und RRDtool-Aufnahme werden nicht implementiert. Siehe [Ganglia-Notizen](ganglia.de.md).
 
+## Datenbank-Monitoring
+
+Freeware besitzt die read-only Diagnosen `db-probe`, `db-health`, `db-activity` und `db-storage`. Dieses Repository besitzt die Instanzzuordnung auf Site-Ebene in `site/databases.tsv` und den begrenzten `sasd-db-health-adapter`, der synthetische `SASD-DB-HEALTH-1`-Beobachtungen verarbeitet und den gemeinsamen SASD-Zustand ausgibt. Der Adapter ist ausdrücklich offline und behauptet keine Abnahme von Datenbankserver, Treiber, TLS, Authentifizierung oder historischen Versionen. Siehe [den Datenbank-Vertikalschnitt](database.de.md).
+
 ## CFEngine
 
 Das R2-`sasd-site-audit` bleibt eine unabhängige lokale Prüfung. M1 importiert sein Vierfeld-Ergebnis wie jede andere lokale Beobachtung. `bin/sasd-config-cfengine1` erzeugt aus gemeinsamem Inventar und Lebenszykluszustand einen kleinen, nur warnenden CFEngine-1-Kandidaten. Deaktivierte und entfernte Hosts werden ausgelassen. Der Kandidat ist auf das Profil 1999 begrenzt und bleibt unbestätigt, bis ein originales CFEngine-1.4-Programm ausgeführt wurde. Grundlage ist die historisch dokumentierte Form mit `control`/`actionsequence`/`files`; eine native Parserprüfung wird nicht behauptet. Der Generator installiert keine Policy, startet keinen Agenten und repariert keine Systeme. CFEngine 1 und der spätere CFEngine-2-Adapter bleiben getrennte Profile.

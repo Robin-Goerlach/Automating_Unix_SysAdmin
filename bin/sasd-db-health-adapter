@@ -1,0 +1,132 @@
+#!/usr/bin/env perl
+# Convert one documented synthetic db-health observation to SASD status.
+# This adapter does not connect to a database and never evaluates SQL.
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_host_state valid_host
+    valid_identifier valid_epoch valid_color);
+
+my ($input, $hosts, $roles, $instances, $state, $now) = ('', '', '', '', '', '');
+my ($freshness, $warn_active, $crit_active) = (900, 10, 50);
+
+sub supported_version {
+    my ($product, $version) = @_;
+    return $version =~ /\A10\.11(?:\.[0-9]+)?\z/ if $product eq 'mariadb';
+    return $version =~ /\A8(?:\.[0-9]+){1,2}\z/ if $product eq 'mysql';
+    return $version =~ /\A(?:1[0-9]|[2-9][0-9])(?:\.[0-9]+){0,2}\z/ if $product eq 'postgresql';
+    return 0;
+}
+while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq '--input') { $input = shift @ARGV; }
+    elsif ($arg eq '--hosts') { $hosts = shift @ARGV; }
+    elsif ($arg eq '--roles') { $roles = shift @ARGV; }
+    elsif ($arg eq '--instances') { $instances = shift @ARGV; }
+    elsif ($arg eq '--state') { $state = shift @ARGV; }
+    elsif ($arg eq '--now') { $now = shift @ARGV; }
+    elsif ($arg eq '--freshness') { $freshness = shift @ARGV; }
+    elsif ($arg eq '--warn-active') { $warn_active = shift @ARGV; }
+    elsif ($arg eq '--crit-active') { $crit_active = shift @ARGV; }
+    elsif ($arg eq '--help') {
+        print "usage: sasd-db-health-adapter --input FILE --hosts FILE --roles FILE --instances FILE [--state FILE] [--now EPOCH] [--freshness SECONDS] [--warn-active N --crit-active N]\n";
+        exit 0;
+    }
+    else { die "unknown argument: $arg\n"; }
+}
+
+for my $path ($input, $hosts, $roles, $instances) {
+    defined($path) && length($path) && -f $path && !-l $path
+        or die "database adapter input must be a regular file\n";
+}
+$now = time() if $now eq '';
+$now =~ /\A[0-9]{1,15}\z/ && $freshness =~ /\A[1-9][0-9]{0,8}\z/ &&
+    $warn_active =~ /\A[0-9]{1,9}\z/ && $crit_active =~ /\A[0-9]{1,9}\z/ &&
+    $warn_active <= $crit_active
+    or die "invalid database adapter boundaries\n";
+$state = "$hosts.state" if $state eq '';
+
+my $role_records = read_roles($roles);
+my ($host_records) = read_host_records($hosts, $role_records, 0);
+my $host_state = read_host_state($state, $host_records, 1);
+my %db;
+open my $dfh, '<', $instances or die "cannot read database instances: $!\n";
+while (<$dfh>) {
+    chomp;
+    s/\r\z//;
+    next if /^\s*$/ || /^#/;
+    my @fields = split /\t/, $_, -1;
+    @fields == 6 or die "invalid database instance record at line $.\n";
+    my ($instance, $host, $product, $version, $profile, $lifecycle) = @fields;
+    valid_identifier($instance) && valid_host($host) &&
+        $product =~ /\A(?:mariadb|mysql|postgresql)\z/ &&
+        $version =~ /\A[0-9]+(?:\.[0-9]+){0,2}\z/ &&
+        valid_identifier($profile) && $lifecycle =~ /\A(?:enabled|disabled|removed)\z/
+        or die "invalid database instance record at line $.\n";
+    exists $host_records->{$host} or die "database instance references unknown host\n";
+    exists $db{$instance} and die "duplicate database instance\n";
+    $db{$instance} = { host => $host, product => $product, version => $version,
+        profile => $profile, lifecycle => $lifecycle };
+}
+close $dfh or die "cannot close database instances: $!\n";
+
+open my $ifh, '<', $input or die "cannot read database observation: $!\n";
+my %observation;
+while (<$ifh>) {
+    chomp;
+    s/\r\z//;
+    next if /^\s*$/;
+    if (!%observation) {
+        $_ eq 'SASD-DB-HEALTH-1' or die "unsupported database observation format\n";
+        $observation{_format} = $_;
+        next;
+    }
+    /^([a-z][a-z0-9_]*)=([^\t\r\n]{1,240})\z/ or die "invalid database observation field\n";
+    my ($key, $value) = ($1, $2);
+    exists $observation{$key} and die "duplicate database observation field\n";
+    $observation{$key} = $value;
+}
+close $ifh or die "cannot close database observation: $!\n";
+for my $key (qw(product version instance host source diagnostic observed_at scope connections active uptime visibility)) {
+    exists $observation{$key} or die "missing database observation field: $key\n";
+}
+
+my $instance = $observation{instance};
+my $record = $db{$instance};
+my ($color, $reason) = ('purple', 'UNKNOWN');
+if (!$record) {
+    $reason = 'unknown database instance';
+} elsif ($record->{host} ne $observation{host}) {
+    $reason = 'database instance host mismatch';
+} elsif ($record->{lifecycle} ne 'enabled' ||
+    exists($host_state->{$record->{host}}) && $host_state->{$record->{host}}->{state} ne 'enabled') {
+    $reason = 'database host or instance is not enabled';
+} elsif ($record->{product} ne $observation{product} ||
+    $record->{version} ne $observation{version} && $observation{version} !~ /\A\Q$record->{version}\E\./) {
+    $reason = 'database product or version does not match inventory';
+} elsif (!supported_version($observation{product}, $observation{version})) {
+    $reason = 'database product version is not supported by this adapter';
+} elsif ($observation{source} ne 'OFFLINE' || $observation{diagnostic} ne 'db-health') {
+    $reason = 'observation source is not an accepted db-health fixture';
+} elsif ($observation{observed_at} !~ /\A[0-9]{1,15}\z/) {
+    $reason = 'invalid observation time';
+} elsif ($observation{observed_at} > $now || $now - $observation{observed_at} > $freshness) {
+    $reason = 'database observation is stale or from the future';
+} elsif ($observation{visibility} ne 'complete') {
+    $reason = 'database health visibility is incomplete';
+} elsif ($observation{connections} !~ /\A[0-9]+\z/ || $observation{active} !~ /\A[0-9]+\z/ || $observation{uptime} !~ /\A[0-9]+\z/) {
+    $reason = 'database metric is unavailable or invalid';
+} elsif ($observation{active} >= $crit_active) {
+    ($color, $reason) = ('red', 'active sessions exceed critical threshold');
+} elsif ($observation{active} >= $warn_active) {
+    ($color, $reason) = ('yellow', 'active sessions exceed warning threshold');
+} else {
+    ($color, $reason) = ('green', 'database health observation accepted');
+}
+my $check = "db_$instance";
+$check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/ or die "database instance produces unsafe check name\n";
+print join("\t", $observation{host}, $check, $color,
+    "source=OFFLINE instance=$instance product=$observation{product} version=$observation{version} ",
+    "connections=$observation{connections} active=$observation{active} uptime=$observation{uptime} ",
+    "reason=$reason"), "\n";
+exit($color eq 'green' ? 0 : $color eq 'yellow' ? 1 : $color eq 'red' ? 2 : 3);

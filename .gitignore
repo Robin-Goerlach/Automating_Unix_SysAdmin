@@ -16,6 +16,7 @@ site/*
 !site/roles.tsv
 !site/checks.tsv
 !site/services.tsv
+!site/databases.tsv
 !site/monitoring.conf
 !fixtures/site/
 !fixtures/site/**

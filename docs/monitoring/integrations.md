@@ -14,6 +14,10 @@ The configured `rrd_dir` reserves a metric area. Existing `sasd-rrd-cycle` remai
 
 M1 owns the canonical local SASD state and history. NetSaint belongs to the 1999 profile. The bounded Nagios candidate is a separate 2002-era profile using the same inventory and plugin boundary; its status importer accepts only synthetic SASD fixtures. Ganglia is a later 3.1.1-era offline candidate using inventory groups and separate gmond/gmetad candidates; no native XML parser, daemon, multicast transport or RRDtool ingestion is implemented. See [the Ganglia notes](ganglia.md).
 
+## Database monitoring
+
+Freeware owns the read-only `db-probe`, `db-health`, `db-activity` and `db-storage` diagnostics. This repository owns the site-level `site/databases.tsv` instance mapping and the bounded `sasd-db-health-adapter`, which consumes synthetic `SASD-DB-HEALTH-1` observations and emits common SASD status. The adapter is explicitly offline and does not claim database-server, driver, TLS, authentication or historical-version acceptance. See [the database vertical slice](database.md).
+
 ## CFEngine
 
 The R2 `sasd-site-audit` remains an independent local configuration check. M1 imports its four-column result like any other approved local observation. `bin/sasd-config-cfengine1` generates a small, warning-only CFEngine 1 candidate from the shared inventory and lifecycle state. Disabled and removed hosts are omitted. The candidate is profile-limited to 1999 and remains unverified until an original CFEngine 1.4 binary is run. The documented syntax basis is the historical `control`/`actionsequence`/`files` form; native parsing is not claimed. The generator does not install policies, start agents or repair systems. CFEngine 1 and the future CFEngine 2 adapter remain separate profiles.

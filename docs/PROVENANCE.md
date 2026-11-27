@@ -57,3 +57,5 @@ The C4 NetSaint candidate is original SASD code for a bounded object configurati
 The Ganglia candidate is original SASD code for offline gmond/gmetad review files and a bounded synthetic metric validator. Ganglia 3.1.1 is a documented 2008 target profile, not native acceptance evidence. No Ganglia source, XML/XDR parser, daemon, network transport or RRDtool database is redistributed.
 
 The cross-repository reuse decision records a read-only review of SASD Freeware commit `73074c6be9cef3e351aeaa28881653fdaadc9ff2`. It records reusable interfaces and boundaries only; no Freeware code or current branch was imported.
+
+The database vertical slice consumes the documented contracts of that Freeware reference for `db-probe`, `db-health`, `db-activity` and `db-storage`. Its SASD adapter and fixtures are original offline integration code; no database client, password, SQL text or server data is redistributed.

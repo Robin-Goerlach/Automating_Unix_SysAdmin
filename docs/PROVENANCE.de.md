@@ -55,3 +55,5 @@ Die NetSaint-Kandidatin C4 ist eigenständiger SASD-Code für eine begrenzte Obj
 Der Ganglia-Kandidat ist eigener SASD-Code für Offline-Prüfdateien von gmond/gmetad und einen begrenzten synthetischen Messwertprüfer. Ganglia 3.1.1 ist ein belegtes Zielprofil von 2008, aber keine native Abnahmeevidenz. Ganglia-Quelltext, XML-/XDR-Parser, Daemon, Netzwerktransport und RRDtool-Datenbank werden nicht weitergegeben.
 
 Die projektübergreifende Wiederverwendungsentscheidung dokumentiert eine lesende Prüfung von SASD-Freeware-Commit `73074c6be9cef3e351aeaa28881653fdaadc9ff2`. Sie dokumentiert nur Schnittstellen und Grenzen; Freeware-Code oder ein aktueller Branch wurden nicht importiert.
+
+Der Datenbank-Vertikalschnitt verwendet die dokumentierten Verträge dieses Freeware-Referenzstands für `db-probe`, `db-health`, `db-activity` und `db-storage`. Adapter und Fixtures von SASD sind eigener Offline-Integrationscode; kein Datenbankclient, Passwort, SQL-Text oder Serverinhalt wird weitergegeben.

@@ -9,7 +9,7 @@ model=$lab/model
 out=$lab/candidates
 server=$lab/monitor
 mkdir "$model" "$out"
-cp "$root/site/hosts.tsv" "$root/site/roles.tsv" "$root/site/checks.tsv" "$root/site/services.tsv" "$model/"
+cp "$root/site/hosts.tsv" "$root/site/roles.tsv" "$root/site/checks.tsv" "$root/site/services.tsv" "$root/site/databases.tsv" "$model/"
 mkdir "$model/bin"
 cp "$root/site/monitoring.conf" "$model/monitoring.conf"
 cp "$root/bin/sasd-mrtg-counter" "$model/bin/sasd-mrtg-counter"
@@ -50,7 +50,9 @@ grep -q 'data_source' "$out/gmetad.conf"
 printf 'lab-web.lab.invalid\tlab\t1700000000\tcpu\t12.5\tpercent\tgauge\n' > "$lab/ganglia.tsv"
 "$root/bin/sasd-ganglia-metric" --input "$lab/ganglia.tsv" --now 1700000001 > "$lab/ganglia.out"
 grep -q '^OK	lab-web.lab.invalid	lab' "$lab/ganglia.out"
-echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister/NetSaint/Nagios/Ganglia): PASS'
+"$root/bin/sasd-db-health-adapter" --input "$root/fixtures/database/health-ok.tsv" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --instances "$model/databases.tsv" --state "$model/hosts.tsv.state" --now 1700000001 > "$lab/database.out"
+grep -q 'mon.lab.invalid.*green.*source=OFFLINE.*instance=erp-primary' "$lab/database.out"
+echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister/NetSaint/Nagios/Ganglia/database): PASS'
 
 deploy_stage=$lab/deploy-stage
 deploy_target=$lab/deploy-target

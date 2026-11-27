@@ -43,4 +43,4 @@ Operational controls and recovery use `sasd-monitor-control`, `sasd-monitor-back
 
 See [operations.md](operations.md) for routine maintenance, acknowledgement, backup and restore procedures.
 
-The later Nagios candidate is documented in [nagios.md](nagios.md); it remains offline and unverified against a native Nagios 1.0-era parser. NetSaint is documented separately in [netsaint.md](netsaint.md), with its own 1999 command profile. The Ganglia 3.1.1-era offline candidate is documented in [ganglia.md](ganglia.md); native XML, transport, daemon and RRDtool acceptance remain open.
+The later Nagios candidate is documented in [nagios.md](nagios.md); it remains offline and unverified against a native Nagios 1.0-era parser. NetSaint is documented separately in [netsaint.md](netsaint.md), with its own 1999 command profile. The Ganglia 3.1.1-era offline candidate is documented in [ganglia.md](ganglia.md); native XML, transport, daemon and RRDtool acceptance remain open. The first database monitoring adapter is documented in [database.md](database.md); it consumes synthetic Freeware-compatible health observations and does not connect to a database.
