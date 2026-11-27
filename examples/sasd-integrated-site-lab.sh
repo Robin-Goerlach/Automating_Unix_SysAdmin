@@ -34,11 +34,12 @@ echo 'A lifecycle add/update/disable/remove/history: PASS'
 "$root/bin/sasd-config-cfengine2" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --state "$model/hosts.tsv.state" --out "$out/cfengine2.conf" --apply > "$lab/cfengine2"
 "$root/bin/sasd-config-bigbrother" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/bb-hosts"
 "$root/bin/sasd-config-bigsister" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/bigsister.cfg"
+"$root/bin/sasd-config-netsaint" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/netsaint.cfg"
 grep -q 'lab-web.lab.invalid' "$out/bb-hosts"
 if awk '$2 == "web.lab.invalid" || $2 == "mail.lab.invalid" { found=1 } END { exit found ? 0 : 1 }' "$out/bb-hosts"; then
     echo 'disabled or removed host emitted by Big Brother adapter' >&2; exit 1
 fi
-echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister): PASS'
+echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister/NetSaint): PASS'
 
 deploy_stage=$lab/deploy-stage
 deploy_target=$lab/deploy-target
@@ -46,12 +47,13 @@ deploy_plan=$lab/deploy.plan
 mkdir -m 0700 "$deploy_target"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --prepare > "$lab/deploy-prepare"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --dry-run > "$lab/deploy-dry-run"
-grep -q 'changes=7 status=DRY-RUN' "$lab/deploy-dry-run"
+grep -q 'changes=8 status=DRY-RUN' "$lab/deploy-dry-run"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --apply > "$lab/deploy-apply"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --dry-run > "$lab/deploy-repeat"
 grep -q 'changes=0 status=DRY-RUN' "$lab/deploy-repeat"
 test -f "$deploy_target/bigsister/bb-display.cfg"
 test -f "$deploy_target/bigsister/uxmon-net"
+test -f "$deploy_target/netsaint/hosts.cfg"
 echo 'B controlled staging, dry-run, apply and repeat: PASS'
 
 "$root/bin/sasd-monitor-mrtg" --config "$model/monitoring.conf" --host-state "$model/hosts.tsv.state" --out "$out/mrtg.cfg" --force > "$lab/mrtg"

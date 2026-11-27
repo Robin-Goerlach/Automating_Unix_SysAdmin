@@ -34,6 +34,7 @@ if [ "$rc" -eq 77 ]; then
     echo 'Native capability observation tests SKIPPED: user xattrs unavailable'
     exit 0
 fi
+[ "$rc" -eq 0 ] || { echo "Native capability observation tests FAILED: xattr operation rc=$rc" >&2; exit 1; }
 run; grep -q 'hosts.xattrs.*BLOCK.*present' "$tmp/out"
 ! grep -q 'private-test-value\|user.sasd-test' "$tmp/out"
 rc=0
@@ -53,6 +54,7 @@ if [ "$rc" -eq 77 ]; then
     echo 'Native capability observation tests SKIPPED: POSIX ACL xattrs unavailable'
     exit 0
 fi
+[ "$rc" -eq 0 ] || { echo "Native capability observation tests FAILED: ACL operation rc=$rc" >&2; exit 1; }
 run; grep -q 'hosts.xattrs.*BLOCK.*present' "$tmp/out"
 /usr/bin/python3 - "$tmp/etc/hosts" <<'PY'
 import os, sys

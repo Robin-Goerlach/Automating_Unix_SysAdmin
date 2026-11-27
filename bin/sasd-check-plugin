@@ -1,0 +1,14 @@
+#!/usr/bin/env perl
+# Run one explicitly selected classic plugin and normalize its result.
+use strict;
+use POSIX qw(WIFEXITED WEXITSTATUS);
+my ($plugin,$check,$timeout)=('','','30'); my @args;
+while (@ARGV) { my $a=shift @ARGV; if($a eq '--plugin'){$plugin=shift @ARGV} elsif($a eq '--check'){$check=shift @ARGV} elsif($a eq '--arg'){push @args,shift @ARGV} elsif($a eq '--timeout'){$timeout=shift @ARGV} elsif($a eq '--help'){print "usage: sasd-check-plugin --plugin FILE --check NAME [--arg VALUE ...] [--timeout SECONDS]\n";exit 0} else {die "unknown argument: $a\n"} }
+$plugin && -f $plugin && !-l $plugin && -x $plugin or die "plugin must be an executable regular file\n"; $check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/ or die "invalid check\n"; $timeout =~ /\A[1-9][0-9]{0,2}\z/ or die "invalid timeout\n";
+my $pid=open(my $fh,'-|'); defined $pid or die "cannot start plugin: $!\n"; if (!$pid) { exec($plugin,@args) or exit 3 }
+my $old=$SIG{ALRM}; $SIG{ALRM}=sub { die "plugin timeout\n" }; alarm $timeout; my $out=''; while (my $line=<$fh>) { $out.=$line; last if length($out)>4096 }
+my $error=''; my $closed;
+eval { $closed=close $fh; 1 } or $error=$@;
+my $rc=$?; alarm 0; $SIG{ALRM}=$old;
+if ($error ne '' || !defined $closed) { chomp $error; $error='plugin failed to close' if $error eq ''; print "purple\t$error\n"; exit 3 }
+$out =~ s/[\r\n]+\z//; $out=substr($out,0,4096); $out =~ s/[\t\r\n]/ /g; my %map=(0=>'green',1=>'yellow',2=>'red',3=>'purple'); my $color=WIFEXITED($rc)&&exists$map{WEXITSTATUS($rc)}?$map{WEXITSTATUS($rc)}:'purple'; print "$color\t",($out eq ''?'plugin returned no output':$out),"\n"; exit($color eq 'green'?0:$color eq 'yellow'?1:$color eq 'red'?2:3);

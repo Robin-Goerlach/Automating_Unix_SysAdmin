@@ -22,6 +22,8 @@ SASD ist eine 2026 neu erstellte, eigenständige Sammlung von Systemverwaltungsp
 - Big Brother — https://linuxgazette.net/issue15/bb-info.html
 - Big Sister, Konfigurationsreferenz und Änderungshistorie — https://www.bigsister.ch/bigsister.html, https://www.bigsister.ch/pdoc/CONFIG.html, https://www.bigsister.ch/pdoc/CHANGES.html
 - Nagios — https://www.nagios.org/about/history/
+- Debian-Diskussion zur NetSaint-Paketierung (1999) — https://lists.debian.org/debian-devel/1999/11/msg00316.html
+- Archivindex des NetSaint-0.0.7-Pakets — https://archive.freebsd.org/ports/alpha/packages-4.6-release/All/
 
 Diese Links bezeichnen fachliche Quellen. Sie sind keine Lizenz- oder Weitergabegenehmigung und bedeuten keine Zugehörigkeit.
 
@@ -42,3 +44,5 @@ Die Big-Sister-Kandidatin verwendet nur dokumentierte Prozent-Direktiven aus `bb
 Der Kandidat verwendet die dokumentierte Form von `cfagent.conf` und `actionsequence`, weil öffentliche Referenzen diese Schnittstellen beschreiben und der Archivindex ein datiertes 1.4.0-Archiv enthält. Das Archiv wurde nicht importiert und kein originales Programm ausgeführt. Daher wird nur ein Kandidat, keine native CFEngine-1-Kompatibilität dokumentiert.
 
 Die M5-/M6-/M7-Provisionierungswerkzeuge, Vorlagen, Fixtures und Dokumentation dieser Entwicklungslinie sind 2026 eigenständig für SASD erstellt worden. Sie verwenden etablierte Unix-Formate und nennen externe Produkte nur beschreibend; Quelltexte fremder Installer, Bootmedien oder historische Archive werden nicht weitergegeben. Native Kompatibilität wird nur bei einem aufgezeichneten Test mit genau benanntem externem Programm und genauer Umgebung behauptet.
+
+Die NetSaint-Kandidatin C4 ist eigenständiger SASD-Code für eine begrenzte Objektkonfiguration und einen synthetischen Statusadapter. Die Quellen belegen Produktidentität 1999 und ein späteres 0.0.7-Paket, aber keine Parserabnahme der erzeugten Datei. NetSaint-Quelltext, Plugins und Daemons werden nicht weitergegeben.

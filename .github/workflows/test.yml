@@ -9,11 +9,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Perl and POSIX shell smoke tests
         run: make test
       - name: Reproducible source distribution check
-        if: github.ref == 'refs/heads/integration/reconcile-debian-r2'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/integration/reconcile-debian-r2'
         run: make release-test

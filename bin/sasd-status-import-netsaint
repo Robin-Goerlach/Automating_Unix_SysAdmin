@@ -1,0 +1,18 @@
+#!/usr/bin/env perl
+# Import explicitly synthetic NetSaint-style observations; not status.dat parsing.
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_checks read_external_status);
+my ($input,$hosts,$roles,$checks)=('','','','');
+while (@ARGV) { my $a=shift @ARGV;
+    if ($a eq '--input') {$input=shift @ARGV} elsif ($a eq '--hosts') {$hosts=shift @ARGV}
+    elsif ($a eq '--roles') {$roles=shift @ARGV} elsif ($a eq '--checks') {$checks=shift @ARGV}
+    elsif ($a eq '--help') { print "usage: sasd-status-import-netsaint --input FILE --hosts FILE --roles FILE --checks FILE\n"; exit 0 }
+    else { die "unknown argument: $a\n" }
+}
+$input && $hosts && $roles && $checks or die "input, hosts, roles and checks are required\n";
+my $r=read_roles($roles); my ($h)=read_host_records($hosts,$r,0); my $c=read_checks($checks);
+my $records=read_external_status($input,'netsaint',$h,$c);
+print join("\t",@$_),"\n" for @$records;
+print STDERR "product=netsaint source=synthetic imported=",scalar(@$records)," status=OK\n";
