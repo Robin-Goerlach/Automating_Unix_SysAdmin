@@ -5,10 +5,41 @@ use POSIX qw(WIFEXITED WEXITSTATUS);
 my ($plugin,$check,$timeout)=('','','30'); my @args;
 while (@ARGV) { my $a=shift @ARGV; if($a eq '--plugin'){$plugin=shift @ARGV} elsif($a eq '--check'){$check=shift @ARGV} elsif($a eq '--arg'){push @args,shift @ARGV} elsif($a eq '--timeout'){$timeout=shift @ARGV} elsif($a eq '--help'){print "usage: sasd-check-plugin --plugin FILE --check NAME [--arg VALUE ...] [--timeout SECONDS]\n";exit 0} else {die "unknown argument: $a\n"} }
 $plugin && -f $plugin && !-l $plugin && -x $plugin or die "plugin must be an executable regular file\n"; $check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/ or die "invalid check\n"; $timeout =~ /\A[1-9][0-9]{0,2}\z/ or die "invalid timeout\n";
-my $pid=open(my $fh,'-|'); defined $pid or die "cannot start plugin: $!\n"; if (!$pid) { exec($plugin,@args) or exit 3 }
-my $old=$SIG{ALRM}; $SIG{ALRM}=sub { die "plugin timeout\n" }; alarm $timeout; my $out=''; while (my $line=<$fh>) { $out.=$line; last if length($out)>4096 }
-my $error=''; my $closed;
-eval { $closed=close $fh; 1 } or $error=$@;
-my $rc=$?; alarm 0; $SIG{ALRM}=$old;
-if ($error ne '' || !defined $closed) { chomp $error; $error='plugin failed to close' if $error eq ''; print "purple\t$error\n"; exit 3 }
-$out =~ s/[\r\n]+\z//; $out=substr($out,0,4096); $out =~ s/[\t\r\n]/ /g; my %map=(0=>'green',1=>'yellow',2=>'red',3=>'purple'); my $color=WIFEXITED($rc)&&exists$map{WEXITSTATUS($rc)}?$map{WEXITSTATUS($rc)}:'purple'; print "$color\t",($out eq ''?'plugin returned no output':$out),"\n"; exit($color eq 'green'?0:$color eq 'yellow'?1:$color eq 'red'?2:3);
+my $pid=open(my $fh,'-|'); defined $pid or die "cannot start plugin: $!\n";
+if (!$pid) {
+    open(STDERR, '>&STDOUT') or exit 3;
+    exec($plugin,@args) or exit 3;
+}
+my ($out,$timed_out,$too_large)=('',0,0);
+local $SIG{ALRM}=sub {
+    $timed_out=1;
+    kill 'TERM', $pid;
+    kill 'KILL', $pid;
+};
+alarm $timeout;
+while (1) {
+    last if $timed_out;
+    my $remaining=4096-length($out);
+    last if $remaining <= 0;
+    my $read=sysread($fh,my $chunk,$remaining < 1024 ? $remaining : 1024);
+    next if !defined($read) && $!{EINTR};
+    last if !defined($read) || $read == 0;
+    $out .= $chunk;
+}
+if (!$timed_out && length($out) >= 4096) {
+    $too_large=1;
+    kill 'TERM', $pid;
+    kill 'KILL', $pid;
+}
+alarm 0;
+my $closed=close $fh;
+my $rc=$?;
+if ($timed_out) { print "purple\tplugin timeout\n"; exit 3 }
+if ($too_large) { print "purple\tplugin output exceeded 4096 bytes\n"; exit 3 }
+if (!$closed) { print "purple\tplugin failed to close\n"; exit 3 }
+$out =~ s/[\r\n]+\z//;
+$out =~ s/[\t\r\n]/ /g;
+my %map=(0=>'green',1=>'yellow',2=>'red',3=>'purple');
+my $color=WIFEXITED($rc) && exists $map{WEXITSTATUS($rc)} ? $map{WEXITSTATUS($rc)} : 'purple';
+print "$color\t",($out eq ''?'plugin returned no output':$out),"\n";
+exit($color eq 'green'?0:$color eq 'yellow'?1:$color eq 'red'?2:3);

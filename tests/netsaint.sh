@@ -24,6 +24,18 @@ printf '#!/bin/sh\nprintf "plugin output\\n"\nexit 1\n' > "$tmp/plugin"; chmod 7
 rc=0; bin/sasd-check-plugin --plugin "$tmp/plugin" --check disk > "$tmp/plugin.out" || rc=$?
 [ "$rc" -eq 1 ]
 grep -q '^yellow[[:space:]]' "$tmp/plugin.out"
+printf '#!/bin/sh\nprintf "unknown output\\n" >&2\nexit 3\n' > "$tmp/unknown-plugin"; chmod 700 "$tmp/unknown-plugin"
+rc=0; bin/sasd-check-plugin --plugin "$tmp/unknown-plugin" --check disk > "$tmp/unknown.out" || rc=$?
+[ "$rc" -eq 3 ]
+grep -q '^purple[[:space:]]unknown output' "$tmp/unknown.out"
+printf '#!/bin/sh\nsleep 5\n' > "$tmp/slow-plugin"; chmod 700 "$tmp/slow-plugin"
+rc=0; bin/sasd-check-plugin --plugin "$tmp/slow-plugin" --check disk --timeout 1 > "$tmp/timeout.out" || rc=$?
+[ "$rc" -eq 3 ]
+grep -q '^purple[[:space:]]plugin timeout$' "$tmp/timeout.out"
+printf '#!/bin/sh\nhead -c 4097 /dev/zero\n' > "$tmp/large-plugin"; chmod 700 "$tmp/large-plugin"
+rc=0; bin/sasd-check-plugin --plugin "$tmp/large-plugin" --check disk > "$tmp/large.out" || rc=$?
+[ "$rc" -eq 3 ]
+grep -q '^purple[[:space:]]plugin output exceeded 4096 bytes$' "$tmp/large.out"
 printf 'status web.lab.invalid.http blue bad\n' > "$tmp/bad"
 if bin/sasd-status-import-netsaint --input "$tmp/bad" --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv >/dev/null 2>&1; then exit 1; fi
 echo 'NetSaint candidate generation, status adapter and check interface: PASS'

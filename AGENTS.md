@@ -52,6 +52,8 @@ Commits on main are acceptable for this solo experimental project when authorize
 - At the beginning of every development session, also read the complete `../logs/MASTER-ASSIGNMENT.md`. This is the durable strategic and technical assignment; it must not be replaced by, or rewritten as, a shortened session summary.
 - At the end of every development assignment, create one complete UTC-stamped session archive in `../logs`, even when the work is partial or a push, CI run, network connection or technical gate fails.
 - Update `../logs/LAST-SESSION.md` only after the complete archive exists and is readable. The handoff must identify the actual repository state, tests, commits, remote/CI status, blockers and next safe step.
+- Replace `../logs/LAST-SESSION.md` completely at every session close. It must contain exactly one current handoff, exactly one archive timestamp and exactly one link to that archive; never append older handoffs.
+- Keep the complete archive immutable, distinguish starting and closing commits, and explicitly verify that `LAST-SESSION.md` contains no older handoff blocks before recommending `/new`.
 - Before recommending `/new`, complete and verify the session archive and handoff. After an interruption, first check whether the previous development state was documented and repair the missing documentation at the next opportunity.
 - Do not create archives for ordinary progress messages. Never record secrets, tokens, private keys or production data, and never describe unverified tests, pushes or CI as successful.
 
