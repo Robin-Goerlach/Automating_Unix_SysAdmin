@@ -6,6 +6,6 @@ NetSaint ist ein eigenes historisches Produktprofil und keine rückdatierte Nagi
 
 `bin/sasd-check-plugin` startet genau eine ausgewählte ausführbare Datei ohne Shell, begrenzt Zeit und Ausgabe und ordnet Exit 0/1/2/3 green/yellow/red/purple zu. Unbekannte und technische Fehler werden purple und niemals erfolgreich.
 
-`bin/sasd-status-import-netsaint` akzeptiert nur synthetische Offlinezeilen der Form `status HOST.CHECK COLOR (EPOCH) MESSAGE`. Der gemeinsame Parser prüft Identität, Rolle, Farben, Duplikate und Meldungslänge. Kein natives `status.dat`, keine vorgetäuschte SASD-Identität, kein Socket und kein NetSaint-Start. Die Kandidatin wird unter `netsaint/hosts.cfg` staged; produktive Pfade bleiben unberührt.
+`bin/sasd-status-import-netsaint` akzeptiert nur synthetische Offlinezeilen der Form `status HOST.CHECK COLOR (EPOCH) MESSAGE`. Der gemeinsame Host-Lebenszyklus wird angewendet; Beobachtungen für deaktivierte oder entfernte Hosts werden vor der Prüfung von Identität, Rolle, Farben, Duplikaten und Meldungslänge abgewiesen. Kein natives `status.dat`, keine vorgetäuschte SASD-Identität, kein Socket und kein NetSaint-Start. Die Kandidatin wird unter `netsaint/hosts.cfg` staged; produktive Pfade bleiben unberührt.
 
 Exakte Grammatik, Argumente, Benachrichtigungen, Abhängigkeiten und Parserkompatibilität von 1999 werden nicht behauptet. Nagios bleibt P4, Ganglia P5.

@@ -6,6 +6,6 @@ NetSaint is a separate historical product profile, not Nagios syntax retroactive
 
 `bin/sasd-check-plugin` executes one explicitly selected executable without a shell, bounds timeout and output, and maps plugin exits 0/1/2/3 to green/yellow/red/purple. Unknown and technical failures are purple; they never become successful checks.
 
-`bin/sasd-status-import-netsaint` accepts only synthetic offline lines of the form `status HOST.CHECK COLOR (EPOCH) MESSAGE`. Shared validation checks identity, role applicability, colors, duplicates and message bounds. It does not parse native `status.dat`, impersonate an authenticated SASD client, open a socket or start NetSaint. Deployment stages the candidate under `netsaint/hosts.cfg`; no production path is touched.
+`bin/sasd-status-import-netsaint` accepts only synthetic offline lines of the form `status HOST.CHECK COLOR (EPOCH) MESSAGE`. It applies the shared host lifecycle state and rejects observations for disabled or removed hosts before shared validation checks identity, role applicability, colors, duplicates and message bounds. It does not parse native `status.dat`, impersonate an authenticated SASD client, open a socket or start NetSaint. Deployment stages the candidate under `netsaint/hosts.cfg`; no production path is touched.
 
 Exact 1999 grammar, arguments, notifications, dependencies and parser compatibility are not claimed. Nagios remains a separate later P4 integration; Ganglia remains P5.

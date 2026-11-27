@@ -11,7 +11,11 @@ if bin/sasd-config-netsaint --hosts site/hosts.tsv --roles site/roles.tsv --chec
     echo 'disabled host emitted by NetSaint adapter' >&2; exit 1
 fi
 printf 'status web.lab.invalid.http yellow (1700000000) synthetic warning\n' > "$tmp/status"
-bin/sasd-status-import-netsaint --input "$tmp/status" --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv > "$tmp/imported"
+if bin/sasd-status-import-netsaint --input "$tmp/status" --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --state "$tmp/state.tsv" > "$tmp/imported" 2> "$tmp/lifecycle-error"; then
+    echo 'status for disabled host accepted' >&2; exit 1
+fi
+printf 'web.lab.invalid\tenabled\toperator\n' > "$tmp/state-enabled.tsv"
+bin/sasd-status-import-netsaint --input "$tmp/status" --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --state "$tmp/state-enabled.tsv" > "$tmp/imported"
 grep -q "^web.lab.invalid$(printf '\t')http$(printf '\t')yellow" "$tmp/imported"
 if printf 'status web.lab.invalid.http green ok\nstatus web.lab.invalid.http red duplicate\n' > "$tmp/duplicate" && bin/sasd-status-import-netsaint --input "$tmp/duplicate" --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv >/dev/null 2>&1; then
     echo 'duplicate NetSaint observation accepted' >&2; exit 1
