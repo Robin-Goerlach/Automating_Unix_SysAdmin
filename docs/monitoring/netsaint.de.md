@@ -4,6 +4,8 @@ NetSaint ist ein eigenes historisches Produktprofil und keine rückdatierte Nagi
 
 `bin/sasd-config-netsaint` leitet deterministisch eine `hosts.cfg`-Kandidatin aus dem gemeinsamen Inventar ab. Erzeugt werden Host-, Hostgruppen-, Service-, Kommando-, Kontakt-, Kontaktgruppen- und Zeitperiodenobjekte. Deaktivierte und entfernte Hosts werden ausgeschlossen; die vorhandenen sicheren Ausgabeschutzprüfungen gelten weiter. Das Ziel ist ein NetSaint-0.0.7-ähnliches Profil und bleibt `UNVERIFIED`, bis ein benanntes historisches System die Datei einliest.
 
+Das erzeugte Kommando `check-sasd` übergibt dem gemeinsamen `sasd-check-plugin`-Runner ausdrücklich `--plugin`. Dies prüft den Kandidatenvertrag, belegt aber weder die Annahme der Kommandozeile durch einen nativen NetSaint-Parser noch eine Live-Prüfung eines Rechners.
+
 `bin/sasd-check-plugin` startet genau eine ausgewählte ausführbare Datei ohne Shell, führt Standardausgabe und Standardfehler zusammen, begrenzt die Ausgabe bereits beim Einlesen, beendet den Prozess bei Timeout und ordnet Exit 0/1/2/3 green/yellow/red/purple zu. Unbekannte, durch Signale und technische Fehler werden purple und niemals erfolgreich.
 
 `bin/sasd-status-import-netsaint` akzeptiert nur synthetische Offlinezeilen der Form `status HOST.CHECK COLOR (EPOCH) MESSAGE`. Der gemeinsame Host-Lebenszyklus wird angewendet; Beobachtungen für deaktivierte oder entfernte Hosts werden vor der Prüfung von Identität, Rolle, Farben, Duplikaten und Meldungslänge abgewiesen. Kein natives `status.dat`, keine vorgetäuschte SASD-Identität, kein Socket und kein NetSaint-Start. Die Kandidatin wird unter `netsaint/hosts.cfg` staged; produktive Pfade bleiben unberührt.

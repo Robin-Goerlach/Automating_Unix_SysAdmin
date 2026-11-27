@@ -41,4 +41,4 @@ Betriebssteuerung und Wiederherstellung verwenden `sasd-monitor-control`, `sasd-
 
 Die Verfahren stehen in [operations.de.md](operations.de.md).
 
-Der spätere Nagios-Kandidat ist in [nagios.de.md](nagios.de.md) dokumentiert; er bleibt offline und ist gegen einen nativen Nagios-Parser der 1.0-Zeit nicht abgenommen.
+Der spätere Nagios-Kandidat ist in [nagios.de.md](nagios.de.md) dokumentiert; er bleibt offline und ist gegen einen nativen Nagios-Parser der 1.0-Zeit nicht abgenommen. NetSaint ist mit eigenem Kommando-Profil von 1999 in [netsaint.de.md](netsaint.de.md) beschrieben. Der Ganglia-Offline-Kandidat im Profil 3.1.1 ist in [ganglia.de.md](ganglia.de.md) dokumentiert; native XML-, Transport-, Daemon- und RRDtool-Abnahmen bleiben offen.

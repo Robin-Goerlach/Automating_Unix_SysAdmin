@@ -35,11 +35,22 @@ echo 'A lifecycle add/update/disable/remove/history: PASS'
 "$root/bin/sasd-config-bigbrother" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/bb-hosts"
 "$root/bin/sasd-config-bigsister" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/bigsister.cfg"
 "$root/bin/sasd-config-netsaint" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/netsaint.cfg"
+"$root/bin/sasd-config-nagios" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --disk-fixture "$root/fixtures/df/healthy.txt" --out "$out/nagios.cfg" --force
+"$root/bin/sasd-config-ganglia" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --state "$model/hosts.tsv.state" --gmond-out "$out/gmond.conf" --gmetad-out "$out/gmetad.conf" --force
 grep -q 'lab-web.lab.invalid' "$out/bb-hosts"
 if awk '$2 == "web.lab.invalid" || $2 == "mail.lab.invalid" { found=1 } END { exit found ? 0 : 1 }' "$out/bb-hosts"; then
     echo 'disabled or removed host emitted by Big Brother adapter' >&2; exit 1
 fi
-echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister/NetSaint): PASS'
+grep -q 'check_command.*sasd-check!disk!' "$out/nagios.cfg"
+printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/test 100 20 80 20%% /\n' > "$lab/nagios-df"
+"$root/bin/sasd-check-plugin" --plugin "$root/bin/sasd-check-adapter" --check sasd --arg disk --arg lab-web.lab.invalid --arg "$lab/nagios-df" > "$lab/nagios-check"
+grep -q '^green.*GREEN -' "$lab/nagios-check"
+grep -q 'cluster {' "$out/gmond.conf"
+grep -q 'data_source' "$out/gmetad.conf"
+printf 'lab-web.lab.invalid\tlab\t1700000000\tcpu\t12.5\tpercent\tgauge\n' > "$lab/ganglia.tsv"
+"$root/bin/sasd-ganglia-metric" --input "$lab/ganglia.tsv" --now 1700000001 > "$lab/ganglia.out"
+grep -q '^OK	lab-web.lab.invalid	lab' "$lab/ganglia.out"
+echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister/NetSaint/Nagios/Ganglia): PASS'
 
 deploy_stage=$lab/deploy-stage
 deploy_target=$lab/deploy-target
@@ -47,13 +58,16 @@ deploy_plan=$lab/deploy.plan
 mkdir -m 0700 "$deploy_target"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --prepare > "$lab/deploy-prepare"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --dry-run > "$lab/deploy-dry-run"
-grep -q 'changes=8 status=DRY-RUN' "$lab/deploy-dry-run"
+grep -q 'changes=11 status=DRY-RUN' "$lab/deploy-dry-run"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --apply > "$lab/deploy-apply"
 "$root/bin/sasd-config-deploy" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --staging "$deploy_stage" --target "$deploy_target" --plan "$deploy_plan" --dry-run > "$lab/deploy-repeat"
 grep -q 'changes=0 status=DRY-RUN' "$lab/deploy-repeat"
 test -f "$deploy_target/bigsister/bb-display.cfg"
 test -f "$deploy_target/bigsister/uxmon-net"
 test -f "$deploy_target/netsaint/hosts.cfg"
+test -f "$deploy_target/nagios/hosts.cfg"
+test -f "$deploy_target/ganglia/gmond.conf"
+test -f "$deploy_target/ganglia/gmetad.conf"
 echo 'B controlled staging, dry-run, apply and repeat: PASS'
 
 "$root/bin/sasd-monitor-mrtg" --config "$model/monitoring.conf" --host-state "$model/hosts.tsv.state" --out "$out/mrtg.cfg" --force > "$lab/mrtg"

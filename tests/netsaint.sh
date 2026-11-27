@@ -5,6 +5,7 @@ tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT HUP INT TERM
 bin/sasd-config-netsaint --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv > "$tmp/hosts.cfg"
 grep -q '^define host{' "$tmp/hosts.cfg"
 grep -q 'check-sasd!http' "$tmp/hosts.cfg"
+grep -q 'command_line.*sasd-check-plugin.*--plugin.*sasd-check-adapter' "$tmp/hosts.cfg"
 grep -q 'hostgroup_name[[:space:]]*role_lab' "$tmp/hosts.cfg"
 printf 'web.lab.invalid\tdisabled\toperator\n' > "$tmp/state.tsv"
 if bin/sasd-config-netsaint --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --state "$tmp/state.tsv" | grep -q web.lab.invalid; then

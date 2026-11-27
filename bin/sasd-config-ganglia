@@ -1,0 +1,67 @@
+#!/usr/bin/env perl
+# Generate review-only Ganglia gmond/gmetad candidates from the shared inventory.
+# This does not enable multicast, bind a socket, or start either daemon.
+use strict;
+use File::Spec;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_roles read_host_records read_host_state atomic_write
+    ensure_dir paths_conflict valid_host);
+
+my ($hosts,$roles,$state,$gmond_out,$gmetad_out)=('','','','','');
+my $force=0;
+while (@ARGV) {
+    my $a=shift @ARGV;
+    if ($a eq '--hosts') {$hosts=shift @ARGV}
+    elsif ($a eq '--roles') {$roles=shift @ARGV}
+    elsif ($a eq '--state') {$state=shift @ARGV}
+    elsif ($a eq '--gmond-out') {$gmond_out=shift @ARGV}
+    elsif ($a eq '--gmetad-out') {$gmetad_out=shift @ARGV}
+    elsif ($a eq '--force') {$force=1}
+    elsif ($a eq '--help') { print "usage: sasd-config-ganglia --hosts FILE --roles FILE [--state FILE] --gmond-out FILE --gmetad-out FILE [--force]\n"; exit 0 }
+    else { die "unknown argument: $a\n" }
+}
+$hosts && $roles && $gmond_out && $gmetad_out or die "hosts, roles, gmond-out and gmetad-out are required\n";
+-f $hosts && !-l $hosts && -f $roles && !-l $roles or die "invalid Ganglia inventory input\n";
+$state="$hosts.state" if $state eq '';
+my $rr=read_roles($roles);
+my ($hr)=read_host_records($hosts,$rr,0);
+my $sr=read_host_state($state,$hr,1);
+my @active=sort grep { !exists($sr->{$_}) || $sr->{$_}->{state} eq 'enabled' } keys %$hr;
+@active or die "Ganglia inventory has no enabled hosts\n";
+my %clusters;
+for my $h (@active) {
+    my @groups=grep { /^ganglia-/ } split /,/, $hr->{$h}->{groups};
+    @groups=('default') unless @groups;
+    for my $cluster (@groups) {
+        valid_host($cluster) or die "invalid Ganglia cluster identity: $cluster\n";
+        push @{$clusters{$cluster}},$h;
+    }
+}
+my @monitor=grep {$hr->{$_}->{role} eq 'monitoring'} @active;
+my $monitor=$monitor[0] || $active[0];
+my $gmond_text="# SASD Ganglia candidate; profile=ganglia-3.x-era; offline and unverified.\n";
+$gmond_text.="# Candidate text only: SASD never starts gmond or enables multicast/listeners.\n\n";
+for my $cluster (sort keys %clusters) {
+    $gmond_text.="cluster {\n  name = \"$cluster\"\n  owner = \"SASD\"\n  latlong = \"unknown\"\n  url = \"\"\n}\n\n";
+    $gmond_text.="globals {\n  daemonize = no\n  setuid = no\n  user = \"sasd\"\n  host_dmax = 86400\n  cleanup_threshold = 300\n  gmond_started = \"offline-candidate\"\n}\n\n";
+    $gmond_text.="# Hosts selected for cluster $cluster: ".join(',',@{$clusters{$cluster}})."\n";
+    $gmond_text.="udp_send_channel {\n  mcast_join = 239.2.11.71\n  port = 8649\n}\n\n";
+}
+my $gmetad_text="# SASD Ganglia gmetad candidate; profile=ganglia-3.x-era; offline and unverified.\n";
+$gmetad_text.="# No daemon, listener, multicast subscription, or RRDtool update is started by SASD.\n\n";
+for my $cluster (sort keys %clusters) {
+    $gmetad_text.="data_source \"$cluster\" 15 ".$hr->{$monitor}->{address}.":8649\n";
+}
+$gmetad_text.="gridname \"SASD offline candidate\"\n";
+$gmetad_text.="authority \"http://".$hr->{$monitor}->{host}."/ganglia/\"\n";
+for my $out ($gmond_out,$gmetad_out) { -e $out && !$force and die "output exists; use --force explicitly\n"; }
+paths_conflict($gmond_out,$gmetad_out) and die "Ganglia outputs overlap\n";
+for my $input ($hosts,$roles,$state) { paths_conflict($gmond_out,$input) || paths_conflict($gmetad_out,$input) and die "Ganglia output overlaps input\n"; }
+for my $out ($gmond_out,$gmetad_out) {
+    my (undef,$dir)=File::Spec->splitpath($out);
+    ensure_dir($dir,0750) if length $dir;
+}
+atomic_write($gmond_out,$gmond_text,0640);
+atomic_write($gmetad_out,$gmetad_text,0640);
+print "gmond=$gmond_out gmetad=$gmetad_out clusters=",scalar(keys %clusters)," hosts=",scalar(@active)," status=APPLIED\n";

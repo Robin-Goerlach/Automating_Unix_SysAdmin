@@ -17,6 +17,10 @@ The primary target profile is 1999. Features from 2002–2009 require a clearly 
 - Keep docs/BOOK-MAP.md accurate but not a chapter-by-chapter code transcription.
 - Reference original third-party product names descriptively; avoid suggesting endorsement.
 
+## Cross-repository reuse
+
+Keep generally reusable Unix/Linux administration commands and diagnostics in SASD Freeware. This repository owns site inventory, lifecycle, historical product profiles, orchestration, status and controlled deployment. Check documented Freeware interfaces before creating a reusable duplicate; use small versioned adapters and preserve `UNKNOWN`/`NOT SUPPORTED` for missing or unsuitable evidence. This does not authorize changes to another repository or create a mandatory dependency.
+
 ## Engineering
 
 - Prefer POSIX sh, awk, sed and era-appropriate Perl core modules for historical programs.

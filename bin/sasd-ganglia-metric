@@ -1,0 +1,36 @@
+#!/usr/bin/env perl
+# Validate bounded synthetic Ganglia observations; no XML/network/RRD access.
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(valid_host valid_epoch);
+my ($input,$now,$freshness)=('','',900);
+while (@ARGV) { my $a=shift @ARGV;
+    if ($a eq '--input') {$input=shift @ARGV}
+    elsif ($a eq '--now') {$now=shift @ARGV}
+    elsif ($a eq '--freshness') {$freshness=shift @ARGV}
+    elsif ($a eq '--help') {print "usage: sasd-ganglia-metric --input FILE [--now EPOCH] [--freshness SECONDS]\n"; exit 0}
+    else {die "unknown argument: $a\n"}
+}
+$input && -f $input && !-l $input or die "metric input must be a regular file\n";
+$now = time() if $now eq '';
+$now =~ /\A[0-9]{1,15}\z/ && $freshness =~ /\A[1-9][0-9]{0,8}\z/ or die "invalid time boundary\n";
+my %allowed=map {$_=>1} qw(cpu mem load net_rx net_tx);
+my (%seen,%last); open my $fh,'<',$input or die "cannot read metric input: $!\n";
+while (<$fh>) {
+    length($_) <= 2048 or die "metric line too long\n";
+    chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
+    my @v=split /\t/,$_,-1;
+    @v == 7 or die "metric record requires host, cluster, epoch, metric, value, unit, type\n";
+    my ($host,$cluster,$epoch,$metric,$value,$unit,$type)=@v;
+    valid_host($host) && valid_host($cluster) && valid_epoch($epoch) && $allowed{$metric} or die "invalid metric identity\n";
+    $value =~ /\A(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\z/ or die "invalid metric value\n";
+    $unit =~ /\A[A-Za-z%\/_-]{1,16}\z/ && $type =~ /\A(?:gauge|counter)\z/ or die "invalid metric unit or type\n";
+    my $key="$host\t$cluster\t$metric";
+    exists $seen{$key} && $seen{$key} == $epoch and die "duplicate metric observation\n";
+    defined $last{$key} && $epoch < $last{$key} and die "metric observations are out of order\n";
+    $seen{$key}=$epoch; $last{$key}=$epoch;
+    my $status=($epoch > $now || $now-$epoch > $freshness) ? 'UNKNOWN' : 'OK';
+    print "$status\t$host\t$cluster\t$epoch\t$metric\t$value\t$unit\t$type\n";
+}
+close $fh or die "cannot close metric input: $!\n";

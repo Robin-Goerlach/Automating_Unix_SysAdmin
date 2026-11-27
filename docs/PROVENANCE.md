@@ -26,6 +26,9 @@ SASD is authoring a new, stand-alone script collection in 2026 to explore classi
 - Nagios object-definition reference — https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/objectdefinitions.html (used for object vocabulary, not exact 1.0a7 parser evidence).
 - NetSaint Debian packaging discussion (1999) — https://lists.debian.org/debian-devel/1999/11/msg00316.html
 - NetSaint 0.0.7 package archive — https://archive.freebsd.org/ports/alpha/packages-4.6-release/All/
+- Ganglia release history — https://ganglia.github.io/blog/archives/
+- Ganglia core release archive — https://sourceforge.net/projects/ganglia/files/ganglia%20monitoring%20core/
+- Ganglia architecture and BSD licence references — https://github.com/fastly/ganglia/blob/master/ganglia.pod and https://github.com/ganglia
 
 These links identify historical and technical background. They are not assertions of license compatibility or permission to redistribute third-party code.
 
@@ -50,3 +53,7 @@ The R2 candidate uses the historically documented `cfagent.conf` and `actionsequ
 The M5/M6/M7 provisioning tools, templates, fixtures and documentation in this development line are original SASD-authored work created in 2026. They use established Unix formats and named external products descriptively; no third-party installer source, boot media or historical archive is redistributed. Native compatibility is claimed only where a recorded test names the exact external program and environment.
 
 The C4 NetSaint candidate is original SASD code for a bounded object configuration and synthetic status adapter. The sources establish the 1999 product identity and a later 0.0.7 package, but not parser acceptance of the generated file. No NetSaint source, plugin or daemon is redistributed.
+
+The Ganglia candidate is original SASD code for offline gmond/gmetad review files and a bounded synthetic metric validator. Ganglia 3.1.1 is a documented 2008 target profile, not native acceptance evidence. No Ganglia source, XML/XDR parser, daemon, network transport or RRDtool database is redistributed.
+
+The cross-repository reuse decision records a read-only review of SASD Freeware commit `73074c6be9cef3e351aeaa28881653fdaadc9ff2`. It records reusable interfaces and boundaries only; no Freeware code or current branch was imported.

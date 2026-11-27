@@ -26,6 +26,9 @@ SASD ist eine 2026 neu erstellte, eigenständige Sammlung von Systemverwaltungsp
 - Nagios-Objektdefinitionsreferenz — https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/objectdefinitions.html (für das Objektvokabular, nicht als exakte Parser-Evidenz für 1.0a7 verwendet).
 - Debian-Diskussion zur NetSaint-Paketierung (1999) — https://lists.debian.org/debian-devel/1999/11/msg00316.html
 - Archivindex des NetSaint-0.0.7-Pakets — https://archive.freebsd.org/ports/alpha/packages-4.6-release/All/
+- Ganglia-Projekthistorie — https://ganglia.github.io/blog/archives/
+- Ganglia-Core-Archiv — https://sourceforge.net/projects/ganglia/files/ganglia%20monitoring%20core/
+- Ganglia-Architektur und BSD-Lizenz — https://github.com/fastly/ganglia/blob/master/ganglia.pod und https://github.com/ganglia
 
 Diese Links bezeichnen fachliche Quellen. Sie sind keine Lizenz- oder Weitergabegenehmigung und bedeuten keine Zugehörigkeit.
 
@@ -48,3 +51,7 @@ Der Kandidat verwendet die dokumentierte Form von `cfagent.conf` und `actionsequ
 Die M5-/M6-/M7-Provisionierungswerkzeuge, Vorlagen, Fixtures und Dokumentation dieser Entwicklungslinie sind 2026 eigenständig für SASD erstellt worden. Sie verwenden etablierte Unix-Formate und nennen externe Produkte nur beschreibend; Quelltexte fremder Installer, Bootmedien oder historische Archive werden nicht weitergegeben. Native Kompatibilität wird nur bei einem aufgezeichneten Test mit genau benanntem externem Programm und genauer Umgebung behauptet.
 
 Die NetSaint-Kandidatin C4 ist eigenständiger SASD-Code für eine begrenzte Objektkonfiguration und einen synthetischen Statusadapter. Die Quellen belegen Produktidentität 1999 und ein späteres 0.0.7-Paket, aber keine Parserabnahme der erzeugten Datei. NetSaint-Quelltext, Plugins und Daemons werden nicht weitergegeben.
+
+Der Ganglia-Kandidat ist eigener SASD-Code für Offline-Prüfdateien von gmond/gmetad und einen begrenzten synthetischen Messwertprüfer. Ganglia 3.1.1 ist ein belegtes Zielprofil von 2008, aber keine native Abnahmeevidenz. Ganglia-Quelltext, XML-/XDR-Parser, Daemon, Netzwerktransport und RRDtool-Datenbank werden nicht weitergegeben.
+
+Die projektübergreifende Wiederverwendungsentscheidung dokumentiert eine lesende Prüfung von SASD-Freeware-Commit `73074c6be9cef3e351aeaa28881653fdaadc9ff2`. Sie dokumentiert nur Schnittstellen und Grenzen; Freeware-Code oder ein aktueller Branch wurden nicht importiert.

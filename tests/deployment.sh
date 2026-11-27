@@ -11,10 +11,10 @@ mkdir -m 0700 "$target"
 run="$root/bin/sasd-config-deploy --hosts $root/site/hosts.tsv --roles $root/site/roles.tsv --checks $root/site/checks.tsv --services $root/site/services.tsv --staging $stage --target $target --plan $plan"
 
 $run --prepare >/dev/null
-$run --dry-run | grep -q 'changes=8 status=DRY-RUN'
+$run --dry-run | grep -q 'changes=11 status=DRY-RUN'
 test ! -e "$target/.sasd-deploy.lock"
 
-$run --apply | grep -q 'changes=8 status=APPLIED'
+$run --apply | grep -q 'changes=11 status=APPLIED'
 test -f "$target/.sasd-deploy.lock"
 lock_inode=$(stat -c '%i' "$target/.sasd-deploy.lock")
 $run --dry-run >/dev/null

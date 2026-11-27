@@ -9,6 +9,7 @@ use SASD::Monitor qw(read_roles read_host_records read_host_state read_checks re
     atomic_write ensure_dir paths_conflict);
 
 my ($hosts,$roles,$checks,$services,$state,$out,$profile)=('','','','','','','nagios-1.0a7');
+my $disk_fixture='fixtures/df/healthy.txt';
 my $force=0;
 my $state_explicit=0;
 while (@ARGV) {
@@ -20,12 +21,18 @@ while (@ARGV) {
     elsif ($a eq '--state') {$state=shift @ARGV; $state_explicit=1}
     elsif ($a eq '--out') {$out=shift @ARGV}
     elsif ($a eq '--profile') {$profile=shift @ARGV}
+    elsif ($a eq '--disk-fixture') {$disk_fixture=shift @ARGV}
     elsif ($a eq '--force') {$force=1}
-    elsif ($a eq '--help') { print "usage: sasd-config-nagios --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--profile nagios-1.0a7] [--out FILE --force]\n"; exit 0 }
+    elsif ($a eq '--help') { print "usage: sasd-config-nagios --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--disk-fixture FILE] [--profile nagios-1.0a7] [--out FILE --force]\n"; exit 0 }
     else { die "unknown argument: $a\n" }
 }
 $hosts && $roles && $checks && $services or die "hosts, roles, checks and services are required\n";
 $profile eq 'nagios-1.0a7' or die "unsupported Nagios profile: $profile\n";
+if ($disk_fixture =~ m!\A/!) {
+    -f $disk_fixture && !-l $disk_fixture or die "absolute disk fixture must be a regular file\n";
+} else {
+    $disk_fixture =~ /\A(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+\z/ or die "unsafe disk fixture path\n";
+}
 for my $path ($hosts,$roles,$checks,$services) { -f $path && !-l $path or die "invalid Nagios input file\n" }
 $state="$hosts.state" if $state eq '';
 my $rr=read_roles($roles);
@@ -57,9 +64,10 @@ for my $name (sort keys %service_groups) { $text.="define servicegroup{\n\tservi
 for my $h (sort keys %$hr) {
     next if $disabled{$h};
     my $r=$hr->{$h};
-    $text.="define host{\n\thost_name\t$h\n\talias\t$h\n\taddress\t$r->{address}\n\thostgroups\t".join(',',map {"role_$_"} grep {length} split /,/, $r->{groups})."\n\tcheck_command\tsasd-check!conn!none\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tactive_checks_enabled\t1\n\tpassive_checks_enabled\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\td,u,r\n\tcontact_groups\tsasd-operators\n}\n\n";
+    $text.="define host{\n\thost_name\t$h\n\talias\t$h\n\taddress\t$r->{address}\n\thostgroups\t".join(',',map {"role_$_"} grep {length} split /,/, $r->{groups})."\n\tcheck_command\tsasd-check!disk!$disk_fixture\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tactive_checks_enabled\t1\n\tpassive_checks_enabled\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\td,u,r\n\tcontact_groups\tsasd-operators\n}\n\n";
     for my $s (@{$services_by_host{$h} || []}) {
-        $text.="define service{\n\thost_name\t$h\n\tservice_description\t$s->{service}\n\tservicegroups\tservice_$s->{service}\n\tcheck_command\tsasd-check!$s->{check}!none\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tcheck_interval\t5\n\tretry_interval\t1\n\tactive_checks_enabled\t1\n\tpassive_checks_enabled\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\tw,u,c,r\n\tcontact_groups\tsasd-operators\n}\n\n";
+        my $fixture = $s->{check} eq 'disk' ? $disk_fixture : 'missing-fixture';
+        $text.="define service{\n\thost_name\t$h\n\tservice_description\t$s->{service}\n\tservicegroups\tservice_$s->{service}\n\tcheck_command\tsasd-check!$s->{check}!$fixture\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tcheck_interval\t5\n\tretry_interval\t1\n\tactive_checks_enabled\t1\n\tpassive_checks_enabled\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\tw,u,c,r\n\tcontact_groups\tsasd-operators\n}\n\n";
     }
 }
 if ($out eq '') { print $text; exit 0 }

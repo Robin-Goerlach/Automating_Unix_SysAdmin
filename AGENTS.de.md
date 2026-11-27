@@ -17,6 +17,10 @@ Das Hauptprofil ist 1999. Funktionen aus 2002–2009 benötigen ein klar gekennz
 - `docs/BOOK-MAP.md` bleibt eine Themenübersicht und wird nicht zu einer kapitelweisen Quelltextabschrift.
 - Produktnamen Dritter werden beschreibend verwendet und bedeuten keine Empfehlung oder Zugehörigkeit.
 
+## Projektübergreifende Wiederverwendung
+
+Allgemein verwendbare Unix-/Linux-Verwaltungsbefehle und Diagnosen bleiben in SASD Freeware. Dieses Repository besitzt Site-Inventar, Lebenszyklus, historische Produktprofile, Orchestrierung, Zustand und kontrolliertes Deployment. Vor einer neuen wiederverwendbaren Doppelimplementierung werden die dokumentierten Freeware-Verträge geprüft; verwendet werden kleine versionierte Adapter, und fehlende oder ungeeignete Evidenz bleibt `UNKNOWN`/`NOT SUPPORTED`. Dies autorisiert keine Änderungen an einem anderen Repository und erzeugt keine verpflichtende Abhängigkeit.
+
 ## Entwicklung
 
 - Bevorzuge POSIX-sh, awk, sed und für die Profile geeignete Perl-Core-Module.
