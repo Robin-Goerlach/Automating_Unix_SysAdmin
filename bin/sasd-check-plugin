@@ -32,11 +32,10 @@ if (!$timed_out && length($out) >= 4096) {
     kill 'KILL', $pid;
 }
 alarm 0;
-my $closed=close $fh;
+close $fh;
 my $rc=$?;
 if ($timed_out) { print "purple\tplugin timeout\n"; exit 3 }
 if ($too_large) { print "purple\tplugin output exceeded 4096 bytes\n"; exit 3 }
-if (!$closed) { print "purple\tplugin failed to close\n"; exit 3 }
 $out =~ s/[\r\n]+\z//;
 $out =~ s/[\t\r\n]/ /g;
 my %map=(0=>'green',1=>'yellow',2=>'red',3=>'purple');
