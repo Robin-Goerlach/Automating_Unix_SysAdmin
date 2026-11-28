@@ -20,26 +20,32 @@ defined $host && $host =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,62}\z/
 defined $warn && defined $crit && $warn =~ /\A\d{1,3}\z/ &&
     $crit =~ /\A\d{1,3}\z/ && $warn <= $crit && $crit <= 100
     or die "invalid thresholds\n";
+defined $input && length $input or die "missing input path\n";
+my $fh;
 if ($input ne '-') {
     -f $input && !-l $input or die "input must be a regular file\n";
-    open(INPUT,"<$input") or die "cannot read $input: $!\n";
-} else { *INPUT = *STDIN; }
+    open($fh, '<', $input) or die "cannot read $input: $!\n";
+} else { $fh = \*STDIN; }
 my $found = 0;
-while (<INPUT>) {
-    next if /^\s*Filesystem\s/;
-    next if /^\s*$/;
+while (<$fh>) {
     chomp;
-    my @f = split /\s+/;
-    # POSIX df -kP columns: filesystem blocks used available capacity mountpoint.
-    if (@f < 6 || $f[4] !~ /\A(\d{1,3})%\z/) {
+    s/\r\z//;
+    next if /\A[ \t]*\z/;
+    next if /\AFilesystem[ \t]+1024-blocks[ \t]+Used[ \t]+Available[ \t]+Capacity[ \t]+Mounted on[ \t]*\z/;
+    my @fields = split /[ \t]+/, $_, -1;
+    # POSIX df -kP columns with unescaped, single-field mount names.
+    if (@fields != 6 || /[\x00-\x08\x0a-\x1f\x7f]/ ||
+        $fields[0] eq '' || $fields[1] !~ /\A[0-9]+\z/ ||
+        $fields[2] !~ /\A[0-9]+\z/ || $fields[3] !~ /\A-?[0-9]+\z/ ||
+        $fields[5] !~ /\A\// || $fields[4] !~ /\A([0-9]{1,3})%\z/) {
         print "$host\tdisk\tpurple\tunparseable df record\n";
         next;
     }
     my $pct = $1;
-    my $mount = $f[5];
+    my $mount = $fields[5];
     my $state = $pct >= $crit ? 'red' : $pct >= $warn ? 'yellow' : 'green';
-    $mount =~ s/[\t\r\n]//g;
     print "$host\tdisk\t$state\t$mount utilization $pct percent\n";
     $found++;
 }
+close $fh or die "cannot close disk input: $!\n" if $input ne '-';
 print "$host\tdisk\tpurple\tno filesystem records\n" unless $found;

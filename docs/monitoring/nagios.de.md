@@ -10,7 +10,31 @@ Der Kommandovertrag ist ausdrücklich:
 
     $USER1$/sasd-check-plugin --plugin $USER1$/sasd-check-adapter --check sasd --arg $ARG1$ --arg $HOSTNAME$ --arg $ARG2$
 
-`sasd-check-adapter` ordnet derzeit nur `disk` dem vorhandenen Programm `sasd-disk-watch` und einer ausdrücklich kontrollierten Eingabedatei zu. Andere Checks liefern UNKNOWN/NOT IMPLEMENTED. Der Zielhostname ist eine Identitätsangabe und die Fixture ein ausdrückliches Argument; der Offline-Adapter behauptet keine Prüfung eines entfernten Rechners und prüft nicht stillschweigend den Monitoringserver an seiner Stelle. Für echte entfernte Prüfungen ist ein separat abgenommener Agent oder natives Nagios-Plugin erforderlich.
+Die Objektargumente geben den Inventar-Check und das Quellargument an.
+`$HOSTNAME$` bezeichnet das Ziel. `$USER1$` muss auf ein vertrauenswürdiges
+Plugin-Verzeichnis zeigen, dessen absoluter Pfad nur Buchstaben, Ziffern,
+Unterstriche, Bindestriche, Punkte und Schrägstriche enthält. Der Generator
+wendet dieselbe Einschränkung auf Fixture-Pfade an und weist Traversierung ab.
+
+Hostobjekte verwenden `conn!-` für die Erreichbarkeit. Dienstobjekte behalten
+ihren Inventar-Check, etwa `http!-` für die Webdienstverfügbarkeit und
+`disk!-` für die Dateisystembelegung. `-` kennzeichnet eine fehlende
+Messquelle. Alle drei Beispiele liefern UNKNOWN (Exit 3). Für ein Labor
+`--disk-fixture DATEI --fixture-host HOST` zusammen angeben. Nur der
+Disk-Dienst des gewählten aktiven Rechners verwendet diese Datei. Das Ergebnis
+trägt `source=FIXTURE`. Der gemeinsame Adapter kann eine lokal erfasste
+Datei mit `--offline disk HOST DATEI` lesen und kennzeichnet das Ergebnis
+als `source=OFFLINE`. Tatsächliche Dateisysteme entfernter Rechner benötigen
+eine separat abgenommene Messquelle. Ein `LIVE`-Messpfad bleibt offen.
+
+Der gemeinsame Runner reicht ausschließlich ausdrücklich mit `--arg`
+übergebene Werte weiter. Der Adapter prüft Ziel, Eingabe und Beobachtungen
+und ordnet OK/WARNING/CRITICAL/UNKNOWN die Exit-Codes 0/1/2/3 zu. Für
+erfasste POSIX-`df -kP`-Ausgaben werden Spalten der C-Locale und
+Mountpfade ohne Leerraum erwartet. Leere, fehlende und fehlerhafte Ausgaben
+sowie reine Kopfzeilen ergeben UNKNOWN. Der höchste Schweregrad bestimmt
+Exit-Code und Meldung. UNKNOWN hat Vorrang vor CRITICAL. Die Offline-Regression
+löst die Makros auf und führt den erzeugten Argumentvektor direkt aus.
 
 `bin/sasd-status-import-nagios` akzeptiert ausschließlich SASDs synthetisches Zeilenformat, etwa `status web.lab.invalid.http red (1700000000) message`. Es prüft Lebenszyklus und Rolle, weist Duplikate und begrenzte fehlerhafte Eingaben zurück und erzeugt SASD-Datensätze. Es parst kein natives `status.dat`, erzeugt keine authentifizierte Clientidentität und akzeptiert keinen Socket.
 

@@ -11,7 +11,7 @@ our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read
     read_host_state validate_status atomic_write read_state read_latest html_escape ensure_dir
     valid_identifier valid_host valid_address valid_profile valid_color valid_path_value valid_epoch
     valid_fingerprint valid_public_key valid_os_value read_enrollment_record
-    paths_conflict inventory_format inventory_header
+    paths_conflict inventory_format inventory_header disk_fixture_path ganglia_clusters
     enrollment_record_line append_event read_operations read_external_status now_seconds);
 
 my %CONFIG_KEYS = map { $_ => 1 } qw(inventory roles checks status_dir history_file
@@ -259,6 +259,36 @@ sub read_host_state {
     }
     close($fh) or die "cannot close host state: $!\n";
     return \%state;
+}
+
+# Generated classic-plugin macros cross a product command boundary. Permit
+# only literal path components, and bind a fixture to one active host.
+sub disk_fixture_path {
+    my ($path, $host, $hosts, $disabled) = @_;
+    return '' unless defined($path) || defined($host);
+    valid_host($host) && exists($hosts->{$host}) && !$disabled->{$host}
+        or die "fixture requires one enabled inventory host\n";
+    defined($path) && length($path) or die "fixture path is required\n";
+    my $absolute = File::Spec->rel2abs($path);
+    $absolute =~ m!\A/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\z! &&
+        $absolute !~ m!/(?:\.|\.\.)(?:/|\z)! &&
+        -f $absolute && !-l $absolute && -r $absolute
+        or die "unsafe or unreadable disk fixture path\n";
+    return $absolute;
+}
+
+sub ganglia_clusters {
+    my ($hosts, $state) = @_;
+    my %clusters;
+    for my $host (sort keys %$hosts) {
+        next if exists($state->{$host}) && $state->{$host}->{state} ne 'enabled';
+        my @groups = grep { /^ganglia-/ } split /,/, $hosts->{$host}->{groups};
+        @groups <= 1 or die "ambiguous Ganglia cluster for $host\n";
+        my $cluster = @groups ? $groups[0] : 'default';
+        valid_host($cluster) or die "invalid Ganglia cluster identity\n";
+        $clusters{$cluster}->{$host} = 1;
+    }
+    return \%clusters;
 }
 
 sub read_checks {

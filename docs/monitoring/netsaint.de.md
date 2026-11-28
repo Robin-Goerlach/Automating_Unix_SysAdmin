@@ -4,7 +4,15 @@ NetSaint ist ein eigenes historisches Produktprofil und keine rückdatierte Nagi
 
 `bin/sasd-config-netsaint` leitet deterministisch eine `hosts.cfg`-Kandidatin aus dem gemeinsamen Inventar ab. Erzeugt werden Host-, Hostgruppen-, Service-, Kommando-, Kontakt-, Kontaktgruppen- und Zeitperiodenobjekte. Deaktivierte und entfernte Hosts werden ausgeschlossen; die vorhandenen sicheren Ausgabeschutzprüfungen gelten weiter. Das Ziel ist ein NetSaint-0.0.7-ähnliches Profil und bleibt `UNVERIFIED`, bis ein benanntes historisches System die Datei einliest.
 
-Das erzeugte Kommando `check-sasd` übergibt dem gemeinsamen `sasd-check-plugin`-Runner ausdrücklich `--plugin`. Dies prüft den Kandidatenvertrag, belegt aber weder die Annahme der Kommandozeile durch einen nativen NetSaint-Parser noch eine Live-Prüfung eines Rechners.
+Das Kommando `check-sasd` reicht Check, Host und Messquelle mit drei
+`--arg`-Optionen an den gemeinsamen Adapter weiter. `--check sasd`
+benennt die Prüfung für den Runner. Der Quellwert `-` ergibt UNKNOWN.
+`--disk-fixture DATEI --fixture-host HOST` bindet eine synthetische
+Dateisystemprüfung an einen einzelnen aktiven Host. Erreichbarkeit und
+Dienstverfügbarkeit bleiben eigene Checks. Der Offline-Test ersetzt die
+Makros anhand des dokumentierten Vertrags und führt den Argumentvektor ohne
+Shell aus. Pfadregeln und Exit-Codes stehen in der Dokumentation des
+[gemeinsamen Prüfvertrags](nagios.de.md).
 
 `bin/sasd-check-plugin` startet genau eine ausgewählte ausführbare Datei ohne Shell, führt Standardausgabe und Standardfehler zusammen, begrenzt die Ausgabe bereits beim Einlesen, beendet den Prozess bei Timeout und ordnet Exit 0/1/2/3 green/yellow/red/purple zu. Unbekannte, durch Signale und technische Fehler werden purple und niemals erfolgreich.
 

@@ -10,7 +10,31 @@ The command contract is explicit:
 
     $USER1$/sasd-check-plugin --plugin $USER1$/sasd-check-adapter --check sasd --arg $ARG1$ --arg $HOSTNAME$ --arg $ARG2$
 
-`sasd-check-adapter` currently maps only `disk` to the existing `sasd-disk-watch` program and an explicit controlled input file. Other checks return UNKNOWN/NOT IMPLEMENTED. The target hostname is an identity label and the fixture is an explicit argument; this offline adapter does not pretend to check a remote host or silently check the monitoring server in its place. A real remote check requires a separately accepted agent or native Nagios plugin.
+The object arguments are the inventory check and a source token. `$HOSTNAME$`
+labels the target. Set `$USER1$` to a trusted plugin directory whose absolute
+path uses only literal letters, digits, underscores, hyphens, dots and slash
+separators. The generator applies the same restriction to fixture paths and
+rejects traversal.
+
+Host objects use `conn!-` for reachability. Service objects retain their
+inventory check, for example `http!-` for web service availability and
+`disk!-` for filesystem capacity. The `-` token denotes absent measurement
+evidence. All three examples return UNKNOWN (exit 3). For a lab demo, pass
+`--disk-fixture FILE --fixture-host HOST` together. Only the enabled,
+selected host's disk service uses that file. Its output carries
+`source=FIXTURE`. The shared adapter can also read a captured local input
+with `--offline disk HOST FILE`, which labels the result `source=OFFLINE`.
+Check an actual remote filesystem through a separately accepted remote
+measurement source. These candidates contain no `LIVE` measurement path.
+
+The shared runner forwards only explicit `--arg` values. The adapter checks
+the target, input and observation records before returning exit 0/1/2/3 for
+OK/WARNING/CRITICAL/UNKNOWN. For the captured POSIX `df -kP` contract, use
+C-locale columns and single-field mount paths. Empty, header-only, malformed
+or missing observations give UNKNOWN. The highest severity controls both
+exit code and message, with UNKNOWN taking precedence over CRITICAL.
+The offline regression resolves macros and runs the generated argument
+vector directly.
 
 `bin/sasd-status-import-nagios` accepts only SASD's synthetic line format, for example `status web.lab.invalid.http red (1700000000) message`. It applies lifecycle and role checks, rejects duplicates and bounded malformed input, and emits SASD records. It does not parse native `status.dat`, create an authenticated client identity or accept a socket.
 

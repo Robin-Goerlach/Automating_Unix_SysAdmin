@@ -1,36 +1,90 @@
 #!/usr/bin/env perl
-# Validate bounded synthetic Ganglia observations; no XML/network/RRD access.
+# Validate one bounded batch of synthetic observations.
 use strict;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(valid_host valid_epoch);
-my ($input,$now,$freshness)=('','',900);
-while (@ARGV) { my $a=shift @ARGV;
-    if ($a eq '--input') {$input=shift @ARGV}
-    elsif ($a eq '--now') {$now=shift @ARGV}
-    elsif ($a eq '--freshness') {$freshness=shift @ARGV}
-    elsif ($a eq '--help') {print "usage: sasd-ganglia-metric --input FILE [--now EPOCH] [--freshness SECONDS]\n"; exit 0}
-    else {die "unknown argument: $a\n"}
+use SASD::Monitor qw(read_roles read_host_records read_host_state ganglia_clusters valid_epoch);
+
+my %options;
+while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq '--help') {
+        print "usage: sasd-ganglia-metric --input FILE --hosts FILE --roles FILE [--state FILE] [--now EPOCH] [--freshness SECONDS]\n";
+        exit 0;
+    }
+    $arg =~ /\A--(input|hosts|roles|state|now|freshness)\z/ or die "unknown option\n";
+    my $key = $1;
+    @ARGV && length($ARGV[0]) && !exists($options{$key}) or die "invalid option: $arg\n";
+    $options{$key} = shift @ARGV;
 }
-$input && -f $input && !-l $input or die "metric input must be a regular file\n";
-$now = time() if $now eq '';
-$now =~ /\A[0-9]{1,15}\z/ && $freshness =~ /\A[1-9][0-9]{0,8}\z/ or die "invalid time boundary\n";
-my %allowed=map {$_=>1} qw(cpu mem load net_rx net_tx);
-my (%seen,%last); open my $fh,'<',$input or die "cannot read metric input: $!\n";
-while (<$fh>) {
-    length($_) <= 2048 or die "metric line too long\n";
-    chomp; s/\r\z//; next if /^\s*$/ || /^\s*#/;
-    my @v=split /\t/,$_,-1;
-    @v == 7 or die "metric record requires host, cluster, epoch, metric, value, unit, type\n";
-    my ($host,$cluster,$epoch,$metric,$value,$unit,$type)=@v;
-    valid_host($host) && valid_host($cluster) && valid_epoch($epoch) && $allowed{$metric} or die "invalid metric identity\n";
-    $value =~ /\A(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)\z/ or die "invalid metric value\n";
-    $unit =~ /\A[A-Za-z%\/_-]{1,16}\z/ && $type =~ /\A(?:gauge|counter)\z/ or die "invalid metric unit or type\n";
-    my $key="$host\t$cluster\t$metric";
-    exists $seen{$key} && $seen{$key} == $epoch and die "duplicate metric observation\n";
-    defined $last{$key} && $epoch < $last{$key} and die "metric observations are out of order\n";
-    $seen{$key}=$epoch; $last{$key}=$epoch;
-    my $status=($epoch > $now || $now-$epoch > $freshness) ? 'UNKNOWN' : 'OK';
-    print "$status\t$host\t$cluster\t$epoch\t$metric\t$value\t$unit\t$type\n";
+for my $required (qw(input hosts roles)) {
+    exists $options{$required} or die "--$required is required\n";
+}
+my $now = exists $options{now} ? $options{now} : time();
+my $freshness = exists $options{freshness} ? $options{freshness} : 900;
+valid_epoch($now) && $freshness =~ /\A[1-9][0-9]{0,8}\z/ or die "invalid time boundary\n";
+my $roles = read_roles($options{roles});
+my ($hosts) = read_host_records($options{hosts}, $roles, 0);
+my $explicit_state = exists $options{state};
+my $state = read_host_state($explicit_state ? $options{state} : "$options{hosts}.state",
+    $hosts, !$explicit_state);
+my $clusters = ganglia_clusters($hosts, $state);
+
+# Absolute network counters are bytes, independent of any rate calculation.
+my $integer = qr/\A[0-9]{1,15}\z/;
+my $decimal = qr/\A[0-9]{1,6}(?:\.[0-9]{1,6})?\z/;
+my %metrics = (
+    cpu    => ['percent', 'gauge',   $decimal, 100],
+    mem    => ['bytes',   'gauge',   $integer, 999999999999999],
+    load   => ['count',   'gauge',   $decimal, 999999],
+    net_rx => ['bytes',   'counter', $integer, 999999999999999],
+    net_tx => ['bytes',   'counter', $integer, 999999999999999],
+);
+
+# Bound the complete read before looking for newline delimiters. Retain
+# validated rows until the entire file has passed validation.
+my $input = $options{input};
+-f $input && !-l $input or die "metric input must be a regular file\n";
+open(my $fh, '<', $input) or die "cannot read metric input: $!\n";
+binmode $fh;
+my $limit = 262144;
+my $data = '';
+while (length($data) <= $limit) {
+    my $read = read($fh, $data, $limit + 1 - length($data), length($data));
+    defined $read or die "cannot read metric input: $!\n";
+    last if $read == 0;
 }
 close $fh or die "cannot close metric input: $!\n";
+length($data) <= $limit or die "metric input exceeds byte limit\n";
+
+my (%last,@rows);
+my $offset = 0;
+while ($offset < length($data)) {
+    my $end = index($data, "\n", $offset);
+    $end = length($data) if $end < 0;
+    $end - $offset <= 2048 or die "metric line too long\n";
+    my $line = substr($data, $offset, $end - $offset);
+    $offset = $end + 1;
+    $line =~ s/\r\z//;
+    $line !~ /[\x00-\x08\x0a-\x1f\x7f]/ or die "invalid metric control byte\n";
+    next if $line =~ /\A[ \t]*(?:#.*)?\z/;
+    @rows < 4096 or die "too many metric observations\n";
+    my @fields = split /\t/, $line, -1;
+    @fields == 7 or die "metric record requires host, cluster, epoch, metric, value, unit, type\n";
+    my ($host,$cluster,$epoch,$metric,$value,$unit,$type) = @fields;
+    exists($clusters->{$cluster}) && exists($clusters->{$cluster}->{$host}) &&
+        valid_epoch($epoch) && exists($metrics{$metric}) or die "invalid metric identity\n";
+    my ($expected_unit,$expected_type,$format,$maximum) = @{$metrics{$metric}};
+    $unit eq $expected_unit && $type eq $expected_type or die "invalid metric unit or type\n";
+    $value =~ $format && $value <= $maximum or die "invalid metric value\n";
+    my $key = "$host\t$metric";
+    if (exists $last{$key}) {
+        $epoch != $last{$key} or die "duplicate metric observation\n";
+        $epoch > $last{$key} or die "metric observations are out of order\n";
+    }
+    $last{$key} = $epoch;
+    my $status = ($epoch > $now || $now - $epoch > $freshness) ? 'UNKNOWN' : 'OK';
+    push @rows, "$status\t$line\tFIXTURE\n";
+}
+@rows or die "no metric observations\n";
+print @rows or die "cannot write metric batch: $!\n";

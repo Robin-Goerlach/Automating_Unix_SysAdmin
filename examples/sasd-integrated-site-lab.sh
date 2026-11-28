@@ -35,7 +35,7 @@ echo 'A lifecycle add/update/disable/remove/history: PASS'
 "$root/bin/sasd-config-bigbrother" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/bb-hosts"
 "$root/bin/sasd-config-bigsister" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/bigsister.cfg"
 "$root/bin/sasd-config-netsaint" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --out "$out/netsaint.cfg"
-"$root/bin/sasd-config-nagios" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --disk-fixture "$root/fixtures/df/healthy.txt" --out "$out/nagios.cfg" --force
+"$root/bin/sasd-config-nagios" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --checks "$model/checks.tsv" --services "$model/services.tsv" --state "$model/hosts.tsv.state" --disk-fixture "$root/fixtures/df/healthy.txt" --fixture-host lab-web.lab.invalid --out "$out/nagios.cfg" --force
 "$root/bin/sasd-config-ganglia" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --state "$model/hosts.tsv.state" --gmond-out "$out/gmond.conf" --gmetad-out "$out/gmetad.conf" --force
 grep -q 'lab-web.lab.invalid' "$out/bb-hosts"
 if awk '$2 == "web.lab.invalid" || $2 == "mail.lab.invalid" { found=1 } END { exit found ? 0 : 1 }' "$out/bb-hosts"; then
@@ -44,12 +44,12 @@ fi
 grep -q 'check_command.*sasd-check!disk!' "$out/nagios.cfg"
 printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/test 100 20 80 20%% /\n' > "$lab/nagios-df"
 "$root/bin/sasd-check-plugin" --plugin "$root/bin/sasd-check-adapter" --check sasd --arg disk --arg lab-web.lab.invalid --arg "$lab/nagios-df" > "$lab/nagios-check"
-grep -q '^green.*GREEN -' "$lab/nagios-check"
+grep -q '^green.*GREEN - source=FIXTURE' "$lab/nagios-check"
 grep -q 'cluster {' "$out/gmond.conf"
-grep -q 'data_source' "$out/gmetad.conf"
-printf 'lab-web.lab.invalid\tlab\t1700000000\tcpu\t12.5\tpercent\tgauge\n' > "$lab/ganglia.tsv"
-"$root/bin/sasd-ganglia-metric" --input "$lab/ganglia.tsv" --now 1700000001 > "$lab/ganglia.out"
-grep -q '^OK	lab-web.lab.invalid	lab' "$lab/ganglia.out"
+grep -q '^# data_source "default" unresolved' "$out/gmetad.conf"
+printf 'lab-web.lab.invalid\tdefault\t1700000000\tcpu\t12.5\tpercent\tgauge\n' > "$lab/ganglia.tsv"
+"$root/bin/sasd-ganglia-metric" --input "$lab/ganglia.tsv" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --state "$model/hosts.tsv.state" --now 1700000001 > "$lab/ganglia.out"
+grep -q '^OK	lab-web.lab.invalid	default.*FIXTURE$' "$lab/ganglia.out"
 "$root/bin/sasd-db-health-adapter" --input "$root/fixtures/database/health-ok.tsv" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --instances "$model/databases.tsv" --state "$model/hosts.tsv.state" --now 1700000001 > "$lab/database.out"
 grep -q 'mon.lab.invalid.*green.*source=OFFLINE.*instance=erp-primary' "$lab/database.out"
 echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister/NetSaint/Nagios/Ganglia/database): PASS'

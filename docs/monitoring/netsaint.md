@@ -4,7 +4,15 @@ NetSaint is a separate historical product profile, not Nagios syntax retroactive
 
 `bin/sasd-config-netsaint` derives a deterministic `hosts.cfg` candidate from the shared inventory. It emits host, hostgroup, service, command, contact, contactgroup and timeperiod objects, excludes disabled and removed hosts, and uses the existing safe output checks. The target is a NetSaint 0.0.7-era profile; the candidate remains `UNVERIFIED` until that binary parses it on a named historical system.
 
-Its generated `check-sasd` command explicitly supplies `--plugin` to the shared `sasd-check-plugin` runner. This is a contract check for the candidate interface, not evidence that a native NetSaint parser accepts the command line or that a live host is being checked.
+The `check-sasd` command passes the check, host and source to the shared
+adapter using three `--arg` options. `--check sasd` labels the check for
+the runner. The source token `-` produces UNKNOWN. Use
+`--disk-fixture FILE --fixture-host HOST` to bind a synthetic filesystem
+check to one enabled host. Host reachability and service availability
+remain separate checks. The offline regression replaces macros according
+to the candidate contract and executes the resulting argument vector
+without a shell. See the path rules and exit codes in the
+[shared check contract](nagios.md).
 
 `bin/sasd-check-plugin` executes one explicitly selected executable without a shell, combines its standard output and standard error, bounds output while reading, terminates it on timeout, and maps plugin exits 0/1/2/3 to green/yellow/red/purple. Unknown, signal and technical failures are purple; they never become successful checks.
 

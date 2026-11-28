@@ -1,45 +1,52 @@
 #!/usr/bin/env perl
-# Controlled bridge from shared check names to existing SASD programs.
-# It never evaluates an inventory value as shell code and never opens a socket.
+# Bridge one inventory check to a controlled, shell-free observation.
 use strict;
 use FindBin;
-my ($check,$host,$input)=('','','');
-my @values;
-while (@ARGV) { my $a=shift @ARGV;
-    if ($a eq '--check') { defined($check=shift @ARGV) or print("UNKNOWN - missing check\n"), exit 3 }
-    elsif ($a eq '--arg') { my $v=shift @ARGV; defined $v or print("UNKNOWN - missing adapter argument\n"), exit 3; push @values,$v }
-    else { push @values,$a }
+
+sub unknown {
+    print "UNKNOWN - source=UNKNOWN $_[0]\n";
+    exit 3;
 }
-if ($check eq '' && @values >= 3) {
-    ($check,$host,$input)=@values[0,1,2];
-} elsif ($check ne '' && @values >= 2) {
-    ($host,$input)=@values[0,1];
-} elsif ($check eq '' && @values == 2) {
-    ($check,$host)=@values[0,1];
-} elsif ($check eq '' && @values == 1) {
-    $check=$values[0];
+
+# The original three-argument interface denotes a fixture. Explicit offline
+# captures use a separate mode; neither mode establishes live provenance.
+my $source = 'FIXTURE';
+if (@ARGV == 4 && $ARGV[0] eq '--offline') {
+    shift @ARGV;
+    $source = 'OFFLINE';
 }
-$check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/ && $host =~ /\A[A-Za-z0-9][A-Za-z0-9_.-]{0,62}\z/
-    or print("UNKNOWN - invalid check target\n"), exit 3;
-if ($check ne 'disk') { print "UNKNOWN - check '$check' is not implemented by SASD\n"; exit 3 }
-$input ne '' && -f $input && !-l $input or print("UNKNOWN - disk fixture is not a regular file\n"), exit 3;
-my $program="$FindBin::Bin/sasd-disk-watch";
-my $pid=open(my $fh,'-|'); defined $pid or print("UNKNOWN - cannot start disk check\n"), exit 3;
-if (!$pid) { exec {$program} $program, '--host', $host, '--input', $input or exit 3 }
-my ($best,$message)=('green','');
-my %rank=(green=>0,yellow=>1,red=>2,purple=>3);
+@ARGV == 3 or unknown('expected check, host and input');
+my ($check,$host,$input) = @ARGV;
+$check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/ &&
+    $host =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/
+    or unknown('invalid check target');
+$check eq 'disk' or unknown("check '$check' is not implemented by SASD");
+$input ne '-' or unknown('no disk observation configured');
+-f $input && !-l $input && -r $input or unknown('disk input is not a readable regular file');
+
+my $program = "$FindBin::Bin/sasd-disk-watch";
+my $pid = open(my $fh, '-|');
+defined $pid or unknown('cannot start disk check');
+if (!$pid) {
+    exec {$program} $program, '--host', $host, '--input', $input or exit 3;
+}
+my %rank = (green=>0, yellow=>1, red=>2, purple=>3);
+my ($best,$message,$invalid);
 while (<$fh>) {
-    chomp; my @f=split /\t/,$_,4; next unless @f == 4;
-    my $color=$f[2]; next unless exists $rank{$color};
-    if ($rank{$color} > $rank{$best}) {
-        $best=$color;
-        $message=$f[3];
-    } elsif ($message eq '') {
-        $message=$f[3];
+    chomp;
+    my @fields = split /\t/, $_, -1;
+    if (@fields != 4 || $fields[0] ne $host || $fields[1] ne $check ||
+        !exists $rank{$fields[2]} || $fields[3] !~ /\A[^\x00-\x1f\x7f]+\z/) {
+        $invalid = 1;
+        next;
+    }
+    my (undef,undef,$color,$detail) = @fields;
+    if (!defined($best) || $rank{$color} > $rank{$best}) {
+        ($best,$message) = ($color,$detail);
     }
 }
-close $fh; my $rc=$?;
-$rc == 0 or print("UNKNOWN - disk check failed\n"), exit 3;
-$message ||= 'disk check returned no observation';
-print uc($best)," - ",$message,"\n";
-exit($rank{$best});
+close $fh or unknown('disk check failed');
+$invalid and unknown('invalid disk check result');
+defined $best or unknown('disk check returned no observation');
+print uc($best), " - source=$source $message\n";
+exit $rank{$best};

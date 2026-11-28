@@ -6,20 +6,73 @@ use File::Spec;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_roles read_host_records read_host_state read_checks read_services
-    atomic_write ensure_dir paths_conflict);
-my ($hosts,$roles,$checks,$services,$state,$out,$profile)=('','','','','','','1999'); my $force=0; my $state_explicit=0;
-while (@ARGV) { my $a=shift @ARGV;
-    if ($a eq '--hosts') {$hosts=shift @ARGV} elsif ($a eq '--roles') {$roles=shift @ARGV} elsif ($a eq '--checks') {$checks=shift @ARGV} elsif ($a eq '--services') {$services=shift @ARGV} elsif ($a eq '--state') {$state=shift @ARGV; $state_explicit=1} elsif ($a eq '--out') {$out=shift @ARGV} elsif ($a eq '--profile') {$profile=shift @ARGV} elsif ($a eq '--force') {$force=1}
-    elsif ($a eq '--help') { print "usage: sasd-config-netsaint --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--out FILE --force]\n"; exit 0 } else { die "unknown argument: $a\n" }
+    atomic_write ensure_dir paths_conflict disk_fixture_path);
+my ($hosts,$roles,$checks,$services,$state,$out,$profile)=('','','','','','','1999');
+my ($disk_fixture,$fixture_host);
+my $force=0;
+my $state_explicit=0;
+while (@ARGV) {
+    my $arg=shift @ARGV;
+    if ($arg eq '--hosts') { $hosts=shift @ARGV }
+    elsif ($arg eq '--roles') { $roles=shift @ARGV }
+    elsif ($arg eq '--checks') { $checks=shift @ARGV }
+    elsif ($arg eq '--services') { $services=shift @ARGV }
+    elsif ($arg eq '--state') { $state=shift @ARGV; $state_explicit=1 }
+    elsif ($arg eq '--out') { $out=shift @ARGV }
+    elsif ($arg eq '--profile') { $profile=shift @ARGV }
+    elsif ($arg eq '--disk-fixture') { $disk_fixture=shift @ARGV; defined $disk_fixture or die "missing fixture path\n" }
+    elsif ($arg eq '--fixture-host') { $fixture_host=shift @ARGV; defined $fixture_host or die "missing fixture host\n" }
+    elsif ($arg eq '--force') { $force=1 }
+    elsif ($arg eq '--help') {
+        print "usage: sasd-config-netsaint --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--disk-fixture FILE --fixture-host HOST] [--out FILE --force]\n";
+        exit 0;
+    } else { die "unknown argument: $arg\n" }
 }
-$hosts && $roles && $checks && $services or die "hosts, roles, checks and services are required\n"; $profile eq '1999' or die "NetSaint profile is 1999\n";
-for ($hosts,$roles,$checks,$services) { -f $_ && !-l $_ or die "invalid NetSaint input file\n" } $state="$hosts.state" if $state eq '';
-my $rr=read_roles($roles); my ($hr)=read_host_records($hosts,$rr,0); my $sr=read_host_state($state,$hr,!$state_explicit); my %disabled=map {$_=>1} grep {$sr->{$_}->{state} ne 'enabled'} keys %$sr;
-my $cr=read_checks($checks); my $sv=read_services($services,$rr,$cr); my (%groups,%services_by_host);
-for my $h (sort keys %$hr) { next if $disabled{$h}; for my $g (split /,/, $hr->{$h}->{groups}) { push @{$groups{$g}},$h } for my $n (sort keys %$sv) { my $s=$sv->{$n}; next unless $s->{role} eq '*' || $s->{role} eq 'baseline' || $s->{role} eq $hr->{$h}->{role}; push @{$services_by_host{$h}},[$s->{service},$s->{check}] } }
+$hosts && $roles && $checks && $services or die "hosts, roles, checks and services are required\n";
+$profile eq '1999' or die "NetSaint profile is 1999\n";
+$state="$hosts.state" unless $state_explicit;
+my $rr=read_roles($roles);
+my ($hr)=read_host_records($hosts,$rr,0);
+my $sr=read_host_state($state,$hr,!$state_explicit);
+my %disabled=map {$_=>1} grep {$sr->{$_}->{state} ne 'enabled'} keys %$sr;
+my $fixture_path=disk_fixture_path($disk_fixture,$fixture_host,$hr,\%disabled);
+my $cr=read_checks($checks);
+my $sv=read_services($services,$rr,$cr);
+my (%groups,%services_by_host);
+for my $host (sort keys %$hr) {
+    next if $disabled{$host};
+    for my $group (split /,/, $hr->{$host}->{groups}) {
+        push @{$groups{$group}}, $host;
+    }
+    for my $name (sort keys %$sv) {
+        my $service=$sv->{$name};
+        my $role=$service->{role};
+        next unless $role eq '*' || $role eq 'baseline' || $role eq $hr->{$host}->{role};
+        push @{$services_by_host{$host}}, $service;
+    }
+}
 my $text="# SASD NetSaint candidate; profile=1999; target=NetSaint 0.0.7-era syntax.\n# Offline only; review with the selected binary. No daemon or network action is started.\n\n";
-$text.="define timeperiod{\n\ttimeperiod_name\t24x7\n\talias\tAll day\n\t sunday\t00:00-24:00\n\t monday\t00:00-24:00\n\t tuesday\t00:00-24:00\n\t wednesday\t00:00-24:00\n\t thursday\t00:00-24:00\n\t friday\t00:00-24:00\n\t saturday\t00:00-24:00\n}\n\ndefine command{\n\tcommand_name\tcheck-sasd\n\tcommand_line\t\$USER1\$/sasd-check-plugin --check \$ARG1\$\n}\n\ndefine contact{\n\tcontact_name\tsasd-operator\n\talias\tSASD operator\n\temail\toperator\@localhost\n}\n\ndefine contactgroup{\n\tcontactgroup_name\tsasd-operators\n\talias\tSASD operators\n\tmembers\tsasd-operator\n}\n\n";
+$text.="define timeperiod{\n\ttimeperiod_name\t24x7\n\talias\tAll day\n\t sunday\t00:00-24:00\n\t monday\t00:00-24:00\n\t tuesday\t00:00-24:00\n\t wednesday\t00:00-24:00\n\t thursday\t00:00-24:00\n\t friday\t00:00-24:00\n\t saturday\t00:00-24:00\n}\n\ndefine command{\n\tcommand_name\tcheck-sasd\n\tcommand_line\t\$USER1\$/sasd-check-plugin --plugin \$USER1\$/sasd-check-adapter --check sasd --arg \$ARG1\$ --arg \$HOSTNAME\$ --arg \$ARG2\$\n}\n\ndefine contact{\n\tcontact_name\tsasd-operator\n\talias\tSASD operator\n\temail\toperator\@localhost\n}\n\ndefine contactgroup{\n\tcontactgroup_name\tsasd-operators\n\talias\tSASD operators\n\tmembers\tsasd-operator\n}\n\n";
 for my $g (sort keys %groups) { $text.="define hostgroup{\n\thostgroup_name\trole_$g\n\talias\tSASD group $g\n\tmembers\t".join(',',sort @{$groups{$g}})."\n}\n\n" }
-$text =~ s{sasd-check-plugin --check}{sasd-check-plugin --plugin \$USER1\$/sasd-check-adapter --check};
-for my $h (sort keys %$hr) { next if $disabled{$h}; my $r=$hr->{$h}; $text.="define host{\n\thost_name\t$h\n\talias\t$h\n\taddress\t$r->{address}\n\tcheck_command\tcheck-sasd!conn\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\td,u,r\n\tcontact_groups\tsasd-operators\n}\n\n"; for my $s (@{$services_by_host{$h} || []}) { $text.="define service{\n\thost_name\t$h\n\tservice_description\t$s->[0]\n\tcheck_command\tcheck-sasd!$s->[1]\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tnormal_check_interval\t5\n\tretry_check_interval\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\tw,u,c,r\n\tcontact_groups\tsasd-operators\n}\n\n" } }
-if ($out eq '') { print $text; exit 0 } -e $out && !$force and die "output exists; use --force explicitly\n"; for ($hosts,$roles,$checks,$services,$state) { paths_conflict($out,$_) and die "output path overlaps an input file\n" } my (undef,$dir)=File::Spec->splitpath($out); ensure_dir($dir,0750) if length $dir; atomic_write($out,$text,0640); print "output=$out profile=$profile status=APPLIED\n";
+for my $h (sort keys %$hr) {
+    next if $disabled{$h};
+    my $r=$hr->{$h};
+    $text.="define host{\n\thost_name\t$h\n\talias\t$h\n\taddress\t$r->{address}\n\tcheck_command\tcheck-sasd!conn!-\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\td,u,r\n\tcontact_groups\tsasd-operators\n}\n\n";
+    for my $s (@{$services_by_host{$h} || []}) {
+        my $input=$fixture_path && $h eq $fixture_host && $s->{check} eq 'disk'
+            ? $fixture_path : '-';
+        $text.="define service{\n\thost_name\t$h\n\tservice_description\t$s->{service}\n\tcheck_command\tcheck-sasd!$s->{check}!$input\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tnormal_check_interval\t5\n\tretry_check_interval\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\tw,u,c,r\n\tcontact_groups\tsasd-operators\n}\n\n";
+    }
+}
+if ($out eq '') {
+    print $text;
+    exit 0;
+}
+-e $out && !$force and die "output exists; use --force explicitly\n";
+for my $input ($hosts,$roles,$checks,$services,$state,grep {length} $fixture_path) {
+    paths_conflict($out,$input) and die "output path overlaps an input file\n";
+}
+my (undef,$dir)=File::Spec->splitpath($out);
+ensure_dir($dir,0750) if length $dir;
+atomic_write($out,$text,0640);
+print "output=$out profile=$profile status=APPLIED\n";

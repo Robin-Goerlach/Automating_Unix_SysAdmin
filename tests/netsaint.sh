@@ -7,6 +7,33 @@ grep -q '^define host{' "$tmp/hosts.cfg"
 grep -q 'check-sasd!http' "$tmp/hosts.cfg"
 grep -q 'command_line.*sasd-check-plugin.*--plugin.*sasd-check-adapter' "$tmp/hosts.cfg"
 grep -q 'hostgroup_name[[:space:]]*role_lab' "$tmp/hosts.cfg"
+netsaint() {
+    bin/sasd-config-netsaint --hosts site/hosts.tsv --roles site/roles.tsv \
+        --checks site/checks.tsv --services site/services.tsv "$@"
+}
+rc=0
+perl tests/classic-candidate-command.pl "$tmp/hosts.cfg" web.lab.invalid filesystem > "$tmp/no-source" || rc=$?
+[ "$rc" -eq 3 ]
+grep -q '^purple.*source=UNKNOWN no disk observation configured' "$tmp/no-source"
+for case in 'healthy 1 YELLOW' 'critical 2 RED' 'invalid 3 PURPLE' 'ok 0 GREEN'; do
+    set -- $case
+    input="$tmp/observation"
+    if [ "$1" = ok ]; then
+        printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/test 100 20 80 20%% /\n' > "$input"
+    else
+        cp "fixtures/df/$1.txt" "$input"
+    fi
+    netsaint --disk-fixture "$input" --fixture-host web.lab.invalid > "$tmp/fixture.cfg"
+    rc=0
+    perl tests/classic-candidate-command.pl "$tmp/fixture.cfg" web.lab.invalid filesystem > "$tmp/result" || rc=$?
+    [ "$rc" -eq "$2" ]
+    grep -q "$3 - source=FIXTURE" "$tmp/result"
+done
+mv "$tmp/observation" "$tmp/observation-moved"
+rc=0
+perl tests/classic-candidate-command.pl "$tmp/fixture.cfg" web.lab.invalid filesystem > "$tmp/missing" || rc=$?
+[ "$rc" -eq 3 ]
+grep -q '^purple.*source=UNKNOWN disk input' "$tmp/missing"
 printf 'web.lab.invalid\tdisabled\toperator\n' > "$tmp/state.tsv"
 if bin/sasd-config-netsaint --hosts site/hosts.tsv --roles site/roles.tsv --checks site/checks.tsv --services site/services.tsv --state "$tmp/state.tsv" | grep -q web.lab.invalid; then
     echo 'disabled host emitted by NetSaint adapter' >&2; exit 1
