@@ -36,6 +36,10 @@ exit code and message, with UNKNOWN taking precedence over CRITICAL.
 The offline regression resolves macros and runs the generated argument
 vector directly.
 
+`--database-config FILE` adds host-bound database services from shared
+offline monitoring. See the candidate contract and status projection in
+[database monitoring](database.md).
+
 `bin/sasd-status-import-nagios` accepts only SASD's synthetic line format, for example `status web.lab.invalid.http red (1700000000) message`. It applies lifecycle and role checks, rejects duplicates and bounded malformed input, and emits SASD records. It does not parse native `status.dat`, create an authenticated client identity or accept a socket.
 
 Historical evidence reviewed:

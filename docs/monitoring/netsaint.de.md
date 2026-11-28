@@ -16,6 +16,10 @@ Shell aus. Pfadregeln und Exit-Codes stehen in der Dokumentation des
 
 `bin/sasd-check-plugin` startet genau eine ausgewählte ausführbare Datei ohne Shell, führt Standardausgabe und Standardfehler zusammen, begrenzt die Ausgabe bereits beim Einlesen, beendet den Prozess bei Timeout und ordnet Exit 0/1/2/3 green/yellow/red/purple zu. Unbekannte, durch Signale und technische Fehler werden purple und niemals erfolgreich.
 
+`--database-config DATEI` ergänzt die hostgebundenen Datenbankdienste aus
+dem gemeinsamen Offline-Monitoring. Der Kandidatenvertrag und die
+Statusprojektion stehen im [Datenbank-Monitoring](database.de.md).
+
 `bin/sasd-status-import-netsaint` akzeptiert nur synthetische Offlinezeilen der Form `status HOST.CHECK COLOR (EPOCH) MESSAGE`. Der gemeinsame Host-Lebenszyklus wird angewendet; Beobachtungen für deaktivierte oder entfernte Hosts werden vor der Prüfung von Identität, Rolle, Farben, Duplikaten und Meldungslänge abgewiesen. Kein natives `status.dat`, keine vorgetäuschte SASD-Identität, kein Socket und kein NetSaint-Start. Die Kandidatin wird unter `netsaint/hosts.cfg` staged; produktive Pfade bleiben unberührt.
 
 Exakte Grammatik, Argumente, Benachrichtigungen, Abhängigkeiten und Parserkompatibilität von 1999 werden nicht behauptet. Nagios bleibt P4, Ganglia P5.

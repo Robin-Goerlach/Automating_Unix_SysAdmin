@@ -6,10 +6,10 @@ use File::Spec;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_roles read_host_records read_host_state read_checks read_services
-    atomic_write ensure_dir paths_conflict disk_fixture_path);
+    atomic_write ensure_dir paths_conflict disk_fixture_path classic_database_services);
 
 my ($hosts,$roles,$checks,$services,$state,$out,$profile)=('','','','','','','nagios-1.0a7');
-my ($disk_fixture,$fixture_host);
+my ($disk_fixture,$fixture_host,$db_config);
 my $force=0;
 my $state_explicit=0;
 while (@ARGV) {
@@ -23,8 +23,12 @@ while (@ARGV) {
     elsif ($a eq '--profile') {$profile=shift @ARGV}
     elsif ($a eq '--disk-fixture') { $disk_fixture=@ARGV ? shift @ARGV : die "missing fixture path\n" }
     elsif ($a eq '--fixture-host') { $fixture_host=@ARGV ? shift @ARGV : die "missing fixture host\n" }
+    elsif ($a eq '--database-config') {
+        $db_config=shift @ARGV;
+        defined $db_config or die "missing database configuration path\n";
+    }
     elsif ($a eq '--force') {$force=1}
-    elsif ($a eq '--help') { print "usage: sasd-config-nagios --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--disk-fixture FILE --fixture-host HOST] [--profile nagios-1.0a7] [--out FILE --force]\n"; exit 0 }
+    elsif ($a eq '--help') { print "usage: sasd-config-nagios --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--disk-fixture FILE --fixture-host HOST] [--database-config FILE] [--profile nagios-1.0a7] [--out FILE --force]\n"; exit 0 }
     else { die "unknown argument: $a\n" }
 }
 $hosts && $roles && $checks && $services or die "hosts, roles, checks and services are required\n";
@@ -36,6 +40,7 @@ my ($hr)=read_host_records($hosts,$rr,0);
 my $sr=read_host_state($state,$hr,!$state_explicit);
 my %disabled=map {$_=>1} grep {$sr->{$_}->{state} ne 'enabled'} keys %$sr;
 my $fixture_path=disk_fixture_path($disk_fixture,$fixture_host,$hr,\%disabled);
+my ($database_services,$database_inputs) = classic_database_services($db_config,$hr,\%disabled);
 my $cr=read_checks($checks);
 my $sv=read_services($services,$rr,$cr);
 my (%groups,%service_groups,%services_by_host);
@@ -47,6 +52,15 @@ for my $h (sort keys %$hr) {
         next unless $s->{role} eq '*' || $s->{role} eq 'baseline' || $s->{role} eq $hr->{$h}->{role};
         push @{$services_by_host{$h}},$s;
         push @{$service_groups{$s->{service}}},"$h,$s->{service}";
+    }
+}
+for my $host (sort keys %$database_services) {
+    my %names = map { lc($_->{service}) => 1 } @{$services_by_host{$host} || []};
+    for my $service (@{$database_services->{$host}}) {
+        my $check = $service->{check};
+        exists $names{lc $check} and die "database service overlaps an inventory service\n";
+        push @{$services_by_host{$host}}, $service;
+        push @{$service_groups{$check}}, "$host,$check";
     }
 }
 my $text="# SASD Nagios candidate; profile=$profile; target release artifact dated 2002-03-13.\n"
@@ -63,13 +77,13 @@ for my $h (sort keys %$hr) {
     my $r=$hr->{$h};
     $text.="define host{\n\thost_name\t$h\n\talias\t$h\n\taddress\t$r->{address}\n\thostgroups\t".join(',',map {"role_$_"} grep {length} split /,/, $r->{groups})."\n\tcheck_command\tsasd-check!conn!-\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tactive_checks_enabled\t1\n\tpassive_checks_enabled\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\td,u,r\n\tcontact_groups\tsasd-operators\n}\n\n";
     for my $s (@{$services_by_host{$h} || []}) {
-        my $fixture = $fixture_path && $h eq $fixture_host && $s->{check} eq 'disk'
-            ? $fixture_path : '-';
+        my $fixture = $s->{input} ||
+            ($fixture_path && $h eq $fixture_host && $s->{check} eq 'disk' ? $fixture_path : '-');
         $text.="define service{\n\thost_name\t$h\n\tservice_description\t$s->{service}\n\tservicegroups\tservice_$s->{service}\n\tcheck_command\tsasd-check!$s->{check}!$fixture\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tcheck_interval\t5\n\tretry_interval\t1\n\tactive_checks_enabled\t1\n\tpassive_checks_enabled\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\tw,u,c,r\n\tcontact_groups\tsasd-operators\n}\n\n";
     }
 }
 if ($out eq '') { print $text; exit 0 }
 -e $out && !$force and die "output exists; use --force explicitly\n";
-for my $input ($hosts,$roles,$checks,$services,$state,grep {length} $fixture_path) { paths_conflict($out,$input) and die "output path overlaps an input file\n" }
+for my $input ($hosts,$roles,$checks,$services,$state,grep {length} ($fixture_path,@$database_inputs)) { paths_conflict($out,$input) and die "output path overlaps an input file\n" }
 my (undef,$dir)=File::Spec->splitpath($out); ensure_dir($dir,0750) if length $dir;
 atomic_write($out,$text,0640); print "output=$out profile=$profile status=APPLIED\n";

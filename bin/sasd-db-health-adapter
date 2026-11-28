@@ -15,10 +15,10 @@ my %options;
 while (@ARGV) {
     my $arg = shift @ARGV;
     if ($arg eq '--help') {
-        print "usage: sasd-db-health-adapter --input FILE --hosts FILE --roles FILE --instances FILE [--state FILE] [--now EPOCH] [--freshness SECONDS] [--warn-active N --crit-active N]\n";
+        print "usage: sasd-db-health-adapter --input FILE --hosts FILE --roles FILE --instances FILE [--state FILE] [--now EPOCH] [--freshness SECONDS] [--warn-active N --crit-active N] [--format status|mrtg|rrd --instance ID]\n";
         exit 0;
     }
-    $arg =~ /\A--(input|hosts|roles|instances|state|now|freshness|warn-active|crit-active)\z/
+    $arg =~ /\A--(input|hosts|roles|instances|state|now|freshness|warn-active|crit-active|format|instance)\z/
         or unknown('unknown database adapter option');
     my $key = $1;
     @ARGV && length($ARGV[0]) && !exists($options{$key})
@@ -28,6 +28,12 @@ while (@ARGV) {
 for my $required (qw(input hosts roles instances)) {
     exists $options{$required} or unknown("--$required is required");
 }
+my $output = exists($options{format}) ? $options{format} : 'status';
+$output =~ /\A(?:status|mrtg|rrd)\z/ or unknown('invalid output format');
+my $target = $options{instance};
+($output eq 'status' && !defined($target)) ||
+    ($output ne 'status' && valid_identifier($target))
+    or unknown('metric output requires an explicit instance');
 my $now = exists($options{now}) ? $options{now} : time();
 my $freshness = exists($options{freshness}) ? $options{freshness} : 900;
 valid_epoch($now) && $freshness =~ /\A[1-9][0-9]{0,8}\z/ or unknown('invalid database time boundaries');
@@ -102,6 +108,7 @@ for my $key (qw(connections active uptime)) {
     $observation{$key} =~ /\A(?:[0-9]{1,15}|unknown)\z/ or unknown('invalid database metric');
 }
 
+!defined($target) || $id eq $target or unknown('observation does not match metric target');
 my $record = $instances->{$id};
 defined $record or unknown('unknown database instance');
 $record->{host} eq $host or unknown('database instance host mismatch');
@@ -115,7 +122,7 @@ my %tested_families = (
 );
 my $expected = $record->{version};
 my ($connections,$active,$uptime) = @observation{qw(connections active uptime)};
-my ($color,$reason) = ('purple','');
+my $reason = '';
 if ($record->{product} ne $product || $version !~ /\A\Q$expected\E(?:\.|\z)/) {
     $reason = 'product or version does not match inventory';
 } elsif ($version !~ $tested_families{$product}) {
@@ -130,16 +137,32 @@ if ($record->{product} ne $product || $version !~ /\A\Q$expected\E(?:\.|\z)/) {
     $reason = 'health metric unavailable';
 } elsif ($product eq 'postgresql' && $active > $connections) {
     $reason = 'active client backends exceed total client backends';
-} elsif (!defined $warn) {
-    $reason = 'no active-session policy configured';
-} elsif ($active >= $crit) {
-    ($color,$reason) = ('red', 'active sessions at or above critical threshold');
-} elsif ($active >= $warn) {
-    ($color,$reason) = ('yellow', 'active sessions at or above warning threshold');
-} else {
-    ($color,$reason) = ('green', 'active sessions below warning threshold');
 }
 my $check = $record->{check};
+if ($output eq 'rrd') {
+    # Emit an explicit UNKNOWN sample for an eligible unavailable snapshot.
+    my @metrics = $reason eq '' ? ($connections,$active,$uptime) : ('U','U','U');
+    print join("\t", $host,$check,join(':', $epoch,@metrics)), "\n";
+    exit($reason eq '' ? 0 : 3);
+}
+if ($output eq 'mrtg') {
+    $reason eq '' or unknown($reason);
+    print join("\n", $connections,$active,$uptime,"$host/$id"), "\n";
+    exit 0;
+}
+
+my $color = 'purple';
+if ($reason eq '') {
+    if (!defined $warn) {
+        $reason = 'no active-session policy configured';
+    } elsif ($active >= $crit) {
+        ($color,$reason) = ('red', 'active sessions at or above critical threshold');
+    } elsif ($active >= $warn) {
+        ($color,$reason) = ('yellow', 'active sessions at or above warning threshold');
+    } else {
+        ($color,$reason) = ('green', 'active sessions below warning threshold');
+    }
+}
 my $message = "source=OFFLINE diagnostic=db-health instance=$id reason=$reason";
 if ($color ne 'purple') {
     $message .= " product=$product version=$version connections=$connections active=$active uptime=$uptime";

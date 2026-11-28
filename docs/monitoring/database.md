@@ -101,5 +101,66 @@ transition rows remain available under the existing retention policy.
 latest status, cycle, independent transitions, acknowledgement, alert
 assessment and the HTML report. The [integrated site lab](../../examples/sasd-integrated-site-lab.sh)
 also imports both fixtures and renders their observation times. Native
-SQL clients, servers, TLS, transport, external monitoring products and
-time-series integrations require separate acceptance.
+SQL clients, servers, TLS and transport require separate acceptance.
+
+## Historical product candidates
+
+Pass `--database-config FILE` to either classic configuration generator
+to add one service per eligible instance. The macro argument vector
+points to the opt-in SASD lab configuration and calls the shared adapter.
+It reads the canonical cycle verdict and checks freshness again at plugin
+time. Missing state, stale observations, source mismatch and targets
+removed since generation return UNKNOWN. The candidate pairs the host with
+the exact `db_<instance>` service and preserves exits 0/1/2/3.
+
+    bin/sasd-db-status-export --config FILE --product bigbrother
+    bin/sasd-db-status-export --config FILE --product bigsister
+
+These are synthetic review records for the two existing SASD interfaces.
+Big Brother emits `host.check color (epoch) message`. Big Sister requires
+the leading `status` token. The epoch is present when the canonical row
+has a valid observation time. Both retain distinct checks and UNKNOWN.
+The exports neither publish to the daemons nor change the canonical state.
+
+## Numeric candidates
+
+For a validated snapshot, pass `--instance ID` and
+`--format mrtg` or `--format rrd` instead of health options. This selects
+one instance and evaluates evidence quality independently of health
+thresholds.
+
+| Metric | Unit | Time-series type |
+| --- | --- | --- |
+| `connections` | Connections or client backends | Gauge |
+| `active` | Active sessions or client backends | Gauge |
+| `uptime` | Seconds since server or postmaster start | Gauge |
+
+Uptime is an elapsed duration that may reset on restart. The MRTG external
+target emits the two connection/activity gauges, uptime and the
+`host/instance` label as four lines. Configure the target with the
+`gauge` option, an appropriate limit and no `unknaszero`. Poll on the
+normal configured interval with no synthetic `--now` override and only
+trusted literal paths. On missing or stale evidence the command fails
+without gauges. MRTG associates samples with poll time. [MRTG external target reference](https://mrtg.org/mrtg/doc/mrtg-reference.en.html)
+
+RRD mode writes `host<TAB>check<TAB>epoch:connections:active:uptime`.
+An eligible unavailable observation emits `U:U:U` and exits 3. Rejected
+identity or malformed input emits no sample. Pass only current samples
+and, if needed, deliberate UNKNOWN samples in chronological order to
+the existing wrapper.
+
+    bin/sasd-rrd-cycle create-database LAB_RRD_DIR HOST db_INSTANCE START_EPOCH
+    bin/sasd-rrd-cycle update-database LAB_RRD_DIR SAMPLE.tsv
+
+Use an existing disposable directory with an absolute path and one writer
+per instance file. Choose a start epoch strictly before the first
+measurement. The wrapper names the file `HOST.db_INSTANCE.rrd` and sends
+the observation epoch with an explicit datasource template. The step is
+300 seconds and heartbeat 600 seconds. Retention is 24 hours at 5-minute
+AVERAGE resolution, and 7 days at 1-hour AVERAGE and MAX resolution.
+Consolidation uses an unknown fraction of 0.5. [RRDtool create reference](https://oss.oetiker.ch/rrdtool/doc/rrdcreate.en.html) · [RRDtool update reference](https://oss.oetiker.ch/rrdtool/doc/rrdupdate.en.html)
+
+`tests/database-products.sh` executes generated plugin argument vectors,
+parses both synthetic exports, checks the four MRTG target lines, and verifies
+RRDtool arguments with a local binary double. The native parsers, notification
+delivery, graphs and historical packages still require acceptance.

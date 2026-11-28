@@ -6,9 +6,9 @@ use File::Spec;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use SASD::Monitor qw(read_roles read_host_records read_host_state read_checks read_services
-    atomic_write ensure_dir paths_conflict disk_fixture_path);
+    atomic_write ensure_dir paths_conflict disk_fixture_path classic_database_services);
 my ($hosts,$roles,$checks,$services,$state,$out,$profile)=('','','','','','','1999');
-my ($disk_fixture,$fixture_host);
+my ($disk_fixture,$fixture_host,$db_config);
 my $force=0;
 my $state_explicit=0;
 while (@ARGV) {
@@ -22,9 +22,13 @@ while (@ARGV) {
     elsif ($arg eq '--profile') { $profile=shift @ARGV }
     elsif ($arg eq '--disk-fixture') { $disk_fixture=shift @ARGV; defined $disk_fixture or die "missing fixture path\n" }
     elsif ($arg eq '--fixture-host') { $fixture_host=shift @ARGV; defined $fixture_host or die "missing fixture host\n" }
+    elsif ($arg eq '--database-config') {
+        $db_config=shift @ARGV;
+        defined $db_config or die "missing database configuration path\n";
+    }
     elsif ($arg eq '--force') { $force=1 }
     elsif ($arg eq '--help') {
-        print "usage: sasd-config-netsaint --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--disk-fixture FILE --fixture-host HOST] [--out FILE --force]\n";
+        print "usage: sasd-config-netsaint --hosts FILE --roles FILE --checks FILE --services FILE [--state FILE] [--disk-fixture FILE --fixture-host HOST] [--database-config FILE] [--out FILE --force]\n";
         exit 0;
     } else { die "unknown argument: $arg\n" }
 }
@@ -36,6 +40,7 @@ my ($hr)=read_host_records($hosts,$rr,0);
 my $sr=read_host_state($state,$hr,!$state_explicit);
 my %disabled=map {$_=>1} grep {$sr->{$_}->{state} ne 'enabled'} keys %$sr;
 my $fixture_path=disk_fixture_path($disk_fixture,$fixture_host,$hr,\%disabled);
+my ($database_services,$database_inputs) = classic_database_services($db_config,$hr,\%disabled);
 my $cr=read_checks($checks);
 my $sv=read_services($services,$rr,$cr);
 my (%groups,%services_by_host);
@@ -51,6 +56,14 @@ for my $host (sort keys %$hr) {
         push @{$services_by_host{$host}}, $service;
     }
 }
+for my $host (sort keys %$database_services) {
+    my %names = map { lc($_->{service}) => 1 } @{$services_by_host{$host} || []};
+    for my $service (@{$database_services->{$host}}) {
+        my $check = $service->{check};
+        exists $names{lc $check} and die "database service overlaps an inventory service\n";
+        push @{$services_by_host{$host}}, $service;
+    }
+}
 my $text="# SASD NetSaint candidate; profile=1999; target=NetSaint 0.0.7-era syntax.\n# Offline only; review with the selected binary. No daemon or network action is started.\n\n";
 $text.="define timeperiod{\n\ttimeperiod_name\t24x7\n\talias\tAll day\n\t sunday\t00:00-24:00\n\t monday\t00:00-24:00\n\t tuesday\t00:00-24:00\n\t wednesday\t00:00-24:00\n\t thursday\t00:00-24:00\n\t friday\t00:00-24:00\n\t saturday\t00:00-24:00\n}\n\ndefine command{\n\tcommand_name\tcheck-sasd\n\tcommand_line\t\$USER1\$/sasd-check-plugin --plugin \$USER1\$/sasd-check-adapter --check sasd --arg \$ARG1\$ --arg \$HOSTNAME\$ --arg \$ARG2\$\n}\n\ndefine contact{\n\tcontact_name\tsasd-operator\n\talias\tSASD operator\n\temail\toperator\@localhost\n}\n\ndefine contactgroup{\n\tcontactgroup_name\tsasd-operators\n\talias\tSASD operators\n\tmembers\tsasd-operator\n}\n\n";
 for my $g (sort keys %groups) { $text.="define hostgroup{\n\thostgroup_name\trole_$g\n\talias\tSASD group $g\n\tmembers\t".join(',',sort @{$groups{$g}})."\n}\n\n" }
@@ -59,8 +72,8 @@ for my $h (sort keys %$hr) {
     my $r=$hr->{$h};
     $text.="define host{\n\thost_name\t$h\n\talias\t$h\n\taddress\t$r->{address}\n\tcheck_command\tcheck-sasd!conn!-\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\td,u,r\n\tcontact_groups\tsasd-operators\n}\n\n";
     for my $s (@{$services_by_host{$h} || []}) {
-        my $input=$fixture_path && $h eq $fixture_host && $s->{check} eq 'disk'
-            ? $fixture_path : '-';
+        my $input = $s->{input} ||
+            ($fixture_path && $h eq $fixture_host && $s->{check} eq 'disk' ? $fixture_path : '-');
         $text.="define service{\n\thost_name\t$h\n\tservice_description\t$s->{service}\n\tcheck_command\tcheck-sasd!$s->{check}!$input\n\tcheck_period\t24x7\n\tmax_check_attempts\t3\n\tnormal_check_interval\t5\n\tretry_check_interval\t1\n\tnotification_interval\t60\n\tnotification_period\t24x7\n\tnotification_options\tw,u,c,r\n\tcontact_groups\tsasd-operators\n}\n\n";
     }
 }
@@ -69,7 +82,7 @@ if ($out eq '') {
     exit 0;
 }
 -e $out && !$force and die "output exists; use --force explicitly\n";
-for my $input ($hosts,$roles,$checks,$services,$state,grep {length} $fixture_path) {
+for my $input ($hosts,$roles,$checks,$services,$state,grep {length} ($fixture_path,@$database_inputs)) {
     paths_conflict($out,$input) and die "output path overlaps an input file\n";
 }
 my (undef,$dir)=File::Spec->splitpath($out);

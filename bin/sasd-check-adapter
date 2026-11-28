@@ -2,6 +2,8 @@
 # Bridge one inventory check to a controlled, shell-free observation.
 use strict;
 use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(database_projection database_result);
 
 sub unknown {
     print "UNKNOWN - source=UNKNOWN $_[0]\n";
@@ -20,6 +22,22 @@ my ($check,$host,$input) = @ARGV;
 $check =~ /\A[A-Za-z][A-Za-z0-9_-]{0,31}\z/ &&
     $host =~ /\A[A-Za-z0-9](?:[A-Za-z0-9_.-]{0,61}[A-Za-z0-9])?\z/
     or unknown('invalid check target');
+if ($check =~ /\Adb_/) {
+    $source eq 'FIXTURE' or unknown('invalid database projection mode');
+    my ($checks,$state,$freshness);
+    my $ok = eval {
+        ($checks,$state,$freshness) = database_projection($input);
+        1;
+    };
+    $ok or unknown('cannot read offline database state');
+    exists($checks->{$check}) && $checks->{$check}->{host} eq $host
+        or unknown('database check is not assigned to this host');
+    my ($color,$message) = database_result($state->{"$host\t$check"},$freshness,time());
+    my %code = (green=>0, yellow=>1, red=>2, purple=>3);
+    my @label = qw(OK WARNING CRITICAL UNKNOWN);
+    print "$label[$code{$color}] - $message\n";
+    exit $code{$color};
+}
 $check eq 'disk' or unknown("check '$check' is not implemented by SASD");
 $input ne '-' or unknown('no disk observation configured');
 -f $input && !-l $input && -r $input or unknown('disk input is not a readable regular file');

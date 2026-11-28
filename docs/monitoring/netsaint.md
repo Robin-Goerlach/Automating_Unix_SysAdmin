@@ -16,6 +16,10 @@ without a shell. See the path rules and exit codes in the
 
 `bin/sasd-check-plugin` executes one explicitly selected executable without a shell, combines its standard output and standard error, bounds output while reading, terminates it on timeout, and maps plugin exits 0/1/2/3 to green/yellow/red/purple. Unknown, signal and technical failures are purple; they never become successful checks.
 
+`--database-config FILE` adds host-bound database services from shared
+offline monitoring. See the candidate contract and status projection in
+[database monitoring](database.md).
+
 `bin/sasd-status-import-netsaint` accepts only synthetic offline lines of the form `status HOST.CHECK COLOR (EPOCH) MESSAGE`. It applies the shared host lifecycle state and rejects observations for disabled or removed hosts before shared validation checks identity, role applicability, colors, duplicates and message bounds. It does not parse native `status.dat`, impersonate an authenticated SASD client, open a socket or start NetSaint. Deployment stages the candidate under `netsaint/hosts.cfg`; no production path is touched.
 
 Exact 1999 grammar, arguments, notifications, dependencies and parser compatibility are not claimed. Nagios remains a separate later P4 integration; Ganglia remains P5.

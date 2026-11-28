@@ -1,20 +1,39 @@
 #!/bin/sh
-# Optional RRDtool bridge; historical 1999 profile. Explicit lab-only paths.
-# No network access or daemon. Creation is never implicit during update.
+# Optional RRDtool bridge. Creation and update are explicit operations.
 set -eu
 usage() {
-    echo "usage: sasd-rrd-cycle create FILE | sasd-rrd-cycle update FILE IN OUT" >&2
+    echo "usage: sasd-rrd-cycle create FILE | update FILE IN OUT" >&2
+    echo "       sasd-rrd-cycle create-database DIR HOST CHECK START | update-database DIR SAMPLE" >&2
     exit 2
 }
+invalid() {
+    echo "$1" >&2
+    exit 3
+}
 [ "$#" -ge 2 ] || usage
-command -v rrdtool >/dev/null 2>&1 || { echo "rrdtool is not installed" >&2; exit 3; }
 action=$1
 file=$2
-[ ! -L "$file" ] || { echo "refusing symlink" >&2; exit 3; }
+[ ! -L "$file" ] || invalid 'refusing symlink'
+
+database_file() {
+    # The database is always named from the inventory host and check in
+    # the requested directory. Arguments remain separate shell words.
+    [ -d "$file" ] || invalid 'database RRD directory is missing'
+    [ "${#1}" -le 63 ] && [ "${#2}" -le 32 ] || invalid 'invalid database identity'
+    case "$1" in ''|[!A-Za-z0-9]*|*[!A-Za-z0-9]) invalid 'invalid database host' ;; esac
+    case "$1" in *[!A-Za-z0-9_.-]*) invalid 'invalid database host' ;; esac
+    case "$2" in db_[A-Za-z]*) ;; *) invalid 'invalid database check' ;; esac
+    case "$2" in *[!A-Za-z0-9_-]*) invalid 'invalid database check' ;; esac
+    case "$file" in /*) ;; *) invalid 'database RRD directory must be absolute' ;; esac
+    file=$file/$1.$2.rrd
+    [ ! -L "$file" ] || invalid 'refusing symlink'
+}
+
+command -v rrdtool >/dev/null 2>&1 || invalid 'rrdtool is not installed'
 case "$action" in
  create)
     [ "$#" -eq 2 ] || usage
-    [ ! -e "$file" ] || { echo "database already exists" >&2; exit 3; }
+    [ ! -e "$file" ] || invalid 'database already exists'
     rrdtool create "$file" --step 300 \
       DS:in:COUNTER:600:0:U DS:out:COUNTER:600:0:U \
       RRA:AVERAGE:0.5:1:288 RRA:AVERAGE:0.5:12:168 \
@@ -22,9 +41,44 @@ case "$action" in
     ;;
  update)
     [ "$#" -eq 4 ] || usage
-    [ -f "$file" ] || { echo "database not found" >&2; exit 3; }
+    [ -f "$file" ] || invalid 'database not found'
     case "$3:$4" in *[!0-9:]*|'') echo "counters must be nonnegative integers" >&2; exit 2;; esac
     rrdtool update "$file" "N:$3:$4"
+    ;;
+ create-database)
+    [ "$#" -eq 5 ] || usage
+    database_file "$3" "$4"
+    [ ! -e "$file" ] || invalid 'database already exists'
+    case "$5" in ''|*[!0-9]*) invalid 'invalid RRD start epoch' ;; esac
+    [ "${#5}" -le 15 ] || invalid 'invalid RRD start epoch'
+    rrdtool create "$file" --start "$5" --step 300 \
+        DS:connections:GAUGE:600:0:U DS:active:GAUGE:600:0:U DS:uptime:GAUGE:600:0:U \
+        RRA:AVERAGE:0.5:1:288 RRA:AVERAGE:0.5:12:168 RRA:MAX:0.5:12:168
+    ;;
+ update-database)
+    [ "$#" -eq 3 ] || usage
+    sample=$3
+    [ -f "$sample" ] && [ ! -L "$sample" ] || invalid 'invalid database metric sample'
+    # Bound the read before splitting the tab-separated fields. The final
+    # field is the exact update vector supplied by the database adapter.
+    sample_fields=$(LC_ALL=C dd if="$sample" bs=257 count=1 2>/dev/null | LC_ALL=C awk -F '\t' '
+        NR != 1 || NF != 3 || length($0) >= 256 { exit 1 }
+        $1 !~ /^[A-Za-z0-9_.-]+$/ || $2 !~ /^[A-Za-z0-9_-]+$/ { exit 1 }
+        {
+            if (split($3, value, ":") != 4 ||
+                value[1] !~ /^[0-9]+$/ || length(value[1]) > 15) exit 1
+            for (i = 2; i <= 4; i++)
+                if (value[i] != "U" && (value[i] !~ /^[0-9]+$/ || length(value[i]) > 15)) exit 1
+            print $1, $2, $3
+        }
+        END { if (NR != 1) exit 1 }
+    ') || invalid 'invalid database metric sample'
+    IFS=' ' read -r host check update <<EOF_SAMPLE
+$sample_fields
+EOF_SAMPLE
+    database_file "$host" "$check"
+    [ -f "$file" ] || invalid 'database not found'
+    rrdtool update "$file" --template connections:active:uptime "$update"
     ;;
  *) usage ;;
 esac

@@ -111,5 +111,70 @@ Latest-Zustand, Zyklus, getrennte Statuswechsel, Quittierung,
 Alarmierungsbewertung und HTML-Bericht. Das
 [integrierte Site-Labor](../../examples/sasd-integrated-site-lab.sh)
 importiert beide Fixtures und zeigt ihre Messzeitpunkte. Native SQL-Clients,
-Server, TLS, Transport, externe Monitoring-Produkte und Zeitreihenanbindungen
-benötigen eine separate Abnahme.
+Server, TLS und Transport benötigen eine separate Abnahme.
+
+## Historische Produktkandidaten
+
+`--database-config DATEI` ergänzt bei beiden klassischen Generatoren einen
+Dienst je zugelassener Instanz. Der aus Makros gebildete Argumentvektor
+verweist auf die aktivierte SASD-Laborkonfiguration und ruft den gemeinsamen
+Adapter auf. Der Adapter liest das kanonische Ergebnis des Zyklus und
+prüft die Frische erneut zum Plugin-Zeitpunkt. Fehlender Zustand,
+veraltete Beobachtung, fremde Quelle und nach der Generierung entfernte
+Ziele liefern UNKNOWN. Der Kandidat verwendet die exakte Zuordnung von Host
+und Dienst `db_<instanz>` und erhält die Exit-Codes 0/1/2/3.
+
+    bin/sasd-db-status-export --config DATEI --product bigbrother
+    bin/sasd-db-status-export --config DATEI --product bigsister
+
+Dies sind synthetische Prüfdatensätze für die beiden bestehenden
+SASD-Schnittstellen. Big Brother gibt `host.check color (epoch) message`
+aus. Big Sister verlangt das vorangestellte Token `status`. Ein gültiger
+Messzeitpunkt aus dem kanonischen Zustand bleibt erhalten. Beide Exporte
+bewahren getrennte Checks und UNKNOWN. Die Ausgabe verbleibt außerhalb
+der Daemons und ändert den kanonischen Zustand nicht.
+
+## Numerische Kandidaten
+
+Für einen geprüften Snapshot `--instance ID` mit `--format mrtg` oder
+`--format rrd` anstelle der Gesundheitsoptionen angeben. Die Auswahl bindet
+die Ausgabe an eine Instanz und bewertet die Messqualität unabhängig von
+Gesundheitsschwellen.
+
+| Metrik | Einheit | Zeitreihentyp |
+| --- | --- | --- |
+| `connections` | Verbindungen oder Client-Backends | Gauge |
+| `active` | Aktive Sitzungen oder Client-Backends | Gauge |
+| `uptime` | Sekunden seit Server- oder Postmaster-Start | Gauge |
+
+Uptime ist eine verstrichene Dauer, die beim Neustart zurückgesetzt werden
+kann. Das externe MRTG-Target gibt die beiden Gauges für Verbindungen und
+Aktivität, Uptime und die Kennung `host/instanz` in vier Zeilen aus. Das
+Target benötigt die Option `gauge`, eine passende Obergrenze und bleibt
+ohne `unknaszero`. Mit vertrauenswürdigen Literalpfaden und dem regulären
+Abfrageintervall arbeiten. Ein simulierter `--now`-Wert ist dem Labortest
+vorbehalten. Bei fehlender oder veralteter Evidenz endet das Programm ohne
+Gauge-Ausgabe. MRTG verwendet die Abfragezeit. [MRTG-Referenz für externe Targets](https://mrtg.org/mrtg/doc/mrtg-reference.en.html)
+
+Der RRD-Modus gibt `host<TAB>check<TAB>epoch:connections:active:uptime`
+aus. Eine zugelassene Beobachtung ohne verfügbare Messwerte ergibt
+`U:U:U` und Exit 3. Bei abgewiesener Identität oder fehlerhaftem Format
+entsteht kein Sample. Nur aktuelle Samples und gegebenenfalls ausdrücklich
+vorgesehene UNKNOWN-Samples in Zeitreihenfolge an den Wrapper übergeben.
+
+    bin/sasd-rrd-cycle create-database LAB_RRD_DIR HOST db_INSTANZ START_EPOCH
+    bin/sasd-rrd-cycle update-database LAB_RRD_DIR SAMPLE.tsv
+
+Ein vorhandenes Wegwerfverzeichnis mit absolutem Pfad und einen Schreiber
+je Instanzdatei verwenden. Der Startzeitpunkt muss vor der ersten Messung
+liegen. Der Wrapper benennt die Datei `HOST.db_INSTANZ.rrd` und übergibt den
+Messzeitpunkt mit explizitem Datasource-Template. Der Schritt beträgt 300
+Sekunden und der Heartbeat 600 Sekunden. Die Aufbewahrung umfasst 24 Stunden
+mit 5-Minuten-AVERAGE sowie 7 Tage mit stündlichem AVERAGE und MAX. Bei der
+Konsolidierung gilt ein Unknown-Anteil von 0,5. [RRDtool-Referenz für create](https://oss.oetiker.ch/rrdtool/doc/rrdcreate.en.html) · [RRDtool-Referenz für update](https://oss.oetiker.ch/rrdtool/doc/rrdupdate.en.html)
+
+`tests/database-products.sh` führt erzeugte Plugin-Argumentvektoren aus,
+liest beide synthetischen Exporte über die bestehenden Parser ein, prüft die
+vier MRTG-Target-Zeilen und verifiziert die RRDtool-Argumente mit einem lokalen
+Testprogramm. Native Parser, Benachrichtigung, Grafiken und historische
+Produktpakete benötigen weiterhin ihre Abnahme.

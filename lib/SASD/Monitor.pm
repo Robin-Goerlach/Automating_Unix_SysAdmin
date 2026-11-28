@@ -8,7 +8,8 @@ use File::Spec;
 use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
 
 our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read_checks read_services applicable_checks check_applies
-    read_db_instances read_monitor_checks
+    read_db_instances read_monitor_checks read_offline_db_checks database_projection database_result
+    classic_database_services
     read_host_state validate_status atomic_write read_state read_latest html_escape ensure_dir
     valid_identifier valid_host valid_address valid_profile valid_color valid_path_value valid_epoch
     valid_fingerprint valid_public_key valid_os_value read_enrollment_record
@@ -273,11 +274,16 @@ sub disk_fixture_path {
     valid_host($host) && exists($hosts->{$host}) && !$disabled->{$host}
         or die "fixture requires one enabled inventory host\n";
     defined($path) && length($path) or die "fixture path is required\n";
+    return classic_command_path($path);
+}
+
+sub classic_command_path {
+    my ($path) = @_;
     my $absolute = File::Spec->rel2abs($path);
     $absolute =~ m!\A/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\z! &&
         $absolute !~ m!/(?:\.|\.\.)(?:/|\z)! &&
         -f $absolute && !-l $absolute && -r $absolute
-        or die "unsafe or unreadable disk fixture path\n";
+        or die "unsafe or unreadable classic command input path\n";
     return $absolute;
 }
 
@@ -389,6 +395,54 @@ sub read_monitor_checks {
     return $checks;
 }
 
+sub read_offline_db_checks {
+    my ($file) = @_;
+    my $cfg = read_config($file);
+    exists($cfg->{offline_databases_path}) or die "database projection requires lab configuration\n";
+    my ($hosts) = read_inventory($cfg->{inventory_path}, $cfg->{roles_path});
+    my $all = read_monitor_checks($cfg, $hosts);
+    my %database = map { $_ => $all->{$_} } grep { exists $all->{$_}->{source} } keys %$all;
+    return ($cfg, \%database);
+}
+
+sub classic_database_services {
+    my ($file,$inventory,$disabled) = @_;
+    return ({}, []) unless defined $file;
+    my $path = classic_command_path($file);
+    my ($cfg,$checks) = read_offline_db_checks($path);
+    my %services;
+    for my $check (sort keys %$checks) {
+        my $host = $checks->{$check}->{host};
+        exists $inventory->{$host} or die "database check references a host outside the candidate inventory\n";
+        next if $disabled->{$host};
+        push @{$services{$host}}, {service=>$check, check=>$check, input=>$path};
+    }
+    my @inputs = ($path, $cfg->{inventory_path} . '.state',
+        @$cfg{qw(inventory_path roles_path checks_path offline_databases_path state_file_path)});
+    return (\%services, \@inputs);
+}
+
+sub database_projection {
+    my ($file) = @_;
+    my ($cfg,$checks) = read_offline_db_checks($file);
+    my $state = read_state($cfg->{state_file_path});
+    return ($checks,$state,$cfg->{freshness});
+}
+
+# Reuse the canonical verdict. Check observation/cycle age so projecting an
+# old state snapshot cannot keep publishing a former healthy observation.
+sub database_result {
+    my ($row,$freshness,$now) = @_;
+    return ('purple','source=OFFLINE no database state available',undef)
+        unless $row && $row->{source} eq 'offline-db';
+    my $epoch = $row->{received};
+    return ('purple','source=OFFLINE invalid database state timestamp',undef)
+        if $epoch > $row->{cycle} || $row->{cycle} > $now;
+    return ('purple','source=OFFLINE stale database state', $epoch)
+        if $now - $epoch > $freshness;
+    return ($row->{state},substr($row->{message}, 0, 240),$epoch);
+}
+
 sub check_applies {
     my ($host,$check) = @_;
     return 0 if exists($check->{host}) && $check->{host} ne $host->{host};
@@ -421,11 +475,8 @@ sub read_external_status {
             ($prefix, $target, $color, $message) = split(/\s+/, $_, 4);
             $prefix eq 'status' or die "invalid Big Sister status record\n";
         } else {
-            my @parts = split(/\s+/, $_, 4);
-            if (defined($parts[0]) && $parts[0] eq 'status') {
-                shift @parts;
-            }
-            ($target, $color, $message) = @parts;
+            s/\Astatus\s+//;
+            ($target, $color, $message) = split(/\s+/, $_, 3);
         }
         defined($target) && defined($color) or die "invalid external status record\n";
         $message = '' unless defined $message;
@@ -441,8 +492,7 @@ sub read_external_status {
         my ($host, $check) = ($1, $2);
         valid_host($host) && exists($hosts->{$host}) && exists($checks->{$check}) or
             die "external status target is not in the shared model\n";
-        my $role = $checks->{$check}->{role};
-        $role eq '*' || $role eq 'baseline' || $role eq $hosts->{$host}->{role}
+        check_applies($hosts->{$host}, $checks->{$check})
             or die "external status check is not assigned to host\n";
         valid_color($color) or die "unknown external status color\n";
         validate_status($host, $check, $color, $message);

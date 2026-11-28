@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+# Project shared lab state into the existing synthetic external status grammars.
+use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(database_projection database_result valid_epoch);
+
+my ($config,$product,$now);
+while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq '--config') { $config = shift @ARGV }
+    elsif ($arg eq '--product') { $product = shift @ARGV }
+    elsif ($arg eq '--now') { $now = shift @ARGV }
+    elsif ($arg eq '--help') {
+        print "usage: sasd-db-status-export --config FILE --product bigbrother|bigsister [--now EPOCH]\n";
+        exit 0;
+    } else { die "unknown argument\n" }
+}
+defined($config) && length($config) && defined($product) && $product =~ /\A(?:bigbrother|bigsister)\z/
+    or die "config and a supported product are required\n";
+$now = time() unless defined $now;
+valid_epoch($now) or die "invalid time boundary\n";
+my ($checks,$state,$freshness) = database_projection($config);
+my $prefix = $product eq 'bigsister' ? 'status ' : '';
+for my $check (sort keys %$checks) {
+    my $host = $checks->{$check}->{host};
+    my ($color,$message,$epoch) = database_result($state->{"$host\t$check"},$freshness,$now);
+    my $timestamp = defined($epoch) ? "($epoch) " : '';
+    print "$prefix$host.$check $color $timestamp$message\n";
+}

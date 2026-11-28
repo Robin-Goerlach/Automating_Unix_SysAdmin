@@ -36,6 +36,10 @@ sowie reine Kopfzeilen ergeben UNKNOWN. Der höchste Schweregrad bestimmt
 Exit-Code und Meldung. UNKNOWN hat Vorrang vor CRITICAL. Die Offline-Regression
 löst die Makros auf und führt den erzeugten Argumentvektor direkt aus.
 
+`--database-config DATEI` ergänzt die hostgebundenen Datenbankdienste aus
+dem gemeinsamen Offline-Monitoring. Der Kandidatenvertrag und die
+Statusprojektion stehen im [Datenbank-Monitoring](database.de.md).
+
 `bin/sasd-status-import-nagios` akzeptiert ausschließlich SASDs synthetisches Zeilenformat, etwa `status web.lab.invalid.http red (1700000000) message`. Es prüft Lebenszyklus und Rolle, weist Duplikate und begrenzte fehlerhafte Eingaben zurück und erzeugt SASD-Datensätze. Es parst kein natives `status.dat`, erzeugt keine authentifizierte Clientidentität und akzeptiert keinen Socket.
 
 Geprüfte historische Quellen:
