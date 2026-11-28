@@ -1,35 +1,115 @@
-# Offline-Vertikalschnitt für Datenbank-Monitoring
+# Offline-Monitoring für Datenbankgesundheit
 
 English: [English version](database.md)
 
-Dieses Repository implementiert `db-probe`, `db-health`, `db-activity` oder
-`db-storage` nicht erneut. Die wiederverwendbaren Diagnosen gehören zu SASD
-Freeware. Dieses Paket ergänzt nur einen begrenzten Orchestrierungsadapter für
-eine dokumentierte synthetische `db-health`-Beobachtung.
+SASD Freeware ist für `db-probe`, `db-health`, `db-activity` und
+`db-storage` zuständig. Dieser Adapter führt synthetische Beobachtungen in
+den gemeinsamen SASD-Monitoring-Zyklus ein. Der Test verwendet ein
+Wegwerfpräfix und benötigt keinen Datenbankclient.
 
-`site/databases.tsv` ist das Instanzinventar. Jede Zeile nennt Instanz,
-Rechner, Datenbankprodukt, erwartete Version, Profil und Lebenszyklus. Ein
-Rechner darf daher mehrere Datenbankinstanzen besitzen. Der Rechner-
-Lebenszyklus bleibt Eigentum von `site/hosts.tsv` und seiner Zustandsdatei.
+## Instanzregister und Laborkonfiguration
 
-`bin/sasd-db-health-adapter` akzeptiert das Schlüssel-/Wert-Fixtureformat
-`SASD-DB-HEALTH-1` und erzeugt den gemeinsamen vierfeldrigen SASD-
-Statusdatensatz. Es prüft die Instanz-/Rechnerzuordnung, Produkt/Version
-(`MariaDB 10.11`, `MySQL 8.x` oder `PostgreSQL 10+` in diesem ersten Schnitt),
-aktiven Lebenszyklus, vollständige Sichtbarkeit, Messwerte und Frische. Die
-Schwellenwerte für aktive Sitzungen sind ausdrückliche Optionen; aus der Zahl
-der Verbindungen allein wird keine Gesundheit abgeleitet. Die Meldung enthält
-die nicht fachlichen Messwerte und ausdrücklich `source=OFFLINE`.
+`site/databases.tsv` enthält Instanz, Host, Produkt, erwartete Version,
+Diagnoseprofil und Lebenszyklus. Der stabile Check `db_<instanz>` wird aus
+diesem Register abgeleitet und ist genau dem angegebenen Host zugeordnet.
+Instanznamen folgen der gemeinsamen Bezeichnergrammatik und sind höchstens
+29 Zeichen lang. Doppelte Instanznamen und Kollisionen mit statischen Checks
+führen auch bei abweichender Groß-/Kleinschreibung zu einem Fehler. Die
+erwartete Version kann eine Versionsfamilie oder einen exakten Stand angeben.
+Das Diagnoseprofil ist hier beschreibend.
 
-Akzeptierte Schwellenwerte liefern green/yellow/red; UNKNOWN-Bedingungen wie
-veraltete oder zukünftige Beobachtungen, unbekannte Instanzen, deaktivierte
-Rechner, unvollständige Sichtbarkeit, Versionsabweichungen oder fehlerhafte
-Messwerte liefern purple. Der Adapter öffnet keine Datenbankverbindung, liest
-keine Anwendungsdaten, akzeptiert kein Passwort, führt kein SQL aus und
-schreibt keine Datenbank.
+In einem Wegwerfpräfix das Register nach `etc/databases.tsv` kopieren und
+`offline_databases=databases.tsv` in einer Kopie der installierten
+Konfiguration ergänzen. Diese Konfiguration mit
+`sasd-monitor-config --check` prüfen. Die eingecheckte Standardvorlage
+enthält diese Option nicht. In `site/checks.tsv` sind keine doppelten
+Instanzeinträge nötig.
 
-Die Fixtures decken gesund, WARNING, CRITICAL, veraltet, unvollständige
-Sichtbarkeit, unbekannte Instanz und Versionsabweichung ab. `tests/database.sh`
-und `examples/sasd-integrated-site-lab.sh` prüfen den vollständigen Offlineweg.
-Dies belegt nur den Adaptervertrag, nicht Datenbankserver, Client-Treiber,
-TLS, Authentifizierung oder historische Versionen.
+Der implizite Host-Lifecycle-Pfad ist der Inventarname mit der Endung
+`.state`. Eine fehlende implizite Datei entspricht einer leeren Projektion.
+Eine explizit mit `--state` angegebene, fehlende, unlesbare oder beschädigte
+Datei führt zur Ablehnung. Hosts ohne Eintrag in einer gültigen sparsamen
+Projektion behalten ihren Inventarstandard. Deaktivierte und entfernte
+Hosts oder Instanzen nehmen keine Datenbankbeobachtung an. Ihre bisherige
+Historie bleibt erhalten.
+
+## Beobachtungsvertrag
+
+Die erste Zeile lautet `SASD-DB-HEALTH-1`. Die folgenden Schlüssel stehen
+je einmal in einer `key=value`-Zeile. Zulässig sind druckbare ASCII-Werte
+von 1–240 Byte. Die Eingabe ist auf insgesamt 4096 Byte begrenzt.
+Unbekannte Schlüssel und Steuerzeichen führen zur Ablehnung.
+
+| Pflichtschlüssel | Zulässige Bedeutung |
+| --- | --- |
+| `instance`, `host` | Exakte Identitäten aus dem Register |
+| `product`, `version` | `mariadb`, `mysql` oder `postgresql` mit ein- bis dreiteiliger numerischer Version |
+| `source`, `diagnostic` | `OFFLINE` und `db-health` |
+| `observed_at` | UTC-Epochensekunden, 1–15 Ziffern |
+| `scope` | `server` für MySQL/MariaDB, `cluster` für PostgreSQL |
+| `connections`, `active`, `uptime` | Nichtnegative ganze Zahlen mit bis zu 15 Stellen oder `unknown`. Uptime in Sekunden |
+| `visibility` | `complete`, `partial` oder `unavailable` |
+
+Das optionale `result` lautet `ok` (Standard für bestehende Fixtures)
+oder `failed`. Aktive PostgreSQL-Client-Backends bilden eine Teilmenge
+aller Client-Backends. MySQL/MariaDB liefern nicht atomar erfasste
+Serverstatus-Zähler. Die PostgreSQL-Beziehung wird deshalb ausschließlich
+für PostgreSQL geprüft. Freeware dokumentiert diese Definitionen am
+Referenzcommit und setzt für seine PostgreSQL-Diagnose mindestens Version
+10 voraus. [Freeware-Spezifikation für db-health](https://github.com/SASD-Sysadmin/freeware/blob/73074c6be9cef3e351aeaa28881653fdaadc9ff2/docs/commands/db-health.de.md)
+
+| Produkt | Synthetisch akzeptierte Familie | Offline geprüftes Beispiel | Native SASD-Client-/Serverabnahme |
+| --- | --- | --- | --- |
+| MariaDB | 10.11 | 10.11.6 | NOT TESTED |
+| MySQL | 8.0 | 8.0.36 | NOT TESTED |
+| PostgreSQL | 15 | 15.4 | NOT TESTED |
+
+Andere Versionen bleiben auch bei gültiger Syntax und passendem
+Registereintrag UNKNOWN. Historische Datenbank- und Plattformabnahmen
+bleiben offen.
+
+## Status, Import und Bewertung
+
+Für eine Gesundheitsbewertung sind `--warn-active N` und
+`--crit-active N` gemeinsam anzugeben. Es gilt `0 <= warn < crit`.
+Gleichheit löst die jeweilige Schwelle aus. Die gleiche Verbindungszahl
+kann je nach Politik zu verschiedenen Bewertungen führen. Ohne
+Bewertungspolitik bleiben auch vollständige Beobachtungen UNKNOWN.
+Veraltete Evidenz (standardmäßig älter als 900 Sekunden), nicht unterstützte
+Versionen, unvollständige Sichtbarkeit, fehlende Messwerte und
+fehlgeschlagene Diagnosen ergeben für zugelassene Instanzen ebenfalls UNKNOWN.
+
+    host<TAB>check<TAB>color<TAB>message<TAB>observation_epoch
+
+Der Adapter liefert für eine zulässige Beobachtung eine validierte Zeile.
+Die Meldung enthält Quellmarker, Diagnose, Instanz und Grund in einem
+einzigen Feld. Die Status-Exits 0/1/2/3 entsprechen
+green/yellow/red/purple. Nicht autorisierte Identitäten, ungültiges Format,
+zukünftige Zeitpunkte und unbrauchbare Lifecycle-Evidenz ergeben Exit 3
+ohne Datensatz. Ohne letzte Beobachtung meldet der gemeinsame Zyklus
+UNKNOWN. Ältere Beobachtungen können neuere nicht ersetzen.
+
+`sasd-monitor-import --source offline-db` übernimmt diese Zeilen mit
+der aktivierten Laborkonfiguration. Der Import verlangt einen expliziten
+Messzeitpunkt spätestens zu `--received-at`, den Adaptermarker und die
+exakte Host-/Checkbindung. Die Laborquelle kann ausschließlich eigene
+Beobachtungen ersetzen. Wiederholter Import derselben Zeile behält ihren
+Messzeitpunkt. Die vom Betreiber angegebene Quelle dokumentiert die Herkunft.
+Sie authentifiziert den Produzenten nicht. Ein Wegwerfpräfix mit isolierten
+Pfaden für Zustand, Historie, Betriebsannotationen und Bericht verwenden.
+
+Der fünfspaltige Eingang erhält den Messzeitpunkt für Reihenfolge und
+Frische. Der Import meldet seinen Zeitpunkt, der Zyklus speichert seinen
+Bewertungszeitpunkt und das sechsfeldrige Latest-Format enthält den
+Zeitpunkt der jüngsten angenommenen Beobachtung. Ein getrennter
+dauerhafter Empfangszeitpunkt und der Zeitpunkt der letzten erfolgreichen
+Messung über spätere UNKNOWN-Beobachtungen hinweg bleiben offen. Zustandswechsel
+bleiben nach den vorhandenen Aufbewahrungsregeln in der Historie verfügbar.
+
+`tests/database.sh` prüft zwei Instanzen desselben Hosts über Import,
+Latest-Zustand, Zyklus, getrennte Statuswechsel, Quittierung,
+Alarmierungsbewertung und HTML-Bericht. Das
+[integrierte Site-Labor](../../examples/sasd-integrated-site-lab.sh)
+importiert beide Fixtures und zeigt ihre Messzeitpunkte. Native SQL-Clients,
+Server, TLS, Transport, externe Monitoring-Produkte und Zeitreihenanbindungen
+benötigen eine separate Abnahme.

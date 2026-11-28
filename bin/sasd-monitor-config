@@ -2,7 +2,7 @@
 use strict;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(read_config read_inventory read_checks);
+use SASD::Monitor qw(read_config read_inventory read_monitor_checks);
 
 my ($file,$check) = ('','');
 while (@ARGV) {
@@ -13,8 +13,8 @@ while (@ARGV) {
 }
 $file && -f $file && !-l $file or die "invalid configuration file\n";
 my $cfg=read_config($file);
-read_inventory($cfg->{inventory_path},$cfg->{roles_path});
-read_checks($cfg->{checks_path});
+my ($hosts)=read_inventory($cfg->{inventory_path},$cfg->{roles_path});
+read_monitor_checks($cfg,$hosts);
 print "config=OK\n";
 print "profile=$cfg->{profile}\nfreshness=$cfg->{freshness}\nhistory_retention=$cfg->{history_retention}\n";
 if ($check) {

@@ -4,7 +4,7 @@ use FindBin;
 use File::Spec;
 use Fcntl qw(LOCK_EX O_WRONLY O_CREAT);
 use lib "$FindBin::Bin/../lib";
-use SASD::Monitor qw(read_config read_inventory read_checks valid_host valid_identifier valid_epoch ensure_dir atomic_write read_operations);
+use SASD::Monitor qw(read_config read_inventory read_monitor_checks check_applies valid_host valid_identifier valid_epoch ensure_dir atomic_write read_operations);
 
 my ($config, $action, $host, $check, $until, $operator, $reason) = ('','','','','','','');
 while (@ARGV) {
@@ -23,13 +23,12 @@ $config && -f $config && !-l $config or die "invalid configuration file\n";
 $action =~ /\A(?:maintenance-add|maintenance-clear|acknowledge|acknowledgement-clear|list)\z/ or die "invalid action\n";
 my $cfg = read_config($config);
 my ($hosts, $roles) = read_inventory($cfg->{inventory_path}, $cfg->{roles_path});
-my $checks = read_checks($cfg->{checks_path});
+my $checks = read_monitor_checks($cfg, $hosts);
 my $dir = $cfg->{operations_dir_path}; ensure_dir($dir, 0750);
 sub target {
     valid_host($host) && exists $hosts->{$host} or die "unknown host\n";
     valid_identifier($check) && exists $checks->{$check} or die "unknown check\n";
-    my $role = $checks->{$check}->{role};
-    ($role eq '*' || $role eq 'baseline' || $role eq $hosts->{$host}->{role}) or die "check is not assigned to host\n";
+    check_applies($hosts->{$host}, $checks->{$check}) or die "check is not assigned to host\n";
 }
 sub write_ops {
     my ($name, $records) = @_;

@@ -7,7 +7,8 @@ use Exporter 'import';
 use File::Spec;
 use Fcntl qw(O_WRONLY O_CREAT O_EXCL);
 
-our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read_checks read_services applicable_checks
+our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read_checks read_services applicable_checks check_applies
+    read_db_instances read_monitor_checks
     read_host_state validate_status atomic_write read_state read_latest html_escape ensure_dir
     valid_identifier valid_host valid_address valid_profile valid_color valid_path_value valid_epoch
     valid_fingerprint valid_public_key valid_os_value read_enrollment_record
@@ -16,7 +17,7 @@ our @EXPORT_OK = qw(read_config read_inventory read_roles read_host_records read
 
 my %CONFIG_KEYS = map { $_ => 1 } qw(inventory roles checks status_dir history_file
     state_file report_file mrtg_file rrd_dir enrollment_dir operations_dir profile freshness
-    history_retention mrtg_command);
+    history_retention mrtg_command offline_databases);
 
 sub _real_file {
     my ($path, $label) = @_;
@@ -170,6 +171,9 @@ sub read_config {
     $cfg{config_dir} = $base;
     for my $key (qw(inventory roles checks status_dir history_file state_file report_file mrtg_file rrd_dir enrollment_dir operations_dir mrtg_command)) {
         $cfg{$key . '_path'} = _resolve($base, $raw{$key});
+    }
+    if (exists $raw{offline_databases}) {
+        $cfg{offline_databases_path} = _resolve($base, $raw{offline_databases});
     }
     return \%cfg;
 }
@@ -336,10 +340,64 @@ sub read_services {
     return \%services;
 }
 
+# Instance names are limited so the stable db_ check fits the common name
+# contract without truncation, hashes, or a second hand-maintained inventory.
+sub read_db_instances {
+    my ($path, $hosts, $state) = @_;
+    _real_file($path, 'database instance inventory');
+    open(my $fh, '<', $path) or die "cannot read database instances: $!\n";
+    my (%instances,%names);
+    while (<$fh>) {
+        chomp;
+        s/\r\z//;
+        next if /\A[ \t]*(?:#.*)?\z/;
+        my ($instance,$host,$product,$version,$profile,$lifecycle) = _fields($_, 6, 'database instance');
+        my $check = "db_$instance";
+        valid_identifier($instance) && valid_identifier($check) && valid_host($host) &&
+            $product =~ /\A(?:mariadb|mysql|postgresql)\z/ &&
+            $version =~ /\A[0-9]{1,5}(?:\.[0-9]{1,5}){0,2}\z/ &&
+            valid_identifier($profile) && $lifecycle =~ /\A(?:enabled|disabled|removed)\z/
+            or die "invalid database instance record at line $.\n";
+        my $removed = exists($state->{$host}) && $state->{$host}->{state} eq 'removed';
+        exists($hosts->{$host}) || $removed or die "database instance references unknown host\n";
+        exists $names{lc $instance} and die "duplicate database instance\n";
+        $names{lc $instance} = 1;
+        my $enabled = $lifecycle eq 'enabled' &&
+            (!exists($state->{$host}) || $state->{$host}->{state} eq 'enabled');
+        $instances{$instance} = { host=>$host, check=>$check, product=>$product,
+            version=>$version, profile=>$profile, enabled=>$enabled };
+    }
+    close $fh or die "cannot close database instances: $!\n";
+    return \%instances;
+}
+
+sub read_monitor_checks {
+    my ($cfg,$hosts,$state) = @_;
+    my $checks = read_checks($cfg->{checks_path});
+    return $checks unless exists $cfg->{offline_databases_path};
+    $state = read_host_state($cfg->{inventory_path} . '.state', $hosts, 1) unless defined $state;
+    my $instances = read_db_instances($cfg->{offline_databases_path}, $hosts, $state);
+    my %configured_names = map { lc($_) => 1 } keys %$checks;
+    for my $id (sort keys %$instances) {
+        my $instance = $instances->{$id};
+        my $check = $instance->{check};
+        exists($configured_names{lc $check}) and die "database check overlaps configured check: $check\n";
+        next unless $instance->{enabled};
+        $checks->{$check} = { host=>$instance->{host}, role=>'*', source=>'offline-db',
+            description=>"Offline database health for $id" };
+    }
+    return $checks;
+}
+
+sub check_applies {
+    my ($host,$check) = @_;
+    return 0 if exists($check->{host}) && $check->{host} ne $host->{host};
+    return $check->{role} eq '*' || $check->{role} eq 'baseline' || $check->{role} eq $host->{role};
+}
+
 sub applicable_checks {
     my ($host, $checks) = @_;
-    return map { $_ } sort grep { $checks->{$_}->{role} eq '*' ||
-        $checks->{$_}->{role} eq 'baseline' || $checks->{$_}->{role} eq $host->{role} } keys %$checks;
+    return sort grep { check_applies($host, $checks->{$_}) } keys %$checks;
 }
 
 sub validate_status {

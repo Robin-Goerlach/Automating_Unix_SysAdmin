@@ -20,6 +20,11 @@ English: [English version](configuration.md)
 | `history_retention` | Maximale Zahl gespeicherter Ereignisse |
 | `mrtg_command` | Freigegebener lokaler External-Target-Helfer |
 
+Der optionale relative Pfad `offline_databases` aktiviert ein
+[synthetisches Instanzregister](database.de.md) für ein Wegwerfpräfix.
+Die daraus abgeleiteten Checks gelten jeweils für einen Host und den
+lokalen Importkanal `offline-db`.
+
 Schreibfrei prüfen:
 
     bin/sasd-monitor-config --config site/monitoring.conf --check

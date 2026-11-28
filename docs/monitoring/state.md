@@ -16,6 +16,12 @@ The M2 lifecycle is `pending-approval`, `approved`, `active`, `rejected`, and `d
 
 Maintenance and acknowledgement are operator annotations stored below `operations_dir`. They never replace the canonical health state. An unexpired annotation is added to the operator message; expired entries are ignored by the cycle.
 
+The static report shows an alert assessment based on canonical health.
+Green maps to `CLEAR`. For other colors, maintenance in effect at the
+cycle time takes precedence over an active acknowledgement. Otherwise
+yellow, red and purple map to `WARNING`, `CRITICAL` and `UNKNOWN`.
+The assessment is visible to operators. Delivery remains a separate integration.
+
 ## Records
 
 Latest files contain six tab-separated fields:
@@ -35,6 +41,10 @@ repeating the identical observation is safe. A cycle treats a future-dated
 record as `purple`, so a manipulated clock cannot keep a failed host healthy
 forever. `source` identifies the adapter for audit text only; it is not an
 authentication or enrollment decision.
+
+The optional synthetic database import requires the fifth field and
+rejects observations after the import time. See the
+[database contract](database.md) for provenance and scope.
 
 Derived state contains eight fields:
 

@@ -16,6 +16,13 @@ Der M2-Lifecycle lautet `pending-approval`, `approved`, `active`, `rejected` und
 
 Maintenance und Acknowledgement sind Betreiberannotationen unter `operations_dir`. Sie ersetzen den kanonischen Gesundheitszustand nicht. Eine gültige Annotation wird im Zyklus an die Meldung angehängt; abgelaufene Einträge werden ignoriert.
 
+Der statische Bericht verwendet den kanonischen Zustand und zeigt eine
+Alarmierungsbewertung an. Für grün gilt `CLEAR`. Bei anderen Farben hat ein
+zum Zykluszeitpunkt wirksames Wartungsfenster Vorrang vor einer aktiven
+Quittierung. Sonst ergeben gelb, rot und purple die Bewertung `WARNING`,
+`CRITICAL` oder `UNKNOWN`. Die Bewertung dient dem Betreiberbericht.
+Eine Zustellung bleibt ein eigener Integrationsschritt.
+
 ## Datensätze
 
 Letzte Meldungen:
@@ -37,6 +44,10 @@ Ein Zyklus behandelt einen zukünftigen Datensatz als `purple`, damit eine
 manipulierte Uhr einen ausgefallenen Rechner nicht unbegrenzt gesund hält.
 `source` beschreibt nur den Adapter für die Audit-Ausgabe und ist kein
 Authentifizierungs- oder Enrollment-Nachweis.
+
+Der optionale synthetische Datenbankimport verlangt ein fünftes Feld
+und lehnt Messzeiten nach der Importzeit ab. Herkunft und Geltungsbereich
+sind im [Datenbankvertrag](database.de.md) beschrieben.
 
 Abgeleiteter Zustand:
 

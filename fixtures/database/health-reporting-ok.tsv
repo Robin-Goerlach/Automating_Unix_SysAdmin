@@ -1,0 +1,13 @@
+SASD-DB-HEALTH-1
+product=postgresql
+version=15.4
+instance=erp-reporting
+host=mon.lab.invalid
+source=OFFLINE
+diagnostic=db-health
+observed_at=1700000000
+scope=cluster
+connections=4
+active=2
+uptime=40000
+visibility=complete

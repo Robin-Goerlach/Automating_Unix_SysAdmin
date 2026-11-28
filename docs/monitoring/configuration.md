@@ -22,6 +22,11 @@ Required keys:
 | `history_retention` | Maximum retained history records |
 | `mrtg_command` | Approved local external-target helper path |
 
+The optional relative path `offline_databases` enables a
+[synthetic instance registry](database.md) for a disposable prefix.
+Each derived check is bound to its host and the local `offline-db`
+import source.
+
 Validate without writing:
 
     bin/sasd-monitor-config --config site/monitoring.conf --check

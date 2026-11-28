@@ -1,4 +1,49 @@
 #!/usr/bin/env perl
-use strict;use FindBin;use File::Spec;use lib "$FindBin::Bin/../lib";use SASD::Monitor qw(read_config read_state html_escape atomic_write ensure_dir);
-my($file,$out)=('','');while(@ARGV){my$a=shift@ARGV;if($a eq'--config'){$file=shift@ARGV;}elsif($a eq'--out'){$out=shift@ARGV;}elsif($a eq'--help'){print"usage: sasd-monitor-report --config FILE [--out FILE|-]\n";exit 0;}else{die"unknown argument: $a\n";}}
-$file&&-f$file&&! -l$file or die"invalid configuration file\n";my$cfg=read_config($file);$out eq'' and $out=$cfg->{report_file_path};my$state=read_state($cfg->{state_file_path});my$html="<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>SASD Monitoring</title><style>body{font-family:monospace}table{border-collapse:collapse}td,th{border:1px solid #666;padding:.4em}.green{background:#b5efb5}.yellow{background:#ffe28a}.red{background:#ffadad}.purple{background:#d6c2ff}</style></head><body><h1>SASD Monitoring</h1><table><tr><th>Host</th><th>Check</th><th>Observed</th><th>State</th><th>Received</th><th>Message</th></tr>\n";for my$k(sort keys%$state){my$s=$state->{$k};$html.='<tr class="'.html_escape($s->{state}).'"><td>'.html_escape($s->{host}).'</td><td>'.html_escape($s->{check}).'</td><td>'.html_escape($s->{observed}).'</td><td>'.html_escape($s->{state}).'</td><td>'.html_escape($s->{received}).'</td><td>'.html_escape($s->{message})."</td></tr>\n";}$html.="</table><p>Generated from local SASD state. No network service is required.</p></body></html>\n";if($out eq'-'){print$html;}else{my($v,$d,$f)=File::Spec->splitpath($out);length$d&&ensure_dir($d,0750);atomic_write($out,$html,0640);}exit 0;
+use strict;
+use FindBin;
+use File::Spec;
+use lib "$FindBin::Bin/../lib";
+use SASD::Monitor qw(read_config read_state read_operations html_escape atomic_write ensure_dir);
+
+my ($file,$out) = ('','');
+while (@ARGV) {
+    my $arg = shift @ARGV;
+    if ($arg eq '--config') { $file = shift @ARGV }
+    elsif ($arg eq '--out') { $out = shift @ARGV }
+    elsif ($arg eq '--help') {
+        print "usage: sasd-monitor-report --config FILE [--out FILE|-]\n";
+        exit 0;
+    } else { die "unknown argument: $arg\n" }
+}
+$file && -f $file && !-l $file or die "invalid configuration file\n";
+my $cfg = read_config($file);
+$out = $cfg->{report_file_path} if $out eq '';
+my $state = read_state($cfg->{state_file_path});
+my ($maintenance,$acknowledgements) = read_operations($cfg->{operations_dir_path});
+my %alert = (green=>'CLEAR', yellow=>'WARNING', red=>'CRITICAL', purple=>'UNKNOWN');
+my $html = <<'HTML';
+<!doctype html>
+<html><head><meta charset="utf-8"><title>SASD Monitoring</title><style>body{font-family:monospace}table{border-collapse:collapse}td,th{border:1px solid #666;padding:.4em}.green{background:#b5efb5}.yellow{background:#ffe28a}.red{background:#ffadad}.purple{background:#d6c2ff}</style></head><body><h1>SASD Monitoring</h1><table><tr><th>Host</th><th>Check</th><th>Observed</th><th>State</th><th>Observation epoch</th><th>Message</th><th>Alert assessment</th></tr>
+HTML
+for my $key (sort keys %$state) {
+    my $row = $state->{$key};
+    my $assessment = $alert{$row->{state}};
+    if ($row->{state} ne 'green') {
+        if (exists($maintenance->{$key}) && $maintenance->{$key}->{until} >= $row->{cycle}) {
+            $assessment = 'MAINTENANCE';
+        } elsif (exists($acknowledgements->{$key}) && $acknowledgements->{$key}->{until} >= $row->{cycle}) {
+            $assessment = 'ACKNOWLEDGED';
+        }
+    }
+    my @cells = (@$row{qw(host check observed state received message)}, $assessment);
+    $html .= '<tr class="' . html_escape($row->{state}) . '">'
+        . join('', map { '<td>' . html_escape($_) . '</td>' } @cells) . "</tr>\n";
+}
+$html .= "</table><p>Generated from local SASD state. No network service is required.</p></body></html>\n";
+if ($out eq '-') {
+    print $html;
+} else {
+    my (undef,$dir) = File::Spec->splitpath($out);
+    ensure_dir($dir, 0750) if length $dir;
+    atomic_write($out, $html, 0640);
+}

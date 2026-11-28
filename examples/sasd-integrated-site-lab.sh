@@ -50,9 +50,7 @@ grep -q '^# data_source "default" unresolved' "$out/gmetad.conf"
 printf 'lab-web.lab.invalid\tdefault\t1700000000\tcpu\t12.5\tpercent\tgauge\n' > "$lab/ganglia.tsv"
 "$root/bin/sasd-ganglia-metric" --input "$lab/ganglia.tsv" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --state "$model/hosts.tsv.state" --now 1700000001 > "$lab/ganglia.out"
 grep -q '^OK	lab-web.lab.invalid	default.*FIXTURE$' "$lab/ganglia.out"
-"$root/bin/sasd-db-health-adapter" --input "$root/fixtures/database/health-ok.tsv" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" --instances "$model/databases.tsv" --state "$model/hosts.tsv.state" --now 1700000001 > "$lab/database.out"
-grep -q 'mon.lab.invalid.*green.*source=OFFLINE.*instance=erp-primary' "$lab/database.out"
-echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister/NetSaint/Nagios/Ganglia/database): PASS'
+echo 'B candidate generation (SASD/CFEngine 1/2/Big Brother/Big Sister/NetSaint/Nagios/Ganglia): PASS'
 
 deploy_stage=$lab/deploy-stage
 deploy_target=$lab/deploy-target
@@ -123,6 +121,26 @@ fi
 "$server/bin/sasd-monitor-report" --config "$server/etc/sasd-monitor.conf" --out "$lab/report.html"
 grep -q 'lab-web.lab.invalid' "$lab/report.html"
 echo 'C monitoring green/yellow/red/missing/recovery/conflict/unknown: PASS'
+# Opt in to the synthetic database source in this disposable monitoring prefix.
+db_config=$server/etc/offline-db.conf
+cp "$server/etc/sasd-monitor.conf" "$db_config"
+cp "$model/databases.tsv" "$server/etc/databases.tsv"
+printf 'offline_databases=databases.tsv\n' >> "$db_config"
+for fixture in health-ok health-reporting-ok; do
+    "$root/bin/sasd-db-health-adapter" --hosts "$model/hosts.tsv" --roles "$model/roles.tsv" \
+        --instances "$model/databases.tsv" --state "$model/hosts.tsv.state" \
+        --input "$root/fixtures/database/$fixture.tsv" --now 1700000001 \
+        --warn-active 10 --crit-active 50 >> "$lab/database.tsv"
+done
+"$server/bin/sasd-monitor-import" --config "$db_config" --input "$lab/database.tsv" \
+    --received-at 1700000001 --source offline-db > "$lab/import-db"
+grep -q '^imported=2 received=1700000001$' "$lab/import-db"
+"$server/bin/sasd-monitor-cycle" --config "$db_config" --now 1700000001 > "$lab/cycle-db"
+"$server/bin/sasd-monitor-report" --config "$db_config" --out "$lab/database-report.html"
+for instance in erp-primary erp-reporting; do
+    grep -q "<td>db_$instance</td><td>green</td><td>green</td><td>1700000000</td>" "$lab/database-report.html"
+done
+echo 'D database adapter, shared import, cycle and report with two instances: PASS'
 echo 'D static administrator report: PASS'
 echo 'E native product daemons, network boot, and production deployment: SKIPPED'
 echo "artifacts=$out report=$lab/report.html"
